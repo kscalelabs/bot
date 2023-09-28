@@ -4,6 +4,7 @@ import logging
 import os
 
 import discord
+import ml.api as ml
 
 logger = logging.getLogger(__name__)
 
@@ -21,8 +22,10 @@ async def send_message(message: discord.Message, user_message: str, is_private: 
 
 
 def run_discord_bot() -> None:
+    ml.configure_logging()
+
     token = os.environ["DISCORD_TOKEN"]
-    intents = discord.Intents(messages=True)
+    intents = discord.Intents.all()
     client = discord.Client(intents=intents)
 
     @client.event

@@ -49,7 +49,7 @@ clean:
 #       Static Checks      #
 # ------------------------ #
 
-py-files := $(filter-out ml/api.py, $(shell git ls-files '*.py'))
+py-files := $(shell git ls-files '*.py')
 
 format:
 	@black $(py-files)
