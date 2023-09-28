@@ -1,0 +1,8 @@
+# requirements.txt
+
+discord
+ml-pretrained
+ml-starter
+six
+torch
+torchaudio
