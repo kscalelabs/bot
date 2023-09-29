@@ -5,6 +5,8 @@ import os
 
 import discord
 import ml.api as ml
+from discord.ext.commands import Bot, Context
+from discord.voice_client import VoiceClient
 
 logger = logging.getLogger(__name__)
 
@@ -26,24 +28,41 @@ def run_discord_bot() -> None:
 
     token = os.environ["DISCORD_TOKEN"]
     intents = discord.Intents.all()
-    client = discord.Client(intents=intents)
+    bot = Bot(command_prefix="!", intents=intents)
 
-    @client.event
+    connections: dict[int, VoiceClient] = {}
+
+    @bot.event
     async def on_ready() -> None:
-        logger.info(f"Logged in as {client.user}.")
+        logger.info("Logged in as %s", bot.user)
 
-    @client.event
-    async def on_message(message: discord.Message) -> None:
-        if message.author == client.user:
+    @bot.command(name="record")
+    async def record(ctx: Context) -> None:
+        voice = ctx.author.voice
+        if not voice:
+            await ctx.send("You aren't in a voice channel!")
             return
 
-        is_private = isinstance(message.channel, discord.DMChannel)
+        vc = await voice.channel.connect()
+        connections.update({ctx.guild.id: vc})
 
-        username = str(message.author)
-        user_message = message.content
-        channel = str(message.channel)
-        logger.info(f"Received message from {username} in {channel}: {user_message}")
+        # Start recording
+        # vc.start_recording(discord.WavSink("output.wav"))
+        vc.stop()
 
-        await send_message(message, user_message, is_private)
+        await ctx.send("Recording started. Use !stop to stop recording.")
 
-    client.run(token)
+    @bot.command(name="stop")
+    async def stop(ctx: Context) -> None:
+        vc = connections.get(ctx.guild.id)
+        if not vc:
+            await ctx.send("Not recording.")
+            return
+
+        # Stop recording and disconnect
+        vc.stop()
+        await vc.disconnect()
+
+        await ctx.send("Recording stopped.")
+
+    bot.run(token)

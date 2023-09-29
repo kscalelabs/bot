@@ -26,6 +26,16 @@ all:
 .PHONY: all
 
 # ------------------------ #
+#      Development         #
+# ------------------------ #
+
+start-fastapi:
+	uvicorn bot.server:app --reload
+
+start-discord:
+	python -m bot
+
+# ------------------------ #
 #          Build           #
 # ------------------------ #
 
