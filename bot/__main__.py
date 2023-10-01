@@ -5,6 +5,6 @@ Usage:
     python -m bot
 """
 
-from .bot import run_discord_bot
+from bot.discord import run_discord_bot
 
 run_discord_bot()
