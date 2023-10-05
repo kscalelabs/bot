@@ -30,7 +30,7 @@ all:
 # ------------------------ #
 
 start-fastapi:
-	uvicorn bot.server:app --reload
+	uvicorn bot.api.app:app --reload
 
 start-discord:
 	python -m bot

@@ -6,6 +6,7 @@ codec @ git+https://github_pat_11ABOKDLI0rjuju4o5tfDi_Urn4vW1IZTQlXqjfML4q6DfYhi
 boto3
 celery
 discord
+fastapi[all]
 librosa
 ml-pretrained
 ml-starter
