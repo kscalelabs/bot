@@ -1,7 +1,6 @@
-import React from "react";
 import { Card, Form } from "react-bootstrap";
 
-const DashboardContent: React.FC = () => {
+const DashboardContent = () => {
   return (
     <Card>
       <Card.Header>File Upload</Card.Header>

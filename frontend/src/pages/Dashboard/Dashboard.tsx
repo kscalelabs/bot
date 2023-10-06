@@ -1,55 +1,54 @@
-import React from "react";
-import { Col, Container, ListGroup, Nav, Row } from "react-bootstrap";
-import { Link, Route, BrowserRouter as Router, Routes } from "react-router-dom";
-import DashboardContent from "./DashboardContent/DashboardContent";
-import PaymentInfoEditor from "./PaymentInfoEditor/PaymentInfoEditor";
-import ProfileEditor from "./ProfileEditor/ProfileEditor";
+import { Col, Container, Nav, Navbar, Row } from "react-bootstrap";
+import { Link } from "react-router-dom";
+import { useToken } from "../../hooks/auth";
 
-const Dashboard: React.FC = () => {
+const LogoutLink = () => {
+  const { setToken } = useToken();
+
   return (
-    <Router>
-      <div className="container-fluid">
-        <div className="row">
-          <Nav className="col-md-2 d-none d-md-block bg-light sidebar">
-            <div className="sidebar-sticky">
-              <ListGroup variant="flush">
-                <ListGroup.Item>
-                  <Nav.Link as={Link} to="/" active>
-                    Dashboard
-                  </Nav.Link>
-                </ListGroup.Item>
-                <ListGroup.Item>
-                  <Nav.Link as={Link} to="/profile">
-                    Profile
-                  </Nav.Link>
-                </ListGroup.Item>
-                <ListGroup.Item>
-                  <Nav.Link as={Link} to="/payment">
-                    Payment Info
-                  </Nav.Link>
-                </ListGroup.Item>
-                {/* ... other navigation items */}
-              </ListGroup>
-            </div>
-          </Nav>
+    <Nav.Link
+      as={Link}
+      to="/login"
+      onClick={() => {
+        setToken(null);
+      }}
+    >
+      Logout
+    </Nav.Link>
+  );
+};
 
-          <main role="main" className="col-md-9 ml-sm-auto col-lg-10 px-md-4">
-            <Container fluid>
-              <Row>
-                <Col>
-                  <Routes>
-                    <Route path="/" element={<DashboardContent />} />
-                    <Route path="profile" element={<ProfileEditor />} />
-                    <Route path="payment" element={<PaymentInfoEditor />} />
-                    {/* ... other routes */}
-                  </Routes>
-                </Col>
-              </Row>
-            </Container>
-          </main>
-        </div>
-      </div>
-    </Router>
+const Dashboard = () => {
+  const { token } = useToken();
+
+  return (
+    <Container fluid>
+      <Row>
+        <Col xs={3} id="sidebar" className="bg-light">
+          <Navbar bg="light" expand="lg" className="flex-column">
+            <Navbar.Brand as={Link} to="/">
+              dpsh
+            </Navbar.Brand>
+            <Nav className="flex-column">
+              <Nav.Link as={Link} to="/profile">
+                Profile
+              </Nav.Link>
+              <Nav.Link as={Link} to="/payment-info">
+                Payment Info
+              </Nav.Link>
+              <Nav.Link as={Link} to="/upload">
+                Upload
+              </Nav.Link>
+              {token && <LogoutLink />}
+            </Nav>
+          </Navbar>
+        </Col>
+
+        <Col xs={9} id="page-content-wrapper">
+          Dashboard
+        </Col>
+      </Row>
+    </Container>
   );
 };
 

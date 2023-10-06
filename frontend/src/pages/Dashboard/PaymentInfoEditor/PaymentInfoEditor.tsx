@@ -1,6 +1,4 @@
-import React from "react";
-
-const PaymentInfoEditor: React.FC = () => {
+const PaymentInfoEditor = () => {
   return <div>PaymentInfoEditor</div>;
 };
 

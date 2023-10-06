@@ -1,22 +1,8 @@
 body {
-  font-family: monospace;
   background-color: #f5f2ef;
-  font-size: 1.5em;
   color: #201a42;
 }
 
 img {
   max-height: 20vh;
-}
-
-a {
-  color: #201a42;
-  text-decoration: none;
-  padding: 0 0.5em;
-  text-align: center;
-}
-
-a:hover {
-  color: #6272a4;
-  text-decoration: underline;
 }

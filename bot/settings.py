@@ -12,9 +12,18 @@ from bot import __version__ as bot_version
 
 
 @dataclass
+class DatabaseSettings:
+    url: str = ml.conf_field(MISSING)
+    port: int = ml.conf_field(MISSING)
+    username: str = ml.conf_field(MISSING)
+    password: str = ml.conf_field(MISSING)
+
+
+@dataclass
 class Settings:
     app_name: str = ml.conf_field("bot")
     version: str = ml.conf_field(MISSING)
+    database: DatabaseSettings = ml.conf_field(DatabaseSettings())
 
 
 def load() -> Settings:
