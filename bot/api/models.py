@@ -1,8 +1,7 @@
 """Defines request and response models for the API."""
 
-from pydantic import BaseModel
 from fastapi import UploadFile
-from fastapi.responses import FileResponse
+from pydantic import BaseModel
 
 
 class UploadRequest(BaseModel):
