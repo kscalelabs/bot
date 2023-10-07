@@ -1,15 +1,15 @@
 import { Col, Container, Row } from "react-bootstrap";
 
-const DashboardContent = () => {
+const SettingsPage = () => {
   return (
     <Container>
       <Row>
         <Col>
-          <h1>Dashboard</h1>
+          <h1>Settings</h1>
         </Col>
       </Row>
     </Container>
   );
 };
 
-export default DashboardContent;
+export default SettingsPage;

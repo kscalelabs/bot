@@ -42,11 +42,11 @@ export const useToken = () => {
   return context;
 };
 
-interface RequiresLogin {
+interface RequiresLoginProps {
   children: React.ReactNode;
 }
 
-export const RequiresLogin = ({ children }: RequiresLogin) => {
+export const RequiresLogin = ({ children }: RequiresLoginProps) => {
   const { token } = useToken();
   if (token === null) {
     return <Navigate to={`/login?redirect=${window.location.pathname}`} />;
