@@ -43,6 +43,7 @@ disable_error_code = ["attr-defined"]
 module = [
     "discord.*",
     "torchaudio.*",
+    "sounddevice.*",
 ]
 
 ignore_missing_imports = true

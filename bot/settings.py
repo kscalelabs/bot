@@ -36,10 +36,10 @@ def load() -> Settings:
     Returns:
         The bot settings dataclass.
     """
-    config_paths = [*(Path.home() / ".config" / "dpsh-bot").glob("*.yaml")]
+    config_paths: list[Path] = list(*(Path.home() / ".config" / "dpsh-bot").glob("*.yaml"))
     if "DPSH_BOT_CONFIG_ROOT" in os.environ:
         config_paths.extend(Path(os.environ["DPSH_BOT_CONFIG_ROOT"]).glob("*.yaml"))
-    raw_configs = OmegaConf.load(config_paths)
+    raw_configs = (OmegaConf.load(config) for config in config_paths)
     config = cast(Settings, OmegaConf.merge(OmegaConf.structured(Settings), *raw_configs))
     config.version = bot_version
     return config

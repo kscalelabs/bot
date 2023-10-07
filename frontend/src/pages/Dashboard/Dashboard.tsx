@@ -4,6 +4,7 @@ import { useToken } from "../../hooks/auth";
 import DashboardContent from "./DashboardContent/DashboardContent";
 import GalleryPage from "./GalleryPage/GalleryPage";
 import HistoryPage from "./HistoryPage/HistoryPage";
+import MakePage from "./MakePage/MakePage";
 import SettingsPage from "./SettingsPage/SettingsPage";
 
 const NavigationBar = () => {
@@ -30,8 +31,8 @@ const NavigationBar = () => {
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="me-auto">
-              <Nav.Link onClick={() => navigate("/history")}>
-                <i className="fa fa-history" /> History
+              <Nav.Link onClick={() => navigate("/make")}>
+                <i className="fa fa-star" /> Make
               </Nav.Link>
               <Nav.Link onClick={() => navigate("/gallery")}>
                 <i className="fa fa-picture-o" /> Gallery
@@ -43,6 +44,9 @@ const NavigationBar = () => {
                 id="basic-nav-dropdown"
                 align="end"
               >
+                <NavDropdown.Item onClick={() => navigate("/history")}>
+                  <i className="fa fa-history" /> History
+                </NavDropdown.Item>
                 <NavDropdown.Item onClick={() => navigate("/settings")}>
                   <i className="fa fa-cog" /> Settings
                 </NavDropdown.Item>
@@ -65,8 +69,9 @@ const Dashboard = () => {
       <Container>
         <Routes>
           <Route index element={<DashboardContent />} />
-          <Route path="history" element={<HistoryPage />} />
           <Route path="gallery" element={<GalleryPage />} />
+          <Route path="make" element={<MakePage />} />
+          <Route path="history" element={<HistoryPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Routes>
       </Container>
