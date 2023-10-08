@@ -17,7 +17,6 @@ const SignUpComponent = ({ setMessage }: Peops) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [showSpinner, setShowSpinner] = useState(false);
 
   const { setToken } = useToken();
@@ -81,31 +80,26 @@ const SignUpComponent = ({ setMessage }: Peops) => {
         />
       </FloatingLabel>
 
-      <Form.Group className="mt-3 mb-3">
-        <Form.Check
-          type="switch"
-          onChange={(e) => {
-            setShowPassword(e.target.checked);
-          }}
-        />
-      </Form.Group>
-
       <FloatingLabel
         controlId="floatingPassword"
         label="Password"
         className="mb-3"
       >
         <Form.Control
-          type={showPassword ? "text" : "password"}
+          type="password"
           placeholder="Password"
           onChange={(e) => {
             setPassword(e.target.value);
           }}
         />
       </FloatingLabel>
-      <FloatingLabel controlId="floatingPassword" label="Confirm Password">
+      <FloatingLabel
+        controlId="floatingPassword"
+        label="Confirm Password"
+        className="mb-3"
+      >
         <Form.Control
-          type={showPassword ? "text" : "password"}
+          type="password"
           placeholder="Confirm Password"
           onChange={(e) => {
             setConfirmPassword(e.target.value);
@@ -116,7 +110,7 @@ const SignUpComponent = ({ setMessage }: Peops) => {
       {showSpinner ? (
         <Spinner />
       ) : (
-        <Button variant="primary" type="submit" className="mt-3">
+        <Button variant="primary" type="submit">
           Sign Up
         </Button>
       )}

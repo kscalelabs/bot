@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, FloatingLabel, Form } from "react-bootstrap";
+import { Button, FloatingLabel, Form, Spinner } from "react-bootstrap";
 import { api } from "../../../constants/backend";
 import { useToken } from "../../../hooks/auth";
 
@@ -15,11 +15,15 @@ interface LogInResponse {
 const LogInComponent = ({ setMessage }: Props) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showSpinner, setShowSpinner] = useState(false);
 
   const { setToken } = useToken();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    setShowSpinner(true);
+
     try {
       const response = await api.post<LogInResponse>("/users/login", {
         email,
@@ -28,6 +32,8 @@ const LogInComponent = ({ setMessage }: Props) => {
       setToken([response.data.token, response.data.token_type]);
     } catch (error) {
       setMessage(["Error", `Authentication failed: ${error}`]);
+    } finally {
+      setShowSpinner(false);
     }
   };
 
@@ -46,7 +52,11 @@ const LogInComponent = ({ setMessage }: Props) => {
           }}
         />
       </FloatingLabel>
-      <FloatingLabel controlId="floatingPassword" label="Password">
+      <FloatingLabel
+        controlId="floatingPassword"
+        label="Password"
+        className="mb-3"
+      >
         <Form.Control
           type="password"
           placeholder="Password"
@@ -56,9 +66,13 @@ const LogInComponent = ({ setMessage }: Props) => {
         />
       </FloatingLabel>
 
-      <Button variant="primary" type="submit" className="mt-3">
-        Login
-      </Button>
+      {showSpinner ? (
+        <Spinner />
+      ) : (
+        <Button variant="primary" type="submit">
+          Login
+        </Button>
+      )}
     </Form>
   );
 };
