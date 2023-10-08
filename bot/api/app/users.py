@@ -1,5 +1,6 @@
 """Defines the API endpoint for creating, deleting and updating user information."""
 
+import re
 from email.utils import parseaddr as parse_email_address
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -58,10 +59,16 @@ def validate_email(email: str) -> str:
 
 
 def validate_password(password: str) -> str:
-    if len(password) < 12:
+    if len(password) < 8:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password must be at least 8 characters")
     if len(password) > 128:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password must be at most 128 characters")
+    if not re.search(r"[a-z]", password):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password must contain a lowercase letter")
+    if not re.search(r"[A-Z]", password):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password must contain an uppercase letter")
+    if not re.search(r"\d", password):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password must contain a number")
     return password
 
 
@@ -91,13 +98,14 @@ class UserReverify(BaseModel):
 
 
 @users_router.post("/reverify")
-async def resend_verification(data: UserReverify) -> bool:
+async def resend_verification(data: UserReverify, request: Request) -> bool:
     user_obj = await User.get_or_none(email=data.email)
     if user_obj is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email not registered")
     if user_obj.email_verified:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already verified")
-    await send_verification_email(data.email, data.login_url)
+    request_url = str(request.base_url)
+    await send_verification_email(data.email, request_url, data.login_url)
     return True
 
 
@@ -172,7 +180,7 @@ class UpdateEmail(BaseModel):
 
 
 @users_router.put("/update/email")
-async def update_email(data: UpdateEmail, user_data: TokenData = Depends(get_current_user)) -> bool:
+async def update_email(data: UpdateEmail, request: Request, user_data: TokenData = Depends(get_current_user)) -> bool:
     user_obj = await User.get_or_none(id=user_data.user_id)
     if not user_obj:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
@@ -180,7 +188,8 @@ async def update_email(data: UpdateEmail, user_data: TokenData = Depends(get_cur
     user_obj.email = new_email
     user_obj.email_verified = False
     await user_obj.save()
-    await send_verification_email(new_email, data.login_url)
+    request_url = str(request.base_url)
+    await send_verification_email(new_email, request_url, data.login_url)
     return True
 
 
@@ -188,7 +197,7 @@ class UpdatePassword(BaseModel):
     new_password: str
 
 
-@users_router.put("/update/password")
+@users_router.put("/password/update")
 async def update_password(data: UpdatePassword, user_data: TokenData = Depends(get_current_user)) -> bool:
     user_obj = await User.get_or_none(id=user_data.user_id)
     if not user_obj:

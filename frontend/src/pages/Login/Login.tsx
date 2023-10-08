@@ -15,7 +15,7 @@ import GoogleAuthComponent from "./components/GoogleAuthComponent";
 import LogInComponent from "./components/LogInComponent";
 import SignUpComponent from "./components/SignUpComponent";
 
-const Login = () => {
+const LogIn = () => {
   const [message, setMessage] = useState<[string, string] | null>(null);
   const [searchParams] = useSearchParams();
   const [signUp, setSignUp] = useState(false);
@@ -79,9 +79,7 @@ const Login = () => {
           <GoogleAuthComponent setMessage={setMessage} />
 
           {signUp ? (
-            <SignUpComponent
-            setMessage={setMessage}
-            />
+            <SignUpComponent setMessage={setMessage} />
           ) : (
             <LogInComponent setMessage={setMessage} />
           )}
@@ -106,4 +104,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default LogIn;
