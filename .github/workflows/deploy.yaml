@@ -34,6 +34,10 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
+      - name: Write .env.production
+        run: |
+          echo "REACT_APP_API_URL=$API_URL" > .env.production
+
       - name: Build
         run: npm run build
 
