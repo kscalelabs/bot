@@ -15,7 +15,7 @@ import {
 } from "react-bootstrap";
 import { Navigate, useSearchParams } from "react-router-dom";
 
-const LogIn = () => {
+const LogInPage = () => {
   const [message, setMessage] = useState<[string, string] | null>(null);
   const [searchParams] = useSearchParams();
   const [signUp, setSignUp] = useState(false);
@@ -104,4 +104,4 @@ const LogIn = () => {
   );
 };
 
-export default LogIn;
+export default LogInPage;

@@ -3,7 +3,7 @@ import "App.css";
 import { RequiresLogin, TokenProvider } from "hooks/auth";
 import Dashboard from "pages/Dashboard/Dashboard";
 import Error404 from "pages/Error/Error404";
-import LogIn from "pages/LogIn/LogIn";
+import LogInPage from "pages/LogIn/LogInPage";
 import { Route, HashRouter as Router, Routes } from "react-router-dom";
 
 const GOOGLE_CLIENT_ID =
@@ -23,7 +23,7 @@ const App = () => {
                 </RequiresLogin>
               }
             />
-            <Route path="/login" element={<LogIn />} />
+            <Route path="/login" element={<LogInPage />} />
             <Route path="*" element={<Error404 />} />
           </Routes>
         </Router>
