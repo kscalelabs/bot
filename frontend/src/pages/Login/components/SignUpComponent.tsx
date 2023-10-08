@@ -1,30 +1,67 @@
+import axios, { AxiosError } from "axios";
 import { useState } from "react";
-import { Button, FloatingLabel, Form } from "react-bootstrap";
+import { Button, FloatingLabel, Form, Spinner } from "react-bootstrap";
 import { api } from "../../../constants/backend";
+import { useToken } from "../../../hooks/auth";
 
 interface Peops {
-  setErrorMessage: (message: string | null) => void;
+  setMessage: (message: [string, string] | null) => void;
 }
 
-const SignUpComponent = ({ setErrorMessage }: Peops) => {
-  const [username, setUsername] = useState("");
+interface SignUpResponse {
+  token: string;
+  token_type: string;
+}
+
+const SignUpComponent = ({ setMessage }: Peops) => {
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showSpinner, setShowSpinner] = useState(false);
+
+  const { setToken } = useToken();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (confirmPassword !== password) {
-      setErrorMessage("Passwords do not match.");
+      setMessage(["Error", "Passwords do not match."]);
       return;
     }
 
+    setShowSpinner(true);
+
     try {
-      const data = { username, password, login_url: window.location.href };
-      const response = await api.post("/users/signup", data);
-      console.log("Authentication successful", response.data);
+      const login_url = window.location.href.replace("signup", "login");
+      const response = await api.post<SignUpResponse>("/users/signup", {
+        email,
+        password,
+        login_url,
+      });
+      setToken([response.data.token, response.data.token_type]);
     } catch (error) {
-      setErrorMessage(`Authentication failed: ${error}`);
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError;
+        console.log(axiosError);
+        const request = axiosError.request,
+          response = axiosError.response;
+        if (response) {
+          if (response.status === 400) {
+            setMessage(["Error", "Invalid email or password."]);
+          } else if (response.status === 500) {
+            setMessage(["Error", "An internal server error occurred."]);
+          } else {
+            setMessage(["Error", "An unknown error occurred."]);
+          }
+        } else if (request) {
+          setMessage(["Error", "An unknown error occurred."]);
+        }
+      } else {
+        setMessage(["Error", "An unknown error occurred."]);
+      }
+    } finally {
+      setShowSpinner(false);
     }
   };
 
@@ -39,17 +76,27 @@ const SignUpComponent = ({ setErrorMessage }: Peops) => {
           type="email"
           placeholder="name@example.com"
           onChange={(e) => {
-            setUsername(e.target.value);
+            setEmail(e.target.value);
           }}
         />
       </FloatingLabel>
+
+      <Form.Group className="mt-3 mb-3">
+        <Form.Check
+          type="switch"
+          onChange={(e) => {
+            setShowPassword(e.target.checked);
+          }}
+        />
+      </Form.Group>
+
       <FloatingLabel
         controlId="floatingPassword"
         label="Password"
         className="mb-3"
       >
         <Form.Control
-          type="password"
+          type={showPassword ? "text" : "password"}
           placeholder="Password"
           onChange={(e) => {
             setPassword(e.target.value);
@@ -58,7 +105,7 @@ const SignUpComponent = ({ setErrorMessage }: Peops) => {
       </FloatingLabel>
       <FloatingLabel controlId="floatingPassword" label="Confirm Password">
         <Form.Control
-          type="password"
+          type={showPassword ? "text" : "password"}
           placeholder="Confirm Password"
           onChange={(e) => {
             setConfirmPassword(e.target.value);
@@ -66,9 +113,13 @@ const SignUpComponent = ({ setErrorMessage }: Peops) => {
         />
       </FloatingLabel>
 
-      <Button variant="primary" type="submit" className="mt-3">
-        Sign Up
-      </Button>
+      {showSpinner ? (
+        <Spinner />
+      ) : (
+        <Button variant="primary" type="submit" className="mt-3">
+          Sign Up
+        </Button>
+      )}
     </Form>
   );
 };

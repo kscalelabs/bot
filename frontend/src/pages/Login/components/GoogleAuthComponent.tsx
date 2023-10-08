@@ -3,10 +3,10 @@ import { useState } from "react";
 import { Col, Row } from "react-bootstrap";
 
 interface Props {
-  setErrorMessage: (message: string | null) => void;
+  setMessage: (message: [string, string] | null) => void;
 }
 
-const GoogleAuthComponent = ({ setErrorMessage }: Props) => {
+const GoogleAuthComponent = ({ setMessage }: Props) => {
   const [credential, setCredential] = useState<string | null>(null);
 
   return (
@@ -17,13 +17,13 @@ const GoogleAuthComponent = ({ setErrorMessage }: Props) => {
             onSuccess={(credentialResponse) => {
               const credential = credentialResponse.credential;
               if (credential === undefined) {
-                setErrorMessage("Failed to login using Google OAuth.");
+                setMessage(["Error", "Failed to login using Google OAuth."]);
                 return;
               }
               setCredential(credential);
             }}
             onError={() => {
-              setErrorMessage("Failed to login using Google OAuth.");
+              setMessage(["Error", "Failed to login using Google OAuth."]);
             }}
             useOneTap={false}
           />

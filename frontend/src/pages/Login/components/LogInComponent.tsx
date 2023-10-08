@@ -1,27 +1,33 @@
-import axios from "axios";
 import { useState } from "react";
 import { Button, FloatingLabel, Form } from "react-bootstrap";
+import { api } from "../../../constants/backend";
+import { useToken } from "../../../hooks/auth";
 
 interface Props {
-  setErrorMessage: (message: string | null) => void;
+  setMessage: (message: [string, string] | null) => void;
 }
 
-const LogInComponent = ({ setErrorMessage }: Props) => {
-  const [username, setUsername] = useState("");
+interface LogInResponse {
+  token: string;
+  token_type: string;
+}
+
+const LogInComponent = ({ setMessage }: Props) => {
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  const { setToken } = useToken();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Username:", username);
-    console.log("Password:", password);
     try {
-      const response = await axios.post("http://localhost:8000/users/login", {
-        username,
+      const response = await api.post<LogInResponse>("/users/login", {
+        email,
         password,
       });
-      console.log("Authentication successful", response.data);
+      setToken([response.data.token, response.data.token_type]);
     } catch (error) {
-      setErrorMessage(`Authentication failed: ${error}`);
+      setMessage(["Error", `Authentication failed: ${error}`]);
     }
   };
 
@@ -36,7 +42,7 @@ const LogInComponent = ({ setErrorMessage }: Props) => {
           type="email"
           placeholder="name@example.com"
           onChange={(e) => {
-            setUsername(e.target.value);
+            setEmail(e.target.value);
           }}
         />
       </FloatingLabel>

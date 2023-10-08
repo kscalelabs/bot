@@ -16,7 +16,7 @@ import LogInComponent from "./components/LogInComponent";
 import SignUpComponent from "./components/SignUpComponent";
 
 const Login = () => {
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<[string, string] | null>(null);
   const [searchParams] = useSearchParams();
   const [signUp, setSignUp] = useState(false);
 
@@ -76,24 +76,29 @@ const Login = () => {
             </ToggleButton>
           </ToggleButtonGroup>
 
-          <GoogleAuthComponent setErrorMessage={setErrorMessage} />
+          <GoogleAuthComponent setMessage={setMessage} />
 
           {signUp ? (
-            <SignUpComponent setErrorMessage={setErrorMessage} />
+            <SignUpComponent
+            setMessage={setMessage}
+            />
           ) : (
-            <LogInComponent setErrorMessage={setErrorMessage} />
+            <LogInComponent setMessage={setMessage} />
           )}
 
           <Modal
-            show={errorMessage !== null}
+            show={message !== null}
             onHide={() => {
-              setErrorMessage(null);
+              setMessage(null);
             }}
           >
             <Modal.Header closeButton>
-              <Modal.Title>Error</Modal.Title>
+              <Modal.Title>{message ? message[0] : ""}</Modal.Title>
             </Modal.Header>
-            <Modal.Body>{errorMessage}</Modal.Body>
+            <Modal.Body>{message ? message[1] : ""}</Modal.Body>
+            <Modal.Footer>
+              Seeing issues? Send an email to <code>ben@dpsh.dev</code>
+            </Modal.Footer>
           </Modal>
         </Col>
       </Row>

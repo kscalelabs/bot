@@ -2,7 +2,7 @@
 
 from email.utils import parseaddr as parse_email_address
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic.main import BaseModel
@@ -66,7 +66,7 @@ def validate_password(password: str) -> str:
 
 
 @users_router.post("/signup")
-async def sign_up_user(data: UserSignup) -> UserSignupResponse:
+async def sign_up_user(data: UserSignup, request: Request) -> UserSignupResponse:
     email = validate_email(data.email)
     password = validate_password(data.password)
     user_obj = await User.get_or_none(email=email)
@@ -74,7 +74,8 @@ async def sign_up_user(data: UserSignup) -> UserSignupResponse:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
     hashed_password = hash_password(password)
     user_obj = await User.create(email=data.email, hashed_password=hashed_password)
-    await send_verification_email(data.email, data.login_url)
+    request_url = str(request.base_url)
+    await send_verification_email(data.email, request_url, data.login_url)
     return UserSignupResponse(
         token=TokenData(
             user_id=user_obj.id,
@@ -203,11 +204,12 @@ class ForgotPassword(BaseModel):
 
 
 @users_router.post("/password/forgot")
-async def forgot_password(data: ForgotPassword) -> bool:
+async def forgot_password(data: ForgotPassword, request: Request) -> bool:
     user_obj = await User.get_or_none(email=data.email)
     if not user_obj:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email not registered")
-    await send_reset_email(data.email, data.login_url)
+    request_url = str(request.base_url)
+    await send_reset_email(data.email, request_url, data.login_url)
     return True
 
 

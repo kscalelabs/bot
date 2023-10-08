@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 
-const TOKEN_KEY = "token";
+const TOKEN_VALUE_KEY = "__DPSH_TOKEN_VALUE";
+const TOKEN_TYPE_KEY = "__DPSH_TOKEN_TYPE";
 
 interface TokenContextProps {
-  token: string | null;
-  setToken: (token: string | null) => void;
+  token: [string, string] | null;
+  setToken: (token: [string, string] | null) => void;
 }
 
 const TokenContext = createContext<TokenContextProps | null>(null);
@@ -15,15 +16,20 @@ interface TokenProviderProps {
 }
 
 export const TokenProvider = ({ children }: TokenProviderProps) => {
-  const [token, setToken] = useState<string | null>(
-    localStorage.getItem(TOKEN_KEY)
+  const tokenValue = localStorage.getItem(TOKEN_VALUE_KEY);
+  const tokenType = localStorage.getItem(TOKEN_TYPE_KEY);
+  const [token, setToken] = useState<[string, string] | null>(
+    tokenValue && tokenType ? [tokenValue, tokenType] : null
   );
 
   useEffect(() => {
-    if (token === null) {
-      localStorage.removeItem(TOKEN_KEY);
+    if (token) {
+      const [tokenValue, tokenType] = token;
+      localStorage.setItem(TOKEN_VALUE_KEY, tokenValue);
+      localStorage.setItem(TOKEN_TYPE_KEY, tokenType);
     } else {
-      localStorage.setItem(TOKEN_KEY, token);
+      localStorage.removeItem(TOKEN_VALUE_KEY);
+      localStorage.removeItem(TOKEN_TYPE_KEY);
     }
   }, [token]);
 

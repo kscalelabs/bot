@@ -23,7 +23,7 @@ async def send_email(subject: str, body: str, to: str) -> None:
         f"""
             To: {to}
             From: {settings.name}<{settings.email}>
-            Subject: {subject}rea
+            Subject: {subject}
         """
     ).strip()
 
@@ -51,14 +51,14 @@ class VerificationPayload:
         return cls(email=data["email"], login_url=data["login_url"])
 
 
-async def send_verification_email(email: str, login_url: str) -> None:
+async def send_verification_email(email: str, request_url: str, login_url: str) -> None:
     payload = VerificationPayload(email, login_url).encode()
 
     body = textwrap.dedent(
         f"""
             Please verify your email by clicking the link below:
 
-            https://api.dpsh.dev/users/verify/{payload}
+            {request_url}/users/verify/{payload}
         """
     )
 
@@ -79,14 +79,14 @@ async def verify_email(payload_string: str) -> str:
     return payload.login_url
 
 
-async def send_reset_email(email: str, login_url: str) -> None:
+async def send_reset_email(email: str, request_url: str, login_url: str) -> None:
     payload = VerificationPayload(email, login_url).encode()
 
     body = textwrap.dedent(
         f"""
             Please reset your password by clicking the link below:
 
-            https://app.dpsh.dev/reset-password/{payload}
+            {request_url}/password/reset/{payload}
         """
     )
 

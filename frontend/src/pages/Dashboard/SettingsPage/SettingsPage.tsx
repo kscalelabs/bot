@@ -99,6 +99,18 @@ const NotificationSettings = () => {
   );
 };
 
+const DeleteAccount = () => {
+  return (
+    <Form.Group className="mt-3">
+      <Form.Check type="switch" label="Confirm account deletion" />
+
+      <Button variant="danger" id="button-addon2" className="mt-3">
+        <i className="fa fa-cross"></i> Delete Account
+      </Button>
+    </Form.Group>
+  );
+};
+
 const SettingsPage = () => {
   return (
     <Container style={{ maxWidth: 800 }}>
@@ -106,6 +118,7 @@ const SettingsPage = () => {
       <EmailInput />
       <PasswordInput />
       <NotificationSettings />
+      <DeleteAccount />
     </Container>
   );
 };
