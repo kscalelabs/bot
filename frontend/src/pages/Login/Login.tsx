@@ -1,136 +1,24 @@
-import { GoogleLogin } from "@react-oauth/google";
-import axios from "axios";
 import { useState } from "react";
 import {
-  Button,
   Col,
   Container,
-  FloatingLabel,
-  Form,
   Image,
   Modal,
   Row,
+  ToggleButton,
+  ToggleButtonGroup,
 } from "react-bootstrap";
 import { Navigate, useSearchParams } from "react-router-dom";
 import logo from "../../assets/logo.png";
 import { useToken } from "../../hooks/auth";
-
-interface GoogleAuthProps {
-  setErrorMessage: (message: string | null) => void;
-}
-
-const GoogleAuth = ({ setErrorMessage }: GoogleAuthProps) => {
-  const [credential, setCredential] = useState<string | null>(null);
-
-  return (
-    <Row className="mb-3">
-      <Col>
-        {credential === null ? (
-          <GoogleLogin
-            onSuccess={(credentialResponse) => {
-              const credential = credentialResponse.credential;
-              if (credential === undefined) {
-                setErrorMessage("Failed to login using Google OAuth.");
-                return;
-              }
-              setCredential(credential);
-            }}
-            onError={() => {
-              setErrorMessage("Failed to login using Google OAuth.");
-            }}
-            useOneTap={false}
-          />
-        ) : (
-          <div className="spinner-border" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </div>
-        )}
-      </Col>
-    </Row>
-  );
-};
-
-interface LoginAuthProps {
-  setErrorMessage: (message: string | null) => void;
-}
-
-const LoginAuth = ({ setErrorMessage }: LoginAuthProps) => {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Username:", username);
-    console.log("Password:", password);
-    try {
-      const response = await axios.post("http://localhost:8000/users/login", {
-        username,
-        password,
-      });
-      console.log("Authentication successful", response.data);
-    } catch (error) {
-      setErrorMessage("Authentication failed.");
-    }
-  };
-
-  return (
-    <Form onSubmit={handleSubmit} className="mb-3">
-      <FloatingLabel
-        controlId="floatingInput"
-        label="Email address"
-        className="mb-3"
-      >
-        <Form.Control
-          type="email"
-          placeholder="name@example.com"
-          onChange={(e) => {
-            setUsername(e.target.value);
-          }}
-        />
-      </FloatingLabel>
-      <FloatingLabel controlId="floatingPassword" label="Password">
-        <Form.Control
-          type="password"
-          placeholder="Password"
-          onChange={(e) => {
-            setPassword(e.target.value);
-          }}
-        />
-      </FloatingLabel>
-
-      <Button variant="primary" type="submit" className="mt-3">
-        Login
-      </Button>
-    </Form>
-  );
-};
-
-interface DummyAuthProps {
-  setErrorMessage: (message: string | null) => void;
-}
-
-const DummyAuth = ({ setErrorMessage }: DummyAuthProps) => {
-  const { setToken } = useToken();
-
-  return (
-    <Row>
-      <Col>
-        <Button
-          variant="primary"
-          onClick={() => {
-            setToken("dummy-token");
-          }}
-        >
-          Dummy Login
-        </Button>
-      </Col>
-    </Row>
-  );
-};
+import GoogleAuthComponent from "./components/GoogleAuthComponent";
+import LogInComponent from "./components/LogInComponent";
+import SignUpComponent from "./components/SignUpComponent";
 
 const Login = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
+  const [signUp, setSignUp] = useState(false);
 
   const { token } = useToken();
   if (token !== null) {
@@ -166,11 +54,35 @@ const Login = () => {
             </Col>
           </Row>
 
-          <GoogleAuth setErrorMessage={setErrorMessage} />
+          <ToggleButtonGroup
+            type="radio"
+            defaultValue={1}
+            name="options"
+            className="mb-3"
+          >
+            <ToggleButton
+              id="loginButton"
+              value={1}
+              onChange={() => setSignUp(false)}
+            >
+              Login
+            </ToggleButton>
+            <ToggleButton
+              id="signUpButton"
+              value={2}
+              onChange={() => setSignUp(true)}
+            >
+              Sign Up
+            </ToggleButton>
+          </ToggleButtonGroup>
 
-          <LoginAuth setErrorMessage={setErrorMessage} />
+          <GoogleAuthComponent setErrorMessage={setErrorMessage} />
 
-          <DummyAuth setErrorMessage={setErrorMessage} />
+          {signUp ? (
+            <SignUpComponent setErrorMessage={setErrorMessage} />
+          ) : (
+            <LogInComponent setErrorMessage={setErrorMessage} />
+          )}
 
           <Modal
             show={errorMessage !== null}

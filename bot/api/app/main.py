@@ -8,14 +8,28 @@ Usage:
 """
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from bot.api.app.users import users_router
 from bot.api.db import close_db, init_db
+from bot.settings import load_settings
 
 app = FastAPI()
 
+# Site settings.
+settings = load_settings()
+
 # Just link to the official terms of service.
 app.terms_of_service = "https://dpsh.dev/tos"
+
+# Adds CORS middleware.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[settings.site.homepage],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT"],
+    allow_headers=["*"],
+)
 
 
 @app.on_event("startup")

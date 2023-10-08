@@ -1,5 +1,7 @@
 """Defines the API endpoint for creating, deleting and updating user information."""
 
+from email.utils import parseaddr as parse_email_address
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import RedirectResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -36,26 +38,44 @@ class TokenData(BaseModel):
         )
 
 
-class UserCreate(BaseModel):
+class UserSignup(BaseModel):
     email: str
     password: str
     login_url: str
 
 
-class UserCreateResponse(BaseModel):
+class UserSignupResponse(BaseModel):
     token: str
     token_type: str
 
 
-@users_router.post("/create")
-async def create_user(data: UserCreate) -> UserCreateResponse:
-    user_obj = await User.get_or_none(email=data.email)
+def validate_email(email: str) -> str:
+    try:
+        email = parse_email_address(email)[1]
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid email")
+    return email
+
+
+def validate_password(password: str) -> str:
+    if len(password) < 12:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password must be at least 8 characters")
+    if len(password) > 128:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password must be at most 128 characters")
+    return password
+
+
+@users_router.post("/signup")
+async def sign_up_user(data: UserSignup) -> UserSignupResponse:
+    email = validate_email(data.email)
+    password = validate_password(data.password)
+    user_obj = await User.get_or_none(email=email)
     if user_obj is not None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
-    hashed_password = hash_password(data.password)
+    hashed_password = hash_password(password)
     user_obj = await User.create(email=data.email, hashed_password=hashed_password)
     await send_verification_email(data.email, data.login_url)
-    return UserCreateResponse(
+    return UserSignupResponse(
         token=TokenData(
             user_id=user_obj.id,
             is_verified=user_obj.email_verified,
@@ -155,10 +175,11 @@ async def update_email(data: UpdateEmail, user_data: TokenData = Depends(get_cur
     user_obj = await User.get_or_none(id=user_data.user_id)
     if not user_obj:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
-    user_obj.email = data.new_email
+    new_email = validate_email(data.new_email)
+    user_obj.email = new_email
     user_obj.email_verified = False
     await user_obj.save()
-    await send_verification_email(data.new_email, data.login_url)
+    await send_verification_email(new_email, data.login_url)
     return True
 
 
@@ -171,7 +192,7 @@ async def update_password(data: UpdatePassword, user_data: TokenData = Depends(g
     user_obj = await User.get_or_none(id=user_data.user_id)
     if not user_obj:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
-    user_obj.hashed_password = hash_password(data.new_password)
+    user_obj.hashed_password = hash_password(validate_password(data.new_password))
     await user_obj.save()
     return True
 
