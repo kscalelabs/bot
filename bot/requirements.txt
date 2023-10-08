@@ -3,19 +3,15 @@
 # Personal access token grants access to repositories in dpsh organization.
 codec @ git+https://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@github.com/dpshai/codec.git
 
-boto3
-celery
-discord
+# FastAPI dependencies.
+aiosmtplib
 fastapi[all]
-librosa
-ml-pretrained
-ml-starter
-pycord
-pynacl
-python-multipart
-redis
-runpod
-six
-torch
-torchaudio
+mangum
+pyjwt
 uvicorn
+
+# Database dependencies.
+tortoise-orm[asyncpg]
+
+# Testing dependencies.
+pytest
