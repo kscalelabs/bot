@@ -23,11 +23,12 @@ class SiteSettings:
 
 @dataclass
 class DatabaseSettings:
+    kind: str = ml.conf_field(MISSING)
     host: str = ml.conf_field(MISSING)
-    port: int = ml.conf_field(MISSING)
-    path: str = ml.conf_field(MISSING)
-    username: str = ml.conf_field(MISSING)
-    password: str = ml.conf_field(MISSING)
+    port: int | None = ml.conf_field(MISSING)
+    path: str | None = ml.conf_field(MISSING)
+    username: str | None = ml.conf_field(MISSING)
+    password: str | None = ml.conf_field(MISSING)
 
 
 @dataclass

@@ -4,6 +4,7 @@ import argparse
 import asyncio
 import logging
 import textwrap
+from dataclasses import dataclass
 
 import aiosmtplib
 import jwt
@@ -21,7 +22,7 @@ async def send_email(subject: str, body: str, to: str) -> None:
         f"""
             To: {to}
             From: {settings.name}<{settings.email}>
-            Subject: {subject}
+            Subject: {subject}rea
         """
     ).strip()
 
@@ -35,8 +36,30 @@ async def send_email(subject: str, body: str, to: str) -> None:
     await smtp_client.quit()
 
 
-async def send_verification_email(email: str) -> None:
-    payload = jwt.encode({"email": email}, load_settings().crypto.jwt_secret, algorithm="HS256")
+@dataclass
+class VerificationPayload:
+    email: str
+    login_url: str
+
+    def encode(self) -> str:
+        return jwt.encode(
+            {"email": self.email, "login_url": self.login_url},
+            load_settings().crypto.jwt_secret,
+            algorithm="HS256",
+        )
+
+    @classmethod
+    def decode(cls, payload: str) -> "VerificationPayload":
+        try:
+            data = jwt.decode(payload, load_settings().crypto.jwt_secret, algorithms=["HS256"])
+            return cls(email=data["email"], login_url=data["login_url"])
+        except Exception:
+            logger.exception("Invalid payload")
+            raise ValueError("Invalid payload")
+
+
+async def send_verification_email(email: str, login_url: str) -> None:
+    payload = VerificationPayload(email, login_url).encode()
 
     body = textwrap.dedent(
         f"""
@@ -49,10 +72,10 @@ async def send_verification_email(email: str) -> None:
     await send_email(subject="Verify your email", body=body, to=email)
 
 
-async def verify_email(payload: str) -> str:
+async def verify_email(payload_string: str) -> str:
     try:
-        email = jwt.decode(payload, load_settings().crypto.jwt_secret, algorithms=["HS256"])["email"]
-        user_obj = await User.get_or_none(email=email)
+        payload = VerificationPayload.decode(payload_string)
+        user_obj = await User.get_or_none(email=payload.email)
         assert user_obj is not None
     except Exception:
         logger.exception("Invalid payload")
@@ -60,7 +83,7 @@ async def verify_email(payload: str) -> str:
 
     user_obj.email_verified = True
     await user_obj.save()
-    return email
+    return payload.login_url
 
 
 def test_email_adhoc() -> None:

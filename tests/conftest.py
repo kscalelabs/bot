@@ -1,10 +1,16 @@
 """Pytest configuration file."""
 
 import functools
+from typing import Generator
 
 import pytest
 import torch
+from _pytest.legacypath import TempdirFactory
 from _pytest.python import Function, Metafunc
+from fastapi.testclient import TestClient
+from pytest_mock.plugin import MockerFixture, MockType
+
+from bot.settings import Settings
 
 
 @functools.lru_cache()
@@ -61,3 +67,52 @@ def pytest_generate_tests(metafunc: Metafunc) -> None:
         if has_mps():
             torch_devices.append(torch.device("mps"))
         metafunc.parametrize("device", torch_devices)
+
+
+@pytest.fixture(scope="function", autouse=True)
+def mock_load_settings(mocker: MockerFixture, tmpdir_factory: TempdirFactory) -> MockType:
+    mock = mocker.patch("bot.settings.load_settings")
+    settings = Settings()
+
+    # Sets the default site settings.
+    settings.site.homepage = "http://localhost"
+
+    # Sets the default database settings.
+    settings.database.kind = "sqlite"
+    settings.database.host = ":memory:"
+    settings.database.port = None
+    settings.database.path = None
+    settings.database.username = None
+    settings.database.password = None
+
+    # Sets the default image settings.
+    image_root_dir = tmpdir_factory.mktemp("images")
+    settings.image.root_dir = str(image_root_dir)
+
+    # Sets the default email settings.
+    settings.email.host = "localhost"
+    settings.email.port = 587
+    settings.email.name = "name"
+    settings.email.email = "email"
+    settings.email.password = "password"
+
+    # Sets the default crypto settings.
+    settings.crypto.jwt_secret = "jwt_secret"
+
+    mock.return_value = settings
+    return mock
+
+
+@pytest.fixture(scope="function", autouse=True)
+def mock_send_email(mocker: MockerFixture) -> MockType:
+    mock = mocker.patch("bot.api.email.send_email")
+    mock.return_value = None
+    return mock
+
+
+@pytest.fixture()
+def app_client() -> Generator[TestClient, None, None]:
+    from bot.api.app.main import app
+
+    with TestClient(app) as app_client:
+        yield app_client

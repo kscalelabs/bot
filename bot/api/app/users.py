@@ -2,37 +2,34 @@
 
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import RedirectResponse
+from pydantic.main import BaseModel
 
 from bot.api.email import send_verification_email, verify_email
-from bot.api.model import User, User_Pydantic
-from bot.settings import load_settings
+from bot.api.model import User
 
 users_router = APIRouter()
 
 
-@users_router.post("/create", response_model=User_Pydantic)
-async def create_user(email: str, password: str) -> User_Pydantic:
-    user_obj = await User.get_or_none(email=email)
+class UserCreate(BaseModel):
+    email: str
+    password: str
+    login_url: str
+
+
+@users_router.post("/create")
+async def create_user(data: UserCreate) -> bool:
+    user_obj = await User.get_or_none(email=data.email)
     if user_obj:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
-    user_obj = await User.create(email=email, password=password)
-    await send_verification_email(email)
-    return await User_Pydantic.from_tortoise_orm(user_obj)
+    user_obj = await User.create(email=data.email, password=data.password)
+    await send_verification_email(data.email, data.login_url)
+    return True
 
 
 @users_router.get("/verify/{payload}")
 async def verify(payload: str) -> RedirectResponse:
     try:
-        await verify_email(payload)
-        homepage = load_settings().site.homepage
-        return RedirectResponse(url=homepage)
+        redirect_url = await verify_email(payload)
+        return RedirectResponse(url=redirect_url, status_code=307)
     except Exception:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid payload")
-
-
-@users_router.post("/delete")
-async def delete(email: str) -> None:
-    user_obj = await User.get_or_none(email=email)
-    if user_obj is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
-    await user_obj.delete()

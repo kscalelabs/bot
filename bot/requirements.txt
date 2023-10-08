@@ -15,3 +15,5 @@ tortoise-orm[asyncpg]
 
 # Testing dependencies.
 pytest
+pytest-asyncio
+pytest-mock

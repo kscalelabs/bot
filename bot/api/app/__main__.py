@@ -1,16 +1,8 @@
-"""Defines the FastAPI application entrypoint."""
+"""Entrypoint for FastAPI through AWS Lambda."""
 
-from fastapi import FastAPI
+from mangum import Mangum
 
-from bot.api.app.users import users_router
-from bot.api.db import init_db
+from bot.api.app.main import app
 
-app = FastAPI()
-
-
-@app.on_event("startup")
-async def startup_event() -> None:
-    await init_db()
-
-
-app.include_router(users_router, prefix="/users", tags=["users"])
+# This is required for AWS Lambda.
+handler = Mangum(app)
