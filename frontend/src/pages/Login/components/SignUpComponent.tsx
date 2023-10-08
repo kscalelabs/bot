@@ -1,8 +1,8 @@
 import axios, { AxiosError } from "axios";
+import { api } from "constants/backend";
+import { useToken } from "hooks/auth";
 import { useState } from "react";
 import { Button, FloatingLabel, Form, Spinner } from "react-bootstrap";
-import { api } from "../../../constants/backend";
-import { useToken } from "../../../hooks/auth";
 
 interface Peops {
   setMessage: (message: [string, string] | null) => void;

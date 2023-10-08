@@ -1,7 +1,8 @@
+import axios, { AxiosError } from "axios";
+import { api } from "constants/backend";
+import { useToken } from "hooks/auth";
 import { useState } from "react";
 import { Button, FloatingLabel, Form, Spinner } from "react-bootstrap";
-import { api } from "../../../constants/backend";
-import { useToken } from "../../../hooks/auth";
 
 interface Props {
   setMessage: (message: [string, string] | null) => void;
@@ -31,7 +32,28 @@ const LogInComponent = ({ setMessage }: Props) => {
       });
       setToken([response.data.token, response.data.token_type]);
     } catch (error) {
-      setMessage(["Error", `Authentication failed: ${error}`]);
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError;
+        console.log(axiosError);
+        const request = axiosError.request,
+          response = axiosError.response;
+        if (response) {
+          if (response.status === 400) {
+            setMessage(["Error", "Invalid email or password."]);
+          } else if (response.status === 500) {
+            setMessage(["Error", "An internal server error occurred."]);
+          } else {
+            setMessage([
+              "Error",
+              `An unknown error occurred with status ${response.status}`,
+            ]);
+          }
+        } else if (request) {
+          setMessage(["Error", "An unknown error occurred."]);
+        }
+      } else {
+        setMessage(["Error", "An unknown error occurred."]);
+      }
     } finally {
       setShowSpinner(false);
     }

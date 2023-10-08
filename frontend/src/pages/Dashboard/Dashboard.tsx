@@ -1,12 +1,12 @@
+import { useToken } from "hooks/auth";
+import DashboardContent from "pages/Dashboard/DashboardContent/DashboardContent";
+import GalleryPage from "pages/Dashboard/GalleryPage/GalleryPage";
+import HistoryPage from "pages/Dashboard/HistoryPage/HistoryPage";
+import MakePage from "pages/Dashboard/MakePage/MakePage";
+import SettingsPage from "pages/Dashboard/SettingsPage/SettingsPage";
+import Error404 from "pages/Error/Error404";
 import { Container, Nav, NavDropdown, Navbar } from "react-bootstrap";
 import { Route, Routes, useNavigate } from "react-router-dom";
-import { useToken } from "../../hooks/auth";
-import Error404 from "../Error/Error404";
-import DashboardContent from "./DashboardContent/DashboardContent";
-import GalleryPage from "./GalleryPage/GalleryPage";
-import HistoryPage from "./HistoryPage/HistoryPage";
-import MakePage from "./MakePage/MakePage";
-import SettingsPage from "./SettingsPage/SettingsPage";
 
 const NavigationBar = () => {
   const { setToken } = useToken();

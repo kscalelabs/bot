@@ -1,6 +1,6 @@
+import logo from "assets/logo.png";
 import { Button, Col, Container, Image, Row } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import logo from "../../assets/logo.png";
 
 interface Props {
   error?: string;

@@ -1,3 +1,8 @@
+import logo from "assets/logo.png";
+import { useToken } from "hooks/auth";
+import GoogleAuthComponent from "pages/LogIn/components/GoogleAuthComponent";
+import LogInComponent from "pages/LogIn/components/LogInComponent";
+import SignUpComponent from "pages/LogIn/components/SignUpComponent";
 import { useState } from "react";
 import {
   Col,
@@ -9,11 +14,6 @@ import {
   ToggleButtonGroup,
 } from "react-bootstrap";
 import { Navigate, useSearchParams } from "react-router-dom";
-import logo from "../../assets/logo.png";
-import { useToken } from "../../hooks/auth";
-import GoogleAuthComponent from "./components/GoogleAuthComponent";
-import LogInComponent from "./components/LogInComponent";
-import SignUpComponent from "./components/SignUpComponent";
 
 const LogIn = () => {
   const [message, setMessage] = useState<[string, string] | null>(null);
