@@ -49,7 +49,10 @@ interface RequiresLoginProps {
 export const RequiresLogin = ({ children }: RequiresLoginProps) => {
   const { token } = useToken();
   if (token === null) {
-    return <Navigate to={`/login?redirect=${window.location.pathname}`} />;
+    // const redirect = window.location.pathname;
+    // Using HashRouter, so we need to include the hash in the redirect
+    const redirect = window.location.hash.substring(1);
+    return <Navigate to={`/login?redirect=${redirect}`} />;
   }
   return <>{children}</>;
 };

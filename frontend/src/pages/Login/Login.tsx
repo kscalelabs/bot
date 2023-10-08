@@ -11,7 +11,7 @@ import {
   Modal,
   Row,
 } from "react-bootstrap";
-import { Navigate } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router-dom";
 import logo from "../../assets/logo.png";
 import { useToken } from "../../hooks/auth";
 
@@ -130,12 +130,12 @@ const DummyAuth = ({ setErrorMessage }: DummyAuthProps) => {
 
 const Login = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
 
   const { token } = useToken();
   if (token !== null) {
     // Gets the ?redirect=... query parameter from the URL.
-    const urlParams = new URLSearchParams(window.location.search);
-    const redirect = urlParams.get("redirect");
+    const redirect = searchParams.get("redirect");
     if (redirect !== null) {
       return <Navigate to={redirect} />;
     }
