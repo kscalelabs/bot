@@ -32,7 +32,7 @@ const SignUpComponent = ({ setMessage }: Peops) => {
     setShowSpinner(true);
 
     try {
-      const login_url = window.location.href.replace("signup", "login");
+      const login_url = window.location.href;
       const response = await api.post<SignUpResponse>("/users/signup", {
         email,
         password,

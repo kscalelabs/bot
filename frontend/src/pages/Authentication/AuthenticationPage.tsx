@@ -1,8 +1,8 @@
 import logo from "assets/logo.png";
 import { useToken } from "hooks/auth";
-import GoogleAuthComponent from "pages/LogIn/components/GoogleAuthComponent";
-import LogInComponent from "pages/LogIn/components/LogInComponent";
-import SignUpComponent from "pages/LogIn/components/SignUpComponent";
+import GoogleAuthComponent from "pages/Authentication/components/GoogleAuthComponent";
+import LogInComponent from "pages/Authentication/components/LogInComponent";
+import SignUpComponent from "pages/Authentication/components/SignUpComponent";
 import { useState } from "react";
 import {
   Col,
@@ -15,7 +15,7 @@ import {
 } from "react-bootstrap";
 import { Navigate, useSearchParams } from "react-router-dom";
 
-const LogInPage = () => {
+const AuthenticationPage = () => {
   const [message, setMessage] = useState<[string, string] | null>(null);
   const [searchParams] = useSearchParams();
   const [signUp, setSignUp] = useState(false);
@@ -104,4 +104,4 @@ const LogInPage = () => {
   );
 };
 
-export default LogInPage;
+export default AuthenticationPage;
