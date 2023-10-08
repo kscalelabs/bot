@@ -1,3 +1,4 @@
+# mypy: disable-error-code="var-annotated"
 """Defines the table models for the API."""
 
 from tortoise import fields

@@ -41,6 +41,7 @@ disable_error_code = ["attr-defined"]
 [[tool.mypy.overrides]]
 
 module = [
+    "codec.*",
     "discord.*",
     "torchaudio.*",
     "sounddevice.*",

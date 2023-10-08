@@ -75,7 +75,7 @@ def load_settings() -> Settings:
         The bot settings dataclass.
     """
     root = Path.home() / ".config" / "dpsh-bot"
-    config_paths: list[Path] = root.glob("*.yaml")
+    config_paths = root.glob("*.yaml")
     if "DPSH_BOT_CONFIG_ROOT" in os.environ:
         config_paths.extend(Path(os.environ["DPSH_BOT_CONFIG_ROOT"]).glob("*.yaml"))
     raw_configs = (OmegaConf.load(config) for config in config_paths)
