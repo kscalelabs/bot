@@ -1,40 +1,23 @@
 import { useState } from "react";
 import { Button, Col, Container, Form, InputGroup } from "react-bootstrap";
 
-const UsernameInput = () => {
-  const [username, setUsername] = useState<string | null>(null);
-
-  const isValidUsername = (username: string | null) => {
-    if (username === null) {
-      return true;
-    }
-    return (
-      username.length >= 3 &&
-      username.length <= 20 &&
-      !username.match(/[^a-zA-Z0-9_]/)
-    );
-  };
+const EmailInput = () => {
+  const [email, setEmail] = useState<string | null>(null);
 
   return (
     <Col>
       <InputGroup>
         <Form.Control
-          type="username"
-          isInvalid={!isValidUsername(username)}
+          type="email"
           onChange={(e) => {
-            setUsername(e.target.value);
+            setEmail(e.target.value);
           }}
-          value={username || ""}
-          placeholder="Username"
+          value={email || ""}
+          placeholder="Email"
         />
         <Button variant="outline-secondary" id="button-addon2">
           <i className="fa fa-check"></i>
         </Button>
-        <Form.Control.Feedback type="invalid">
-          Your username must be 3-20 characters long, contain letters, numbers,
-          and underscores, and must not contain spaces, special characters, or
-          emoji.
-        </Form.Control.Feedback>
       </InputGroup>
     </Col>
   );
@@ -120,7 +103,7 @@ const SettingsPage = () => {
   return (
     <Container style={{ maxWidth: 800 }}>
       <h1>Settings</h1>
-      <UsernameInput />
+      <EmailInput />
       <PasswordInput />
       <NotificationSettings />
     </Container>

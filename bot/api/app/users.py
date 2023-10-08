@@ -15,21 +15,53 @@ users_router = APIRouter()
 security = HTTPBearer()
 
 
+class TokenData(BaseModel):
+    user_id: int
+    is_verified: bool
+
+    def encode(self) -> str:
+        return create_access_token(
+            {
+                "id": self.user_id,
+                "verified": self.is_verified,
+            },
+        )
+
+    @classmethod
+    def decode(cls, payload: str) -> "TokenData":
+        token_data = load_access_token(payload)
+        return cls(
+            user_id=token_data["id"],
+            is_verified=token_data["verified"],
+        )
+
+
 class UserCreate(BaseModel):
     email: str
     password: str
     login_url: str
 
 
+class UserCreateResponse(BaseModel):
+    token: str
+    token_type: str
+
+
 @users_router.post("/create")
-async def create_user(data: UserCreate) -> bool:
+async def create_user(data: UserCreate) -> UserCreateResponse:
     user_obj = await User.get_or_none(email=data.email)
     if user_obj is not None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
     hashed_password = hash_password(data.password)
     user_obj = await User.create(email=data.email, hashed_password=hashed_password)
     await send_verification_email(data.email, data.login_url)
-    return True
+    return UserCreateResponse(
+        token=TokenData(
+            user_id=user_obj.id,
+            is_verified=user_obj.email_verified,
+        ).encode(),
+        token_type="bearer",
+    )
 
 
 class UserReverify(BaseModel):
@@ -74,19 +106,18 @@ async def login(data: UserLogin) -> UserLoginResponse:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email not registered")
     if not check_password(data.password, user_obj.hashed_password):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect password")
-    if not user_obj.email_verified:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email not verified")
-    return UserLoginResponse(token=create_access_token({"id": user_obj.id}), token_type="bearer")
-
-
-class TokenData(BaseModel):
-    user_id: int
+    return UserLoginResponse(
+        token=TokenData(
+            user_id=user_obj.id,
+            is_verified=user_obj.email_verified,
+        ).encode(),
+        token_type="bearer",
+    )
 
 
 async def get_current_user(authorization: HTTPAuthorizationCredentials = Depends(security)) -> TokenData:
     token = authorization.credentials
-    token_data = load_access_token(token)
-    return TokenData(user_id=token_data["id"])
+    return TokenData.decode(token)
 
 
 class UserInfoResponse(BaseModel):
