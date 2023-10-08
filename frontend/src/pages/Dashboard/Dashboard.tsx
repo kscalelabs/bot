@@ -4,7 +4,7 @@ import GalleryPage from "pages/Dashboard/GalleryPage/GalleryPage";
 import HistoryPage from "pages/Dashboard/HistoryPage/HistoryPage";
 import MakePage from "pages/Dashboard/MakePage/MakePage";
 import SettingsPage from "pages/Dashboard/SettingsPage/SettingsPage";
-import Error404 from "pages/Error/Error404";
+import Error404Page from "pages/Error/Error404Page";
 import { Container, Nav, NavDropdown, Navbar } from "react-bootstrap";
 import { Route, Routes, useNavigate } from "react-router-dom";
 
@@ -74,7 +74,7 @@ const Dashboard = () => {
           <Route path="make" element={<MakePage />} />
           <Route path="history" element={<HistoryPage />} />
           <Route path="settings" element={<SettingsPage />} />
-          <Route path="*" element={<Error404 />} />
+          <Route path="*" element={<Error404Page />} />
         </Routes>
       </Container>
     </Container>

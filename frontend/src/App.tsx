@@ -2,7 +2,7 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import "App.css";
 import { RequiresLogin, TokenProvider } from "hooks/auth";
 import Dashboard from "pages/Dashboard/Dashboard";
-import Error404 from "pages/Error/Error404";
+import Error404Page from "pages/Error/Error404Page";
 import LogInPage from "pages/LogIn/LogInPage";
 import { Route, HashRouter as Router, Routes } from "react-router-dom";
 
@@ -24,7 +24,7 @@ const App = () => {
               }
             />
             <Route path="/login" element={<LogInPage />} />
-            <Route path="*" element={<Error404 />} />
+            <Route path="*" element={<Error404Page />} />
           </Routes>
         </Router>
       </TokenProvider>

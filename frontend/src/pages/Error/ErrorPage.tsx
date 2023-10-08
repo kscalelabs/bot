@@ -7,7 +7,7 @@ interface Props {
   code?: number;
 }
 
-const Error = (props: Props) => {
+const ErrorPage = (props: Props) => {
   const { error, code } = props;
 
   const navigate = useNavigate();
@@ -47,4 +47,4 @@ const Error = (props: Props) => {
   );
 };
 
-export default Error;
+export default ErrorPage;
