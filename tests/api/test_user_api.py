@@ -27,9 +27,31 @@ async def test_user_signup(app_client: TestClient, mock_send_email: MockType) ->
     assert response.status_code == 200
     assert mock_send_email.call_count == 1
 
+    # Checks that we can re-send the verification link if we need to.
+    response = app_client.post(
+        "/users/reverify",
+        json={
+            "email": test_email,
+            "login_url": login_url,
+        },
+    )
+    assert response.status_code == 200
+    assert response.json() is True
+    assert mock_send_email.call_count == 2
+
     # The response is a 307, which redirects to "/" API endpoint, thus the 200.
     response = app_client.get(f"/users/verify/{payload}")
     assert response.status_code == 200
+
+    # Checks that trying to re-verify results in a 400.
+    response = app_client.post(
+        "/users/reverify",
+        json={
+            "email": test_email,
+            "login_url": login_url,
+        },
+    )
+    assert response.status_code == 400
 
     # Logs the user in.
     response = app_client.post(
@@ -51,3 +73,46 @@ async def test_user_signup(app_client: TestClient, mock_send_email: MockType) ->
     data = response.json()
     assert data["email"] == test_email
     assert data["email_verified"] is True
+
+    # Send an email to reset the user's password.
+    response = app_client.post(
+        "/users/password/forgot",
+        json={
+            "email": test_email,
+            "login_url": login_url,
+        },
+    )
+    assert response.status_code == 200
+    assert response.json() is True
+    assert mock_send_email.call_count == 3
+
+    # Reset the user's password.
+    payload = VerificationPayload(test_email, login_url).encode()
+    new_password = "newpassword"
+    response = app_client.post(
+        "/users/password/reset",
+        json={
+            "payload": payload,
+            "new_password": new_password,
+        },
+    )
+    assert response.status_code == 200
+    assert response.json() is True
+
+    # Logs in with the new password.
+    response = app_client.post(
+        "/users/login",
+        json={
+            "email": test_email,
+            "password": new_password,
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()
+    token = data["token"]
+    token_type = data["token_type"]
+
+    # Delete the user.
+    response = app_client.delete("/users/me", headers={"Authorization": f"{token_type} {token}"})
+    assert response.status_code == 200
+    assert response.json() is True

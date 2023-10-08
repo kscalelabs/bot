@@ -8,6 +8,7 @@ from dataclasses import dataclass
 
 import aiosmtplib
 
+from bot.api.auth import hash_password
 from bot.api.model import User
 from bot.api.token import create_access_token, load_access_token
 from bot.settings import load_settings
@@ -76,6 +77,34 @@ async def verify_email(payload_string: str) -> str:
     user_obj.email_verified = True
     await user_obj.save()
     return payload.login_url
+
+
+async def send_reset_email(email: str, login_url: str) -> None:
+    payload = VerificationPayload(email, login_url).encode()
+
+    body = textwrap.dedent(
+        f"""
+            Please reset your password by clicking the link below:
+
+            https://app.dpsh.dev/reset-password/{payload}
+        """
+    )
+
+    await send_email(subject="Reset your password", body=body, to=email)
+
+
+async def reset_password(payload_string: str, new_password: str) -> None:
+    try:
+        payload = VerificationPayload.decode(payload_string)
+        user_obj = await User.get_or_none(email=payload.email)
+        assert user_obj is not None
+    except Exception:
+        logger.exception("Invalid payload")
+        raise ValueError("Invalid payload")
+
+    hashed_password = hash_password(new_password)
+    user_obj.hashed_password = hashed_password
+    await user_obj.save()
 
 
 def test_email_adhoc() -> None:

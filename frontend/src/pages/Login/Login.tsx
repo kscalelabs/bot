@@ -1,6 +1,16 @@
 import { GoogleLogin } from "@react-oauth/google";
+import axios from "axios";
 import { useState } from "react";
-import { Button, Col, Container, Image, Modal, Row } from "react-bootstrap";
+import {
+  Button,
+  Col,
+  Container,
+  FloatingLabel,
+  Form,
+  Image,
+  Modal,
+  Row,
+} from "react-bootstrap";
 import { Navigate } from "react-router-dom";
 import logo from "../../assets/logo.png";
 import { useToken } from "../../hooks/auth";
@@ -40,11 +50,66 @@ const GoogleAuth = ({ setErrorMessage }: GoogleAuthProps) => {
   );
 };
 
-interface GoogleAuthProps {
+interface LoginAuthProps {
   setErrorMessage: (message: string | null) => void;
 }
 
-const DummyAuth = ({ setErrorMessage }: GoogleAuthProps) => {
+const LoginAuth = ({ setErrorMessage }: LoginAuthProps) => {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Username:", username);
+    console.log("Password:", password);
+    try {
+      const response = await axios.post("http://localhost:8000/users/login", {
+        username,
+        password,
+      });
+      console.log("Authentication successful", response.data);
+    } catch (error) {
+      setErrorMessage("Authentication failed.");
+    }
+  };
+
+  return (
+    <Form onSubmit={handleSubmit} className="mb-3">
+      <FloatingLabel
+        controlId="floatingInput"
+        label="Email address"
+        className="mb-3"
+      >
+        <Form.Control
+          type="email"
+          placeholder="name@example.com"
+          onChange={(e) => {
+            setUsername(e.target.value);
+          }}
+        />
+      </FloatingLabel>
+      <FloatingLabel controlId="floatingPassword" label="Password">
+        <Form.Control
+          type="password"
+          placeholder="Password"
+          onChange={(e) => {
+            setPassword(e.target.value);
+          }}
+        />
+      </FloatingLabel>
+
+      <Button variant="primary" type="submit" className="mt-3">
+        Login
+      </Button>
+    </Form>
+  );
+};
+
+interface DummyAuthProps {
+  setErrorMessage: (message: string | null) => void;
+}
+
+const DummyAuth = ({ setErrorMessage }: DummyAuthProps) => {
   const { setToken } = useToken();
 
   return (
@@ -102,6 +167,8 @@ const Login = () => {
           </Row>
 
           <GoogleAuth setErrorMessage={setErrorMessage} />
+
+          <LoginAuth setErrorMessage={setErrorMessage} />
 
           <DummyAuth setErrorMessage={setErrorMessage} />
 
