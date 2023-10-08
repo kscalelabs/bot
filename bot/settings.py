@@ -49,7 +49,9 @@ class EmailSettings:
 
 @dataclass
 class CryptoSettings:
-    jwt_secret: str = ml.conf_field(II("oc.env:BOT_JWT_SECRET"))
+    jwt_secret: str = ml.conf_field(MISSING)
+    expire_token_minutes: int = ml.conf_field(MISSING)
+    algorithm: str = ml.conf_field("HS256")
 
 
 @dataclass

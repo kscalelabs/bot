@@ -9,7 +9,7 @@ from tortoise.models import Model
 class User(Model):
     id = fields.IntField(pk=True)
     email = fields.CharField(max_length=255)
-    password = fields.CharField(max_length=255)
+    hashed_password = fields.CharField(max_length=255)
     google_id = fields.CharField(max_length=255, null=True)
     email_verified = fields.BooleanField(default=False)
 
@@ -35,7 +35,7 @@ class GalleryItems(Model):
 
 
 # Pydantic models for FastAPI
-User_Pydantic = pydantic_model_creator(User, name="User")
+User_Pydantic = pydantic_model_creator(User, name="User", exclude=("hashed_password",))
 Images_Pydantic = pydantic_model_creator(Images, name="Images")
 Gallery_Pydantic = pydantic_model_creator(Gallery, name="Gallery")
 GalleryItems_Pydantic = pydantic_model_creator(GalleryItems, name="GalleryItems")

@@ -7,9 +7,9 @@ import textwrap
 from dataclasses import dataclass
 
 import aiosmtplib
-import jwt
 
 from bot.api.model import User
+from bot.api.token import create_access_token, load_access_token
 from bot.settings import load_settings
 
 logger = logging.getLogger(__name__)
@@ -42,20 +42,12 @@ class VerificationPayload:
     login_url: str
 
     def encode(self) -> str:
-        return jwt.encode(
-            {"email": self.email, "login_url": self.login_url},
-            load_settings().crypto.jwt_secret,
-            algorithm="HS256",
-        )
+        return create_access_token({"email": self.email, "login_url": self.login_url})
 
     @classmethod
     def decode(cls, payload: str) -> "VerificationPayload":
-        try:
-            data = jwt.decode(payload, load_settings().crypto.jwt_secret, algorithms=["HS256"])
-            return cls(email=data["email"], login_url=data["login_url"])
-        except Exception:
-            logger.exception("Invalid payload")
-            raise ValueError("Invalid payload")
+        data = load_access_token(payload)
+        return cls(email=data["email"], login_url=data["login_url"])
 
 
 async def send_verification_email(email: str, login_url: str) -> None:

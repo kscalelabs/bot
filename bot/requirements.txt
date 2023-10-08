@@ -11,6 +11,7 @@ pyjwt
 uvicorn
 
 # Database dependencies.
+bcrypt
 tortoise-orm[asyncpg]
 
 # Testing dependencies.

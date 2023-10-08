@@ -98,6 +98,7 @@ def mock_load_settings(mocker: MockerFixture, tmpdir_factory: TempdirFactory) ->
 
     # Sets the default crypto settings.
     settings.crypto.jwt_secret = "jwt_secret"
+    settings.crypto.expire_token_minutes = 60
 
     mock.return_value = settings
     return mock
