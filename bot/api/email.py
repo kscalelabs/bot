@@ -58,7 +58,7 @@ async def send_verification_email(email: str, request_url: str, login_url: str) 
         f"""
             Please verify your email by clicking the link below:
 
-            {request_url}/users/verify/{payload}
+            {request_url}users/verify/{payload}
         """
     )
 
@@ -86,7 +86,7 @@ async def send_reset_email(email: str, request_url: str, login_url: str) -> None
         f"""
             Please reset your password by clicking the link below:
 
-            {request_url}/password/reset/{payload}
+            {request_url}password/reset/{payload}
         """
     )
 
