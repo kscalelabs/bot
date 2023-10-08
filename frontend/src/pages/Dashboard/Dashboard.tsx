@@ -1,6 +1,7 @@
 import { Container, Nav, NavDropdown, Navbar } from "react-bootstrap";
 import { Route, Routes, useNavigate } from "react-router-dom";
 import { useToken } from "../../hooks/auth";
+import Error404 from "../Error/Error404";
 import DashboardContent from "./DashboardContent/DashboardContent";
 import GalleryPage from "./GalleryPage/GalleryPage";
 import HistoryPage from "./HistoryPage/HistoryPage";
@@ -73,6 +74,7 @@ const Dashboard = () => {
           <Route path="make" element={<MakePage />} />
           <Route path="history" element={<HistoryPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="*" element={<Error404 />} />
         </Routes>
       </Container>
     </Container>

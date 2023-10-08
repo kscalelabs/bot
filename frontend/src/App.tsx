@@ -1,5 +1,5 @@
 import { GoogleOAuthProvider } from "@react-oauth/google";
-import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
+import { Route, HashRouter as Router, Routes } from "react-router-dom";
 import "./App.css";
 import { RequiresLogin, TokenProvider } from "./hooks/auth";
 import Dashboard from "./pages/Dashboard/Dashboard";
