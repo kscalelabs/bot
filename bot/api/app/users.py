@@ -38,7 +38,7 @@ class UserReverify(BaseModel):
 
 
 @users_router.post("/reverify")
-async def send_verification(data: UserReverify) -> bool:
+async def resend_verification(data: UserReverify) -> bool:
     user_obj = await User.get_or_none(email=data.email)
     if user_obj is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email not registered")
@@ -74,6 +74,8 @@ async def login(data: UserLogin) -> UserLoginResponse:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email not registered")
     if not check_password(data.password, user_obj.hashed_password):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect password")
+    if not user_obj.email_verified:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email not verified")
     return UserLoginResponse(token=create_access_token({"id": user_obj.id}), token_type="bearer")
 
 
@@ -112,7 +114,35 @@ async def delete_user(data: TokenData = Depends(get_current_user)) -> bool:
     return True
 
 
-users_password_router = APIRouter()
+class UpdateEmail(BaseModel):
+    new_email: str
+    login_url: str
+
+
+@users_router.put("/update/email")
+async def update_email(data: UpdateEmail, user_data: TokenData = Depends(get_current_user)) -> bool:
+    user_obj = await User.get_or_none(id=user_data.user_id)
+    if not user_obj:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
+    user_obj.email = data.new_email
+    user_obj.email_verified = False
+    await user_obj.save()
+    await send_verification_email(data.new_email, data.login_url)
+    return True
+
+
+class UpdatePassword(BaseModel):
+    new_password: str
+
+
+@users_router.put("/update/password")
+async def update_password(data: UpdatePassword, user_data: TokenData = Depends(get_current_user)) -> bool:
+    user_obj = await User.get_or_none(id=user_data.user_id)
+    if not user_obj:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
+    user_obj.hashed_password = hash_password(data.new_password)
+    await user_obj.save()
+    return True
 
 
 class ForgotPassword(BaseModel):
@@ -120,7 +150,7 @@ class ForgotPassword(BaseModel):
     login_url: str
 
 
-@users_password_router.post("/forgot")
+@users_router.post("/password/forgot")
 async def forgot_password(data: ForgotPassword) -> bool:
     user_obj = await User.get_or_none(email=data.email)
     if not user_obj:
@@ -134,13 +164,10 @@ class PasswordReset(BaseModel):
     new_password: str
 
 
-@users_password_router.post("/reset")
+@users_router.post("/password/reset")
 async def password_reset(data: PasswordReset) -> bool:
     try:
         await reset_password(data.payload, data.new_password)
         return True
     except Exception:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid payload")
-
-
-users_router.include_router(users_password_router, prefix="/password", tags=["password"])

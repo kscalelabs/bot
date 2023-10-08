@@ -66,9 +66,10 @@ async def test_user_signup(app_client: TestClient, mock_send_email: MockType) ->
     token = data["token"]
     token_type = data["token_type"]
     assert token_type == "bearer"
+    headers = {"Authorization": f"{token_type} {token}"}
 
     # Gets the user's profile using the token.
-    response = app_client.get("/users/me", headers={"Authorization": f"{token_type} {token}"})
+    response = app_client.get("/users/me", headers=headers)
     assert response.status_code == 200
     data = response.json()
     assert data["email"] == test_email
@@ -111,8 +112,33 @@ async def test_user_signup(app_client: TestClient, mock_send_email: MockType) ->
     data = response.json()
     token = data["token"]
     token_type = data["token_type"]
+    headers = {"Authorization": f"{token_type} {token}"}
+
+    # Changes the user's email.
+    new_email = "ben@dpsh.dev"
+    response = app_client.put(
+        "/users/update/email",
+        json={
+            "new_email": new_email,
+            "login_url": login_url,
+        },
+        headers=headers,
+    )
+    assert response.status_code == 200
+    assert response.json() is True
+    assert mock_send_email.call_count == 4
+
+    # Changes the user's password.
+    new_password = "newpassword"
+    response = app_client.put(
+        "/users/update/password",
+        json={"new_password": new_password},
+        headers=headers,
+    )
+    assert response.status_code == 200
+    assert response.json() is True
 
     # Delete the user.
-    response = app_client.delete("/users/me", headers={"Authorization": f"{token_type} {token}"})
+    response = app_client.delete("/users/me", headers=headers)
     assert response.status_code == 200
     assert response.json() is True
