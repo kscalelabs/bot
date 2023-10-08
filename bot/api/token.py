@@ -34,4 +34,8 @@ def load_access_token(payload: str) -> dict:
         return jwt.decode(payload, settings.jwt_secret, algorithms=[settings.algorithm])
     except Exception:
         logger.exception("Invalid token")
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )

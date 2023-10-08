@@ -1,14 +1,18 @@
 """Defines the API endpoint for creating, deleting and updating user information."""
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import RedirectResponse
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic.main import BaseModel
 
-from bot.api.auth import hash_password
+from bot.api.auth import check_password, hash_password
 from bot.api.email import send_verification_email, verify_email
 from bot.api.model import User
+from bot.api.token import create_access_token, load_access_token
 
 users_router = APIRouter()
+
+security = HTTPBearer()
 
 
 class UserCreate(BaseModel):
@@ -37,11 +41,47 @@ async def verify(payload: str) -> RedirectResponse:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid payload")
 
 
-@users_router.get("/login")
-async def login(email: str, password: str) -> bool:
-    user_obj = await User.get_or_none(email=email)
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+
+class UserLoginResponse(BaseModel):
+    token: str
+    token_type: str
+
+
+@users_router.post("/login", response_model=UserLoginResponse)
+async def login(data: UserLogin) -> UserLoginResponse:
+    user_obj = await User.get_or_none(email=data.email)
     if not user_obj:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email not registered")
-    if user_obj.password != password:
+    if not check_password(data.password, user_obj.hashed_password):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect password")
-    return True
+    return UserLoginResponse(token=create_access_token({"id": user_obj.id}), token_type="bearer")
+
+
+class TokenData(BaseModel):
+    user_id: int
+
+
+async def get_current_user(authorization: HTTPAuthorizationCredentials = Depends(security)) -> TokenData:
+    token = authorization.credentials
+    token_data = load_access_token(token)
+    return TokenData(user_id=token_data["id"])
+
+
+class UserInfoResponse(BaseModel):
+    email: str
+    email_verified: bool
+
+
+@users_router.get("/me", response_model=UserInfoResponse)
+async def get_user_info(data: TokenData = Depends(get_current_user)) -> UserInfoResponse:
+    user_obj = await User.get_or_none(id=data.user_id)
+    if not user_obj:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
+    return UserInfoResponse(
+        email=user_obj.email,
+        email_verified=user_obj.email_verified,
+    )
