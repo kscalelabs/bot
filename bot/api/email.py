@@ -42,7 +42,8 @@ class OneTimePassPayload:
     email: str
 
     def encode(self) -> str:
-        return create_access_token({"email": self.email})
+        expire_minutes = load_settings().crypto.expire_otp_minutes
+        return create_access_token({"email": self.email}, expire_minutes=expire_minutes)
 
     @classmethod
     def decode(cls, payload: str) -> "OneTimePassPayload":

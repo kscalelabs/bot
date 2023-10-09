@@ -61,12 +61,12 @@ py-files := $(shell git ls-files '*.py')
 format:
 	@black $(py-files)
 	@ruff --fix $(py-files)
+	@cd frontend && npm run format
 .PHONY: format
 
 static-checks:
 	@black --diff --check $(py-files)
 	@ruff $(py-files)
-	@mypy --install-types --non-interactive $(py-files)
 .PHONY: lint
 
 mypy-daemon:

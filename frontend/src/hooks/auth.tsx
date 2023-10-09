@@ -20,7 +20,7 @@ export const TokenProvider = ({ children }: TokenProviderProps) => {
   const tokenValue = localStorage.getItem(TOKEN_VALUE_KEY);
   const tokenType = localStorage.getItem(TOKEN_TYPE_KEY);
   const [token, setToken] = useState<[string, string] | null>(
-    tokenValue && tokenType ? [tokenValue, tokenType] : null
+    tokenValue && tokenType ? [tokenValue, tokenType] : null,
   );
 
   useEffect(() => {

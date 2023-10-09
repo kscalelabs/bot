@@ -15,28 +15,10 @@ class User(Model):
     banned = fields.BooleanField(default=False)
 
 
-class Images(Model):
+class Token(Model):
     id = fields.IntField(pk=True)
-    user = fields.ForeignKeyField("models.User", related_name="images")
-    image_size = fields.CharField(max_length=255)
-    upload_time = fields.DatetimeField(auto_now_add=True)
-    shared_publicly = fields.BooleanField(default=False)
-
-
-class Gallery(Model):
-    id = fields.IntField(pk=True)
-    user = fields.ForeignKeyField("models.User", related_name="galleries")
-    name = fields.CharField(max_length=255)
-
-
-class GalleryItems(Model):
-    id = fields.IntField(pk=True)
-    gallery = fields.ForeignKeyField("models.Gallery", related_name="items")
-    image = fields.ForeignKeyField("models.Images", related_name="gallery_items")
+    used: fields.BooleanField = fields.BooleanField(default=False)
 
 
 # Pydantic models for FastAPI
 User_Pydantic = pydantic_model_creator(User, name="User", exclude=("hashed_password",))
-Images_Pydantic = pydantic_model_creator(Images, name="Images")
-Gallery_Pydantic = pydantic_model_creator(Gallery, name="Gallery")
-GalleryItems_Pydantic = pydantic_model_creator(GalleryItems, name="GalleryItems")

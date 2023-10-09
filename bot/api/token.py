@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
-def create_access_token(data: dict) -> str:
+def create_access_token(data: dict, expire_minutes: int | None = None) -> str:
     if "exp" in data:
         raise ValueError("The payload should not contain an expiration time")
     settings = load_settings().crypto
@@ -21,7 +21,9 @@ def create_access_token(data: dict) -> str:
 
     # JWT exp claim expects a timestamp in seconds. This will automatically be
     # used to determine if the token is expired.
-    expire = datetime.datetime.utcnow() + datetime.timedelta(minutes=settings.expire_token_minutes)
+    if expire_minutes is None:
+        expire_minutes = settings.expire_token_minutes
+    expire = datetime.datetime.utcnow() + datetime.timedelta(minutes=expire_minutes)
     to_encode.update({"exp": expire})
 
     encoded_jwt = jwt.encode(to_encode, settings.jwt_secret, algorithm=settings.algorithm)
