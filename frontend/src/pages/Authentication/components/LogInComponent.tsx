@@ -1,8 +1,13 @@
-import axios, { AxiosError } from "axios";
-import { api } from "constants/backend";
+import { humanReadableError, useApi } from "constants/backend";
 import { useToken } from "hooks/auth";
 import { useState } from "react";
-import { Button, FloatingLabel, Form, Spinner } from "react-bootstrap";
+import {
+  Button,
+  ButtonGroup,
+  FloatingLabel,
+  Form,
+  Spinner,
+} from "react-bootstrap";
 
 interface Props {
   setMessage: (message: [string, string] | null) => void;
@@ -19,6 +24,7 @@ const LogInComponent = ({ setMessage }: Props) => {
   const [showSpinner, setShowSpinner] = useState(false);
 
   const { setToken } = useToken();
+  const api = useApi();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,28 +38,30 @@ const LogInComponent = ({ setMessage }: Props) => {
       });
       setToken([response.data.token, response.data.token_type]);
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const axiosError = error as AxiosError;
-        console.log(axiosError);
-        const request = axiosError.request,
-          response = axiosError.response;
-        if (response) {
-          if (response.status === 400) {
-            setMessage(["Error", "Invalid email or password."]);
-          } else if (response.status === 500) {
-            setMessage(["Error", "An internal server error occurred."]);
-          } else {
-            setMessage([
-              "Error",
-              `An unknown error occurred with status ${response.status}`,
-            ]);
-          }
-        } else if (request) {
-          setMessage(["Error", "An unknown error occurred."]);
-        }
-      } else {
-        setMessage(["Error", "An unknown error occurred."]);
-      }
+      setMessage(["Error", humanReadableError(error)]);
+    } finally {
+      setShowSpinner(false);
+    }
+  };
+
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    setShowSpinner(true);
+
+    const login_url = window.location.href;
+
+    try {
+      await api.post<boolean>("/users/password/forgot", {
+        email,
+        login_url,
+      });
+      setMessage([
+        "Sent!",
+        "If a corresponding email exists, then a temporary login link has been sent.",
+      ]);
+    } catch (error) {
+      setMessage(["Error", humanReadableError(error)]);
     } finally {
       setShowSpinner(false);
     }
@@ -72,6 +80,7 @@ const LogInComponent = ({ setMessage }: Props) => {
           onChange={(e) => {
             setEmail(e.target.value);
           }}
+          value={email}
         />
       </FloatingLabel>
       <FloatingLabel
@@ -85,15 +94,27 @@ const LogInComponent = ({ setMessage }: Props) => {
           onChange={(e) => {
             setPassword(e.target.value);
           }}
+          value={password}
         />
       </FloatingLabel>
 
       {showSpinner ? (
         <Spinner />
       ) : (
-        <Button variant="primary" type="submit">
-          Login
-        </Button>
+        <ButtonGroup>
+          <Button variant="primary" type="submit">
+            Login
+          </Button>
+          {email.length > 0 && password.length === 0 && (
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={handlePasswordReset}
+            >
+              Reset Password
+            </Button>
+          )}
+        </ButtonGroup>
       )}
     </Form>
   );

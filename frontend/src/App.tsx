@@ -24,6 +24,7 @@ const App = () => {
               }
             />
             <Route path="/login" element={<AuthenticationPage />} />
+            <Route path="/login/:urlToken" element={<AuthenticationPage />} />
             <Route path="*" element={<Error404Page />} />
           </Routes>
         </Router>

@@ -4,6 +4,8 @@ import pytest
 from fastapi.testclient import TestClient
 from pytest_mock.plugin import MockType
 
+from bot.api.email import OneTimePassPayload
+
 
 @pytest.mark.asyncio
 async def test_user_signup(app_client: TestClient, mock_send_email: MockType) -> None:
@@ -87,25 +89,12 @@ async def test_user_signup(app_client: TestClient, mock_send_email: MockType) ->
     assert response.json() is True
     assert mock_send_email.call_count == 3
 
-    # Reset the user's password.
-    payload = VerificationPayload(test_email, login_url).encode()
-    new_password = "NewPassword1234"
+    # Authenticates through one-time passcode.
+    otp = OneTimePassPayload(email=test_email).encode()
     response = app_client.post(
-        "/users/password/reset",
+        "/users/otp",
         json={
-            "payload": payload,
-            "new_password": new_password,
-        },
-    )
-    assert response.status_code == 200, response.json()
-    assert response.json() is True
-
-    # Logs in with the new password.
-    response = app_client.post(
-        "/users/login",
-        json={
-            "email": test_email,
-            "password": new_password,
+            "payload": otp,
         },
     )
     assert response.status_code == 200, response.json()
@@ -115,9 +104,9 @@ async def test_user_signup(app_client: TestClient, mock_send_email: MockType) ->
     headers = {"Authorization": f"{token_type} {token}"}
 
     # Changes the user's email.
-    new_email = "ben@dpsh.dev"
+    new_email = "admin@dpsh.dev"
     response = app_client.put(
-        "/users/update/email",
+        "/users/email/update",
         json={
             "new_email": new_email,
             "login_url": login_url,
@@ -139,6 +128,6 @@ async def test_user_signup(app_client: TestClient, mock_send_email: MockType) ->
     assert response.json() is True
 
     # Delete the user.
-    response = app_client.delete("/users/me", headers=headers)
+    response = app_client.delete("/users/myself", headers=headers)
     assert response.status_code == 200, response.json()
     assert response.json() is True

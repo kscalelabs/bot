@@ -9,7 +9,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic.main import BaseModel
 
 from bot.api.auth import check_password, hash_password
-from bot.api.email import reset_password, send_reset_email, send_verification_email, verify_email
+from bot.api.email import OneTimePassPayload, send_otp_email, send_verification_email, verify_email
 from bot.api.model import User
 from bot.api.token import create_access_token, load_access_token
 
@@ -67,7 +67,7 @@ def validate_password(password: str) -> str:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password must contain a lowercase letter")
     if not re.search(r"[A-Z]", password):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password must contain an uppercase letter")
-    if not re.search(r"\d", password):
+    if not re.search(r"[0-9]", password):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password must contain a number")
     return password
 
@@ -132,9 +132,29 @@ class UserLoginResponse(BaseModel):
 async def login(data: UserLogin) -> UserLoginResponse:
     user_obj = await User.get_or_none(email=data.email)
     if not user_obj:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email not registered")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid username or password")
     if not check_password(data.password, user_obj.hashed_password):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect password")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid username or password")
+    return UserLoginResponse(
+        token=TokenData(
+            user_id=user_obj.id,
+            is_verified=user_obj.email_verified,
+        ).encode(),
+        token_type="bearer",
+    )
+
+
+class OneTimePass(BaseModel):
+    payload: str
+
+
+@users_router.post("/otp", response_model=UserLoginResponse)
+async def otp(data: OneTimePass) -> UserLoginResponse:
+    try:
+        data = OneTimePassPayload.decode(data.payload)
+        user_obj = await User.get(email=data.email)
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid one-time passcode")
     return UserLoginResponse(
         token=TokenData(
             user_id=user_obj.id,
@@ -165,7 +185,7 @@ async def get_user_info(data: TokenData = Depends(get_current_user)) -> UserInfo
     )
 
 
-@users_router.delete("/me")
+@users_router.delete("/myself")
 async def delete_user(data: TokenData = Depends(get_current_user)) -> bool:
     user_obj = await User.get_or_none(id=data.user_id)
     if not user_obj:
@@ -179,12 +199,14 @@ class UpdateEmail(BaseModel):
     login_url: str
 
 
-@users_router.put("/update/email")
+@users_router.put("/email/update")
 async def update_email(data: UpdateEmail, request: Request, user_data: TokenData = Depends(get_current_user)) -> bool:
     user_obj = await User.get_or_none(id=user_data.user_id)
     if not user_obj:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
     new_email = validate_email(data.new_email)
+    if new_email == user_obj.email:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="New email cannot be the same as old email")
     user_obj.email = new_email
     user_obj.email_verified = False
     await user_obj.save()
@@ -213,24 +235,11 @@ class ForgotPassword(BaseModel):
 
 
 @users_router.post("/password/forgot")
-async def forgot_password(data: ForgotPassword, request: Request) -> bool:
+async def forgot_password(data: ForgotPassword) -> bool:
     user_obj = await User.get_or_none(email=data.email)
     if not user_obj:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email not registered")
-    request_url = str(request.base_url)
-    await send_reset_email(data.email, request_url, data.login_url)
-    return True
-
-
-class PasswordReset(BaseModel):
-    payload: str
-    new_password: str
-
-
-@users_router.post("/password/reset")
-async def password_reset(data: PasswordReset) -> bool:
-    try:
-        await reset_password(data.payload, data.new_password)
+        # raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email not registered")
+        # Don't leak whether the email is registered or not.
         return True
-    except Exception:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid payload")
+    await send_otp_email(data.email, data.login_url)
+    return True

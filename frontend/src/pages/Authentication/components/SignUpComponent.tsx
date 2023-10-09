@@ -1,5 +1,10 @@
-import axios, { AxiosError } from "axios";
-import { api } from "constants/backend";
+import { humanReadableError, useApi } from "constants/backend";
+import {
+  EMAIL_MESSAGE,
+  PASSWORD_MESSAGE,
+  isValidEmail,
+  isValidPassword,
+} from "constants/inputs";
 import { useToken } from "hooks/auth";
 import { useState } from "react";
 import { Button, FloatingLabel, Form, Spinner } from "react-bootstrap";
@@ -20,6 +25,7 @@ const SignUpComponent = ({ setMessage }: Peops) => {
   const [showSpinner, setShowSpinner] = useState(false);
 
   const { setToken } = useToken();
+  const api = useApi();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,25 +46,7 @@ const SignUpComponent = ({ setMessage }: Peops) => {
       });
       setToken([response.data.token, response.data.token_type]);
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const axiosError = error as AxiosError;
-        console.log(axiosError);
-        const request = axiosError.request,
-          response = axiosError.response;
-        if (response) {
-          if (response.status === 400) {
-            setMessage(["Error", "Invalid email or password."]);
-          } else if (response.status === 500) {
-            setMessage(["Error", "An internal server error occurred."]);
-          } else {
-            setMessage(["Error", "An unknown error occurred."]);
-          }
-        } else if (request) {
-          setMessage(["Error", "An unknown error occurred."]);
-        }
-      } else {
-        setMessage(["Error", "An unknown error occurred."]);
-      }
+      setMessage(["Error", humanReadableError(error)]);
     } finally {
       setShowSpinner(false);
     }
@@ -73,11 +61,15 @@ const SignUpComponent = ({ setMessage }: Peops) => {
       >
         <Form.Control
           type="email"
+          isInvalid={!isValidEmail(email)}
           placeholder="name@example.com"
           onChange={(e) => {
             setEmail(e.target.value);
           }}
         />
+        <Form.Control.Feedback type="invalid">
+          {EMAIL_MESSAGE}
+        </Form.Control.Feedback>
       </FloatingLabel>
 
       <FloatingLabel
@@ -87,11 +79,15 @@ const SignUpComponent = ({ setMessage }: Peops) => {
       >
         <Form.Control
           type="password"
+          isInvalid={!isValidPassword(password)}
           placeholder="Password"
           onChange={(e) => {
             setPassword(e.target.value);
           }}
         />
+        <Form.Control.Feedback type="invalid">
+          {PASSWORD_MESSAGE}
+        </Form.Control.Feedback>
       </FloatingLabel>
       <FloatingLabel
         controlId="floatingPassword"
@@ -100,11 +96,15 @@ const SignUpComponent = ({ setMessage }: Peops) => {
       >
         <Form.Control
           type="password"
+          isInvalid={password !== confirmPassword}
           placeholder="Confirm Password"
           onChange={(e) => {
             setConfirmPassword(e.target.value);
           }}
         />
+        <Form.Control.Feedback type="invalid">
+          Passwords should match.
+        </Form.Control.Feedback>
       </FloatingLabel>
 
       {showSpinner ? (

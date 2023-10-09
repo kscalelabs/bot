@@ -13,21 +13,36 @@ import {
   ToggleButton,
   ToggleButtonGroup,
 } from "react-bootstrap";
-import { Navigate, useSearchParams } from "react-router-dom";
+import { Navigate, useParams, useSearchParams } from "react-router-dom";
+
+interface AuthenticationPageRouterParams {
+  [urlToken: string]: string;
+}
 
 const AuthenticationPage = () => {
   const [message, setMessage] = useState<[string, string] | null>(null);
   const [searchParams] = useSearchParams();
   const [signUp, setSignUp] = useState(false);
 
-  const { token } = useToken();
-  if (token !== null) {
+  const { token, setToken } = useToken();
+  const { urlToken } = useParams<AuthenticationPageRouterParams>();
+
+  const tokenIsFound = () => {
     // Gets the ?redirect=... query parameter from the URL.
     const redirect = searchParams.get("redirect");
     if (redirect !== null) {
       return <Navigate to={redirect} />;
     }
     return <Navigate to="/" />;
+  };
+
+  if (token !== null) {
+    return tokenIsFound();
+  }
+
+  if (urlToken !== undefined) {
+    setToken([urlToken, "url"]);
+    return tokenIsFound();
   }
 
   return (
@@ -36,7 +51,7 @@ const AuthenticationPage = () => {
       className="h-100 d-flex justify-content-center align-items-center"
       style={{ minHeight: "100vh" }}
     >
-      <Row className="text-center">
+      <Row className="text-center" style={{ width: "20em" }}>
         <Col>
           <Row className="aspect-ratio aspect-ratio-1x1">
             <Col>

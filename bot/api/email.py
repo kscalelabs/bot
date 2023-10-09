@@ -38,6 +38,19 @@ async def send_email(subject: str, body: str, to: str) -> None:
 
 
 @dataclass
+class OneTimePassPayload:
+    email: str
+
+    def encode(self) -> str:
+        return create_access_token({"email": self.email})
+
+    @classmethod
+    def decode(cls, payload: str) -> "OneTimePassPayload":
+        data = load_access_token(payload)
+        return cls(email=data["email"])
+
+
+@dataclass
 class VerificationPayload:
     email: str
     login_url: str
@@ -79,18 +92,18 @@ async def verify_email(payload_string: str) -> str:
     return payload.login_url
 
 
-async def send_reset_email(email: str, request_url: str, login_url: str) -> None:
-    payload = VerificationPayload(email, login_url).encode()
+async def send_otp_email(email: str, login_url: str) -> None:
+    payload = OneTimePassPayload(email).encode()
 
     body = textwrap.dedent(
         f"""
-            Please reset your password by clicking the link below:
+            Here is a one-time password (OTP) for you to log in:
 
-            {request_url}password/reset/{payload}
+            {login_url}/{payload}
         """
     )
 
-    await send_email(subject="Reset your password", body=body, to=email)
+    await send_email(subject="One-Time Password", body=body, to=email)
 
 
 async def reset_password(payload_string: str, new_password: str) -> None:

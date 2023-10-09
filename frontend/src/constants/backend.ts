@@ -1,12 +1,50 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
+import { useToken } from "hooks/auth";
 
 export const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
-export const api = axios.create({
-  withCredentials: true,
-  baseURL: BACKEND_URL,
-  headers: {
-    "Content-Type": "application/json",
-    Accepts: "application/json",
-  },
-});
+export const useApi = () => {
+  const { token } = useToken();
+  if (token === null) {
+    return axios.create({
+      baseURL: BACKEND_URL,
+      headers: {
+        "Content-Type": "application/json",
+        Accepts: "application/json",
+      },
+    });
+  }
+  const [tokenValue, tokenType] = token;
+  return axios.create({
+    baseURL: BACKEND_URL,
+    headers: {
+      "Content-Type": "application/json",
+      Accepts: "application/json",
+      Authorization: `${tokenType} ${tokenValue}`,
+    },
+  });
+};
+
+export const humanReadableError = (error: any | undefined) => {
+  if (axios.isAxiosError(error)) {
+    const axiosError = error as AxiosError;
+    const request = axiosError.request,
+      response = axiosError.response;
+    if (response) {
+      const detail = (response.data as any).detail;
+      if (detail) {
+        return detail;
+      }
+      if (response.status === 400) {
+        return "Invalid credentials.";
+      } else if (response.status === 500) {
+        return "An internal server error occurred.";
+      } else {
+        return "An unknown error occurred.";
+      }
+    } else if (request) {
+      return "An unknown error occurred while handling the request.";
+    }
+  }
+  return "An unknown error occurred.";
+};
