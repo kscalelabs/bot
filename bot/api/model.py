@@ -8,7 +8,7 @@ from tortoise.models import Model
 
 class User(Model):
     id = fields.IntField(pk=True)
-    email = fields.CharField(max_length=255)
+    email = fields.CharField(max_length=255, unique=True)
     banned = fields.BooleanField(default=False)
 
 

@@ -30,7 +30,10 @@ all:
 # ------------------------ #
 
 start-fastapi:
-	uvicorn bot.api.app.main:app --reload
+	uvicorn bot.api.app.main:app --reload --port 8000 --host localhost
+
+start-frontend:
+	cd frontend && npm start
 
 # ------------------------ #
 #          Build           #

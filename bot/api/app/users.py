@@ -5,6 +5,8 @@ from email.utils import parseaddr as parse_email_address
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic.main import BaseModel
+from google.oauth2 import id_token as google_id_token
+from google.auth.transport import requests as google_requests
 
 from bot.api.email import OneTimePassPayload, send_delete_email, send_otp_email
 from bot.api.model import User
@@ -57,23 +59,47 @@ class UserLoginResponse(BaseModel):
     token_type: str
 
 
+async def create_or_get(email: str) -> User:
+    user_obj = await User.get_or_none(email=email)
+    if user_obj is None:
+        user_obj = await User.create(email=email)
+    if not user_obj:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid one-time passcode")
+    if user_obj.banned:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User is banned")
+    return user_obj
+
+
+def get_login_response(user_obj: User) -> UserLoginResponse:
+    return UserLoginResponse(
+        token=TokenData(user_id=user_obj.id).encode(),
+        token_type="bearer",
+    )
+
+
 @users_router.post("/otp", response_model=UserLoginResponse)
 async def otp(data: OneTimePass) -> UserLoginResponse:
     try:
         payload = OneTimePassPayload.decode(data.payload)
     except Exception:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid one-time passcode")
-    user_obj = await User.get_or_none(email=payload.email)
-    if user_obj is None:
-        user_obj = await User.create(email=payload.email)
-    if not user_obj:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid one-time passcode")
-    if user_obj.banned:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User is banned")
-    return UserLoginResponse(
-        token=TokenData(user_id=user_obj.id).encode(),
-        token_type="bearer",
-    )
+    user_obj = await create_or_get(payload.email)
+    return get_login_response(user_obj)
+
+
+class GoogleLogin(BaseModel):
+    token: str
+
+
+@users_router.post("/google")
+async def google_login(data: GoogleLogin) -> UserLoginResponse:
+    try:
+        idinfo = google_id_token.verify_oauth2_token(data.token, google_requests.Request())
+        email = idinfo["email"]
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid Google token")
+    user_obj = await create_or_get(email)
+    return get_login_response(user_obj)
 
 
 async def get_current_user(authorization: HTTPAuthorizationCredentials = Depends(security)) -> TokenData:

@@ -10,6 +10,12 @@ mangum
 pyjwt
 uvicorn
 
+# Google authentication dependencies.
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+google-api-python-client
+
 # Database dependencies.
 bcrypt
 tortoise-orm[asyncpg]

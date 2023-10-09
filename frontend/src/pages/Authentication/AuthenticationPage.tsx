@@ -4,6 +4,7 @@ import LogInComponent from "pages/Authentication/components/LogInComponent";
 import { useCallback, useState } from "react";
 import { Col, Container, Image, Modal, Row } from "react-bootstrap";
 import { Navigate, useSearchParams } from "react-router-dom";
+import GoogleAuthComponent from "./components/GoogleAuthComponent";
 
 const AuthenticationPage = () => {
   const [message, setMessage] = useState<[string, string] | null>(null);
@@ -44,8 +45,7 @@ const AuthenticationPage = () => {
             </Col>
           </Row>
 
-          {/* <GoogleAuthComponent setMessage={setMessage} /> */}
-
+          <GoogleAuthComponent setMessage={setMessage} />
           <LogInComponent setMessage={setMessage} />
 
           <Modal
