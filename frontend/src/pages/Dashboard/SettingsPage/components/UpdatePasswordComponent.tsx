@@ -28,7 +28,7 @@ const UpdatePasswordComponent = () => {
 
     setShowSpinner(true);
     try {
-      const login_url = window.location.href;
+      const login_url = window.location.origin;
       await api.put<boolean>("/users/password/update", {
         new_password: password,
         login_url,

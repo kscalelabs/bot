@@ -38,7 +38,7 @@ const SignUpComponent = ({ setMessage }: Peops) => {
     setShowSpinner(true);
 
     try {
-      const login_url = window.location.href;
+      const login_url = window.location.origin;
       const response = await api.post<SignUpResponse>("/users/signup", {
         email,
         password,

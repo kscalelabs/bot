@@ -39,7 +39,7 @@ const UpdateEmailComponent = () => {
     e.preventDefault();
     setShowSpinner(true);
     try {
-      const login_url = window.location.href;
+      const login_url = window.location.origin;
       await api.put<boolean>("/users/email/update", {
         new_email: email,
         login_url,

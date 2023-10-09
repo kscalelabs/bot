@@ -1,6 +1,10 @@
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import "App.css";
-import { RequiresLogin, TokenProvider } from "hooks/auth";
+import {
+  OneTimePasswordWrapper,
+  RequiresLogin,
+  TokenProvider,
+} from "hooks/auth";
 import AuthenticationPage from "pages/Authentication/AuthenticationPage";
 import Dashboard from "pages/Dashboard/Dashboard";
 import Error404Page from "pages/Error/Error404Page";
@@ -14,19 +18,20 @@ const App = () => {
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <TokenProvider>
         <Router>
-          <Routes>
-            <Route
-              path="/*"
-              element={
-                <RequiresLogin>
-                  <Dashboard />
-                </RequiresLogin>
-              }
-            />
-            <Route path="/login" element={<AuthenticationPage />} />
-            <Route path="/login/:urlToken" element={<AuthenticationPage />} />
-            <Route path="*" element={<Error404Page />} />
-          </Routes>
+          <OneTimePasswordWrapper>
+            <Routes>
+              <Route
+                path="/*"
+                element={
+                  <RequiresLogin>
+                    <Dashboard />
+                  </RequiresLogin>
+                }
+              />
+              <Route path="/login" element={<AuthenticationPage />} />
+              <Route path="*" element={<Error404Page />} />
+            </Routes>
+          </OneTimePasswordWrapper>
         </Router>
       </TokenProvider>
     </GoogleOAuthProvider>

@@ -1,5 +1,6 @@
+import { useApi } from "constants/backend";
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router-dom";
 
 const TOKEN_VALUE_KEY = "__DPSH_TOKEN_VALUE";
 const TOKEN_TYPE_KEY = "__DPSH_TOKEN_TYPE";
@@ -60,5 +61,41 @@ export const RequiresLogin = ({ children }: RequiresLoginProps) => {
     const redirect = window.location.hash.substring(1);
     return <Navigate to={`/login?redirect=${redirect}`} />;
   }
+  return <>{children}</>;
+};
+
+interface OneTimePasswordWrapperProps {
+  children: React.ReactNode;
+}
+
+interface UserLoginResponse {
+  token: string;
+  token_type: string;
+}
+
+export const OneTimePasswordWrapper = ({
+  children,
+}: OneTimePasswordWrapperProps) => {
+  const [searchParams] = useSearchParams();
+  const { setToken } = useToken();
+  const api = useApi();
+
+  useEffect(() => {
+    (async () => {
+      const payload = searchParams.get("otp");
+      if (payload !== null) {
+        try {
+          const response = await api.post<UserLoginResponse>("/users/otp", {
+            payload,
+          });
+          setToken([response.data.token, response.data.token_type]);
+        } catch (error) {
+        } finally {
+          searchParams.delete("otp");
+        }
+      }
+    })();
+  }, [api, searchParams, setToken]);
+
   return <>{children}</>;
 };

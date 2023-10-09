@@ -32,7 +32,7 @@ export const humanReadableError = (error: any | undefined) => {
       response = axiosError.response;
     if (response) {
       const detail = (response.data as any).detail;
-      if (detail) {
+      if (typeof detail === "string") {
         return detail;
       }
       if (response.status === 400) {

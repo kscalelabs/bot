@@ -1,9 +1,8 @@
 import logo from "assets/logo.png";
 import { useToken } from "hooks/auth";
-import GoogleAuthComponent from "pages/Authentication/components/GoogleAuthComponent";
 import LogInComponent from "pages/Authentication/components/LogInComponent";
 import SignUpComponent from "pages/Authentication/components/SignUpComponent";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
   Col,
   Container,
@@ -13,36 +12,22 @@ import {
   ToggleButton,
   ToggleButtonGroup,
 } from "react-bootstrap";
-import { Navigate, useParams, useSearchParams } from "react-router-dom";
-
-interface AuthenticationPageRouterParams {
-  [urlToken: string]: string;
-}
+import { Navigate, useSearchParams } from "react-router-dom";
 
 const AuthenticationPage = () => {
   const [message, setMessage] = useState<[string, string] | null>(null);
   const [searchParams] = useSearchParams();
   const [signUp, setSignUp] = useState(false);
 
-  const { token, setToken } = useToken();
-  const { urlToken } = useParams<AuthenticationPageRouterParams>();
+  const { token } = useToken();
 
-  const tokenIsFound = () => {
-    // Gets the ?redirect=... query parameter from the URL.
+  const getRedirect = useCallback(() => {
     const redirect = searchParams.get("redirect");
-    if (redirect !== null) {
-      return <Navigate to={redirect} />;
-    }
-    return <Navigate to="/" />;
-  };
+    return redirect !== null ? redirect : "/";
+  }, [searchParams]);
 
   if (token !== null) {
-    return tokenIsFound();
-  }
-
-  if (urlToken !== undefined) {
-    setToken([urlToken, "url"]);
-    return tokenIsFound();
+    return <Navigate to={getRedirect()} />;
   }
 
   return (
@@ -91,7 +76,7 @@ const AuthenticationPage = () => {
             </ToggleButton>
           </ToggleButtonGroup>
 
-          <GoogleAuthComponent setMessage={setMessage} />
+          {/* <GoogleAuthComponent setMessage={setMessage} /> */}
 
           {signUp ? (
             <SignUpComponent setMessage={setMessage} />

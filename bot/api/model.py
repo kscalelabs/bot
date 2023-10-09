@@ -12,6 +12,7 @@ class User(Model):
     hashed_password = fields.CharField(max_length=255)
     google_id = fields.CharField(max_length=255, null=True)
     email_verified = fields.BooleanField(default=False)
+    banned = fields.BooleanField(default=False)
 
 
 class Images(Model):

@@ -99,7 +99,7 @@ async def send_otp_email(email: str, login_url: str) -> None:
         f"""
             Here is a one-time password (OTP) for you to log in:
 
-            {login_url}/{payload}
+            {login_url}?otp={payload}
         """
     )
 

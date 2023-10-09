@@ -49,7 +49,8 @@ const LogInComponent = ({ setMessage }: Props) => {
 
     setShowSpinner(true);
 
-    const login_url = window.location.href;
+    // Construct the login URL from the current URL, using hash routing.
+    const login_url = window.location.origin + "#/login";
 
     try {
       await api.post<boolean>("/users/password/forgot", {
@@ -111,7 +112,7 @@ const LogInComponent = ({ setMessage }: Props) => {
               type="button"
               onClick={handlePasswordReset}
             >
-              Reset Password
+              Log In with OTP
             </Button>
           )}
         </ButtonGroup>
