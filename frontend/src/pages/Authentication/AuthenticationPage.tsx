@@ -1,23 +1,13 @@
 import logo from "assets/logo.png";
 import { useToken } from "hooks/auth";
 import LogInComponent from "pages/Authentication/components/LogInComponent";
-import SignUpComponent from "pages/Authentication/components/SignUpComponent";
 import { useCallback, useState } from "react";
-import {
-  Col,
-  Container,
-  Image,
-  Modal,
-  Row,
-  ToggleButton,
-  ToggleButtonGroup,
-} from "react-bootstrap";
+import { Col, Container, Image, Modal, Row } from "react-bootstrap";
 import { Navigate, useSearchParams } from "react-router-dom";
 
 const AuthenticationPage = () => {
   const [message, setMessage] = useState<[string, string] | null>(null);
   const [searchParams] = useSearchParams();
-  const [signUp, setSignUp] = useState(false);
 
   const { token } = useToken();
 
@@ -54,35 +44,9 @@ const AuthenticationPage = () => {
             </Col>
           </Row>
 
-          <ToggleButtonGroup
-            type="radio"
-            defaultValue={1}
-            name="options"
-            className="mb-3"
-          >
-            <ToggleButton
-              id="loginButton"
-              value={1}
-              onChange={() => setSignUp(false)}
-            >
-              Login
-            </ToggleButton>
-            <ToggleButton
-              id="signUpButton"
-              value={2}
-              onChange={() => setSignUp(true)}
-            >
-              Sign Up
-            </ToggleButton>
-          </ToggleButtonGroup>
-
           {/* <GoogleAuthComponent setMessage={setMessage} /> */}
 
-          {signUp ? (
-            <SignUpComponent setMessage={setMessage} />
-          ) : (
-            <LogInComponent setMessage={setMessage} />
-          )}
+          <LogInComponent setMessage={setMessage} />
 
           <Modal
             show={message !== null}

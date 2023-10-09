@@ -1,5 +1,4 @@
 import { humanReadableError, useApi } from "constants/backend";
-import { useToken } from "hooks/auth";
 import { useState } from "react";
 import {
   Button,
@@ -20,47 +19,22 @@ interface LogInResponse {
 
 const LogInComponent = ({ setMessage }: Props) => {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [showSpinner, setShowSpinner] = useState(false);
 
-  const { setToken } = useToken();
   const api = useApi();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     setShowSpinner(true);
-
-    try {
-      const response = await api.post<LogInResponse>("/users/login", {
-        email,
-        password,
-      });
-      setToken([response.data.token, response.data.token_type]);
-    } catch (error) {
-      setMessage(["Error", humanReadableError(error)]);
-    } finally {
-      setShowSpinner(false);
-    }
-  };
-
-  const handlePasswordReset = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    setShowSpinner(true);
-
-    // Construct the login URL from the current URL, using hash routing.
     const login_url = window.location.origin + "#/login";
 
     try {
-      await api.post<boolean>("/users/password/forgot", {
+      await api.post<boolean>("/users/login", {
         email,
         login_url,
       });
-      setMessage([
-        "Sent!",
-        "If a corresponding email exists, then a temporary login link has been sent.",
-      ]);
+      setMessage(["Success!", "Check your email for a login link."]);
     } catch (error) {
       setMessage(["Error", humanReadableError(error)]);
     } finally {
@@ -70,11 +44,7 @@ const LogInComponent = ({ setMessage }: Props) => {
 
   return (
     <Form onSubmit={handleSubmit} className="mb-3">
-      <FloatingLabel
-        controlId="floatingInput"
-        label="Email address"
-        className="mb-3"
-      >
+      <FloatingLabel controlId="floatingInput" label="Email" className="mb-3">
         <Form.Control
           type="email"
           placeholder="name@example.com"
@@ -82,20 +52,6 @@ const LogInComponent = ({ setMessage }: Props) => {
             setEmail(e.target.value);
           }}
           value={email}
-        />
-      </FloatingLabel>
-      <FloatingLabel
-        controlId="floatingPassword"
-        label="Password"
-        className="mb-3"
-      >
-        <Form.Control
-          type="password"
-          placeholder="Password"
-          onChange={(e) => {
-            setPassword(e.target.value);
-          }}
-          value={password}
         />
       </FloatingLabel>
 
@@ -106,15 +62,6 @@ const LogInComponent = ({ setMessage }: Props) => {
           <Button variant="primary" type="submit">
             Login
           </Button>
-          {email.length > 0 && password.length === 0 && (
-            <Button
-              variant="secondary"
-              type="button"
-              onClick={handlePasswordReset}
-            >
-              Log In with OTP
-            </Button>
-          )}
         </ButtonGroup>
       )}
     </Form>

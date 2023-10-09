@@ -1,4 +1,5 @@
 import logo from "assets/logo.svg";
+import { useApi } from "constants/backend";
 import { useToken } from "hooks/auth";
 import DashboardContent from "pages/Dashboard/DashboardContent/DashboardContent";
 import GalleryPage from "pages/Dashboard/GalleryPage/GalleryPage";
@@ -6,8 +7,13 @@ import HistoryPage from "pages/Dashboard/HistoryPage/HistoryPage";
 import MakePage from "pages/Dashboard/MakePage/MakePage";
 import SettingsPage from "pages/Dashboard/SettingsPage/SettingsPage";
 import Error404Page from "pages/Error/Error404Page";
+import { useEffect, useState } from "react";
 import { Container, Nav, NavDropdown, Navbar } from "react-bootstrap";
 import { Route, Routes, useNavigate } from "react-router-dom";
+
+interface UserInfoResponse {
+  email: string;
+}
 
 const NavigationBar = () => {
   const { setToken } = useToken();
@@ -18,6 +24,23 @@ const NavigationBar = () => {
     navigate("/login");
   };
 
+  const [email, setEmail] = useState<string | null>(null);
+
+  const api = useApi();
+
+  useEffect(() => {
+    (async () => {
+      if (email === null) {
+        try {
+          const response = await api.get<UserInfoResponse>("/users/me");
+          setEmail(response.data.email);
+        } catch (error) {
+          logout();
+        }
+      }
+    })();
+  }, [api, email]);
+
   return (
     <>
       <style>
@@ -25,7 +48,7 @@ const NavigationBar = () => {
           display: none;
         }`}
       </style>
-      <Navbar expand="lg" className="bg-body-tertiary mb-3">
+      <Navbar>
         <Container>
           {/* Site icon */}
           <Navbar.Brand href="#" onClick={() => navigate("/")}>
@@ -37,12 +60,19 @@ const NavigationBar = () => {
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav
               className="mr-auto"
+              variant="pills"
               style={{ justifyContent: "center", flex: "1" }}
             >
-              <Nav.Link onClick={() => navigate("/make")}>
+              <Nav.Link
+                onClick={() => navigate("/make")}
+                style={{ margin: "0 1em" }}
+              >
                 <i className="fa fa-star" /> Make
               </Nav.Link>
-              <Nav.Link onClick={() => navigate("/gallery")}>
+              <Nav.Link
+                onClick={() => navigate("/gallery")}
+                style={{ margin: "0 1em" }}
+              >
                 <i className="fa fa-picture-o" /> Gallery
               </Nav.Link>
             </Nav>
@@ -54,6 +84,7 @@ const NavigationBar = () => {
                 id="basic-nav-dropdown"
                 align="end"
               >
+                <NavDropdown.Header>{email}</NavDropdown.Header>
                 <NavDropdown.Item onClick={() => navigate("/history")}>
                   <i className="fa fa-history" /> History
                 </NavDropdown.Item>

@@ -5,6 +5,8 @@ import asyncio
 import logging
 import textwrap
 from dataclasses import dataclass
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 import aiosmtplib
 
@@ -17,21 +19,18 @@ logger = logging.getLogger(__name__)
 async def send_email(subject: str, body: str, to: str) -> None:
     settings = load_settings().email
 
-    header = textwrap.dedent(
-        f"""
-            To: {to}
-            From: {settings.name}<{settings.email}>
-            Subject: {subject}
-        """
-    ).strip()
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = f"{settings.name} <{settings.email}>"
+    msg["To"] = to
 
-    message = header + "\n\n" + body
+    msg.attach(MIMEText(body, "html"))
 
     smtp_client = aiosmtplib.SMTP(hostname=settings.host, port=settings.port)
 
     await smtp_client.connect()
     await smtp_client.login(settings.email, settings.password)
-    await smtp_client.sendmail(settings.email, to, message)
+    await smtp_client.sendmail(settings.email, to, msg.as_string())
     await smtp_client.quit()
 
 
@@ -50,15 +49,28 @@ class OneTimePassPayload:
 
 
 async def send_otp_email(payload: OneTimePassPayload, login_url: str) -> None:
+    url = f"{login_url}?otp={payload.encode()}"
+
     body = textwrap.dedent(
         f"""
-            Here is a one-time password (OTP) for you to log in:
-
-            {login_url}?otp={payload.encode()}
+            <h1><code>don't panic</code><br/><code>stay human</code></h1>
+            <h2><code><a href="{url}">log in</a></code></h2>
+            <p>Or copy-paste this link: {url}</p>
         """
     )
 
     await send_email(subject="One-Time Password", body=body, to=payload.email)
+
+
+async def send_delete_email(email: str) -> None:
+    body = textwrap.dedent(
+        """
+            <h1><code>don't panic</code><br/><code>stay human</code></h1>
+            <h2><code>your account has been deleted</code></h2>
+        """
+    )
+
+    await send_email(subject="Account Deleted", body=body, to=email)
 
 
 def test_email_adhoc() -> None:

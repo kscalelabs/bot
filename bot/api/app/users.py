@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic.main import BaseModel
 
-from bot.api.email import OneTimePassPayload, send_otp_email
+from bot.api.email import OneTimePassPayload, send_delete_email, send_otp_email
 from bot.api.model import User
 from bot.api.token import create_access_token, load_access_token
 
@@ -99,4 +99,5 @@ async def delete_user(data: TokenData = Depends(get_current_user)) -> bool:
     if not user_obj:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
     await user_obj.delete()
+    await send_delete_email(user_obj.email)
     return True
