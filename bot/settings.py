@@ -4,7 +4,6 @@ import functools
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import cast
 
 import ml.api as ml
 from omegaconf import II, MISSING, OmegaConf
@@ -79,12 +78,11 @@ def load_settings() -> Settings:
     """
     if "DPSH_BOT_CONFIG" in os.environ:
         raw_config = OmegaConf.create(os.environ["DPSH_BOT_CONFIG"])
-        config = cast(Settings, OmegaConf.merge(OmegaConf.structured(Settings), raw_config))
+        config = OmegaConf.merge(OmegaConf.structured(Settings), raw_config)
     else:
         root = Path.home() / ".config" / "dpsh-bot"
         config_paths = root.glob("*.yaml")
         raw_configs = (OmegaConf.load(config) for config in config_paths)
-        config = cast(Settings, OmegaConf.merge(OmegaConf.structured(Settings), *raw_configs))
+        config = OmegaConf.merge(OmegaConf.structured(Settings), *raw_configs)
     OmegaConf.resolve(config)
-    config.version = bot_version
     return config

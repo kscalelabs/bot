@@ -153,10 +153,10 @@ class OneTimePass(BaseModel):
 @users_router.post("/otp", response_model=UserLoginResponse)
 async def otp(data: OneTimePass) -> UserLoginResponse:
     try:
-        data = OneTimePassPayload.decode(data.payload)
+        payload = OneTimePassPayload.decode(data.payload)
     except Exception:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid one-time passcode")
-    user_obj = await User.get_or_none(email=data.email)
+    user_obj = await User.get_or_none(email=payload.email)
     if not user_obj:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid one-time passcode")
     if user_obj.banned:
@@ -243,11 +243,11 @@ class ForgotPassword(BaseModel):
 @users_router.post("/password/forgot")
 async def forgot_password(data: ForgotPassword) -> bool:
     user_obj = await User.get_or_none(email=data.email)
-    if user_obj.banned:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User is banned")
     if not user_obj:
         # raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email not registered")
         # Don't leak whether the email is registered or not.
         return True
+    if user_obj.banned:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User is banned")
     await send_otp_email(data.email, data.login_url)
     return True
