@@ -12,11 +12,6 @@ interface Props {
   setMessage: (message: [string, string] | null) => void;
 }
 
-interface LogInResponse {
-  token: string;
-  token_type: string;
-}
-
 const LogInComponent = ({ setMessage }: Props) => {
   const [email, setEmail] = useState("");
   const [showSpinner, setShowSpinner] = useState(false);

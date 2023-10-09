@@ -7,7 +7,7 @@ import HistoryPage from "pages/Dashboard/HistoryPage/HistoryPage";
 import MakePage from "pages/Dashboard/MakePage/MakePage";
 import SettingsPage from "pages/Dashboard/SettingsPage/SettingsPage";
 import Error404Page from "pages/Error/Error404Page";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Container, Nav, NavDropdown, Navbar } from "react-bootstrap";
 import { Route, Routes, useNavigate } from "react-router-dom";
 
@@ -19,10 +19,10 @@ const NavigationBar = () => {
   const { setToken } = useToken();
   const navigate = useNavigate();
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setToken(null);
     navigate("/login");
-  };
+  }, [navigate, setToken]);
 
   const [email, setEmail] = useState<string | null>(null);
 
@@ -39,7 +39,7 @@ const NavigationBar = () => {
         }
       }
     })();
-  }, [api, email]);
+  }, [api, email, logout]);
 
   return (
     <>
