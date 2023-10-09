@@ -10,7 +10,7 @@ from email.mime.text import MIMEText
 
 import aiosmtplib
 
-from bot.api.token import create_access_token, load_access_token
+from bot.api.token import create_token, load_token
 from bot.settings import load_settings
 
 logger = logging.getLogger(__name__)
@@ -40,11 +40,11 @@ class OneTimePassPayload:
 
     def encode(self) -> str:
         expire_minutes = load_settings().crypto.expire_otp_minutes
-        return create_access_token({"email": self.email}, expire_minutes=expire_minutes)
+        return create_token({"email": self.email}, expire_minutes=expire_minutes)
 
     @classmethod
-    def decode(cls, payload: str) -> "OneTimePassPayload":
-        data = load_access_token(payload)
+    async def decode(cls, payload: str) -> "OneTimePassPayload":
+        _, data = await load_token(payload, only_once=True)
         return cls(email=data["email"])
 
 

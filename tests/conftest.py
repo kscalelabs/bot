@@ -74,6 +74,9 @@ def mock_load_settings(mocker: MockerFixture, tmpdir_factory: TempdirFactory) ->
     mock = mocker.patch("bot.settings.load_settings")
     settings = Settings()
 
+    # Sets the default app settings.
+    settings.is_prod = False
+
     # Sets the default site settings.
     settings.site.homepage = "http://localhost"
 

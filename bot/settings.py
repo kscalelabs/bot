@@ -50,7 +50,7 @@ class EmailSettings:
 class CryptoSettings:
     jwt_secret: str = ml.conf_field(MISSING)
     expire_token_minutes: int = ml.conf_field(60 * 24)
-    expire_otp_minutes: int = ml.conf_field(5)
+    expire_otp_minutes: int = ml.conf_field(10)
     algorithm: str = ml.conf_field("HS256")
 
 
@@ -58,6 +58,7 @@ class CryptoSettings:
 class Settings:
     app_name: str = ml.conf_field("bot")
     version: str = ml.conf_field(II("bot.version:"))
+    is_prod: bool = ml.conf_field(True)
     site: SiteSettings = ml.conf_field(SiteSettings())
     database: DatabaseSettings = ml.conf_field(DatabaseSettings())
     image: ImageSettings = ml.conf_field(ImageSettings())

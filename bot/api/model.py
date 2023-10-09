@@ -13,9 +13,20 @@ class User(Model):
 
 
 class Token(Model):
-    id = fields.IntField(pk=True)
-    used: fields.BooleanField = fields.BooleanField(default=False)
+    uuid = fields.UUIDField(pk=True)
+    user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
+        "models.User",
+        related_name="tokens",
+        on_delete=fields.CASCADE,
+        default=None,
+        null=True,
+        index=True,
+    )
+    issued = fields.DatetimeField(auto_now_add=True)
+    expires = fields.DatetimeField(null=True)
+    disabled = fields.BooleanField(default=False)
 
 
 # Pydantic models for FastAPI
 User_Pydantic = pydantic_model_creator(User, name="User")
+Token_Pydantic = pydantic_model_creator(Token, name="Token")

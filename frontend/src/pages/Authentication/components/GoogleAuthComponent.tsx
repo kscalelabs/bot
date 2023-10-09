@@ -23,20 +23,20 @@ const GoogleAuthComponent = ({ setMessage }: Props) => {
 
   useEffect(() => {
     (async () => {
-      if (credential === null) {
-        return;
-      }
-
-      try {
-        const response = await api.post<UserLoginResponse>("/users/google", {
-          token: credential,
-        });
-        setToken([response.data.token, response.data.token_type]);
-      } catch (error) {
-        setMessage(["Error", humanReadableError(error)]);
+      if (credential !== null) {
+        try {
+          const response = await api.post<UserLoginResponse>("/users/google", {
+            token: credential,
+          });
+          setToken([response.data.token, response.data.token_type]);
+        } catch (error) {
+          setMessage(["Error", humanReadableError(error)]);
+        } finally {
+          setCredential(null);
+        }
       }
     })();
-  }, [api, credential, setMessage, setToken]);
+  });
 
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
@@ -48,9 +48,9 @@ const GoogleAuthComponent = ({ setMessage }: Props) => {
                 const credential = credentialResponse.credential;
                 if (credential === undefined) {
                   setMessage(["Error", "Failed to login using Google OAuth."]);
-                  return;
+                } else {
+                  setCredential(credential);
                 }
-                setCredential(credential);
               }}
               onError={() => {
                 setMessage(["Error", "Failed to login using Google OAuth."]);
