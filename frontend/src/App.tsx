@@ -11,24 +11,24 @@ import { Route, HashRouter as Router, Routes } from "react-router-dom";
 
 const App = () => {
   return (
-      <TokenProvider>
-        <Router>
-          <OneTimePasswordWrapper>
-            <Routes>
-              <Route
-                path="/*"
-                element={
-                  <RequiresLogin>
-                    <Dashboard />
-                  </RequiresLogin>
-                }
-              />
-              <Route path="/login" element={<AuthenticationPage />} />
-              <Route path="*" element={<Error404Page />} />
-            </Routes>
-          </OneTimePasswordWrapper>
-        </Router>
-      </TokenProvider>
+    <TokenProvider>
+      <Router>
+        <OneTimePasswordWrapper>
+          <Routes>
+            <Route
+              path="/*"
+              element={
+                <RequiresLogin>
+                  <Dashboard />
+                </RequiresLogin>
+              }
+            />
+            <Route path="/login" element={<AuthenticationPage />} />
+            <Route path="*" element={<Error404Page />} />
+          </Routes>
+        </OneTimePasswordWrapper>
+      </Router>
+    </TokenProvider>
   );
 };
 
