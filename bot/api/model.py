@@ -9,9 +9,6 @@ from tortoise.models import Model
 class User(Model):
     id = fields.IntField(pk=True)
     email = fields.CharField(max_length=255)
-    hashed_password = fields.CharField(max_length=255)
-    google_id = fields.CharField(max_length=255, null=True)
-    email_verified = fields.BooleanField(default=False)
     banned = fields.BooleanField(default=False)
 
 
@@ -21,4 +18,4 @@ class Token(Model):
 
 
 # Pydantic models for FastAPI
-User_Pydantic = pydantic_model_creator(User, name="User", exclude=("hashed_password",))
+User_Pydantic = pydantic_model_creator(User, name="User")

@@ -1,3 +1,4 @@
+import logo from "assets/logo.svg";
 import { useToken } from "hooks/auth";
 import DashboardContent from "pages/Dashboard/DashboardContent/DashboardContent";
 import GalleryPage from "pages/Dashboard/GalleryPage/GalleryPage";
@@ -26,12 +27,18 @@ const NavigationBar = () => {
       </style>
       <Navbar expand="lg" className="bg-body-tertiary mb-3">
         <Container>
+          {/* Site icon */}
           <Navbar.Brand href="#" onClick={() => navigate("/")}>
-            dpsh
+            <img src={logo} alt="logo" width="30" height="30" />
           </Navbar.Brand>
+
+          {/* Navbar choices */}
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
-            <Nav className="me-auto">
+            <Nav
+              className="mr-auto"
+              style={{ justifyContent: "center", flex: "1" }}
+            >
               <Nav.Link onClick={() => navigate("/make")}>
                 <i className="fa fa-star" /> Make
               </Nav.Link>
@@ -39,6 +46,8 @@ const NavigationBar = () => {
                 <i className="fa fa-picture-o" /> Gallery
               </Nav.Link>
             </Nav>
+
+            {/* Navbar dropdown */}
             <Nav>
               <NavDropdown
                 title={<i className="fa fa-lg fa-ellipsis-v" />}
