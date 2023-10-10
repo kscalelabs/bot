@@ -38,9 +38,9 @@ async def send_email(subject: str, body: str, to: str) -> None:
 class OneTimePassPayload:
     email: str
 
-    def encode(self) -> str:
+    async def encode(self) -> str:
         expire_minutes = load_settings().crypto.expire_otp_minutes
-        return create_token({"email": self.email}, expire_minutes=expire_minutes)
+        return await create_token({"email": self.email}, expire_minutes=expire_minutes)
 
     @classmethod
     async def decode(cls, payload: str) -> "OneTimePassPayload":
@@ -49,7 +49,7 @@ class OneTimePassPayload:
 
 
 async def send_otp_email(payload: OneTimePassPayload, login_url: str) -> None:
-    url = f"{login_url}?otp={payload.encode()}"
+    url = f"{login_url}?otp={await payload.encode()}"
 
     body = textwrap.dedent(
         f"""

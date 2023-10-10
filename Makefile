@@ -29,7 +29,7 @@ all:
 #      Development         #
 # ------------------------ #
 
-start-fastapi:
+start-backend:
 	uvicorn bot.api.app.main:app --reload --port 8000 --host localhost
 
 start-frontend:

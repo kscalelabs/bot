@@ -50,6 +50,15 @@ async def test_user_signup(app_client: TestClient, mock_send_email: MockType) ->
     response = app_client.post("/users/otp", json={"payload": await otp.encode()})
     assert response.status_code == 200, response.json()
 
+    # Log the user out everywhere.
+    response = app_client.delete("/users/logout/all")
+    assert response.status_code == 200, response.json()
+    assert response.json() is True
+
+    # Log the user back in.
+    response = app_client.post("/users/otp", json={"payload": await otp.encode()})
+    assert response.status_code == 200, response.json()
+
     # Delete the user.
     response = app_client.delete("/users/myself")
     assert response.status_code == 200, response.json()

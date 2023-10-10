@@ -81,9 +81,6 @@ async def load_token(payload: str, only_once: bool = False) -> tuple[Token, dict
     token = await Token.get_or_none(uuid=token_uuid)
     if token is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token is disabled")
-    if token.disabled:
-        await token.delete()
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token is disabled")
     if token.expires is not None and token.expires < _server_time():
         await token.delete()
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired")

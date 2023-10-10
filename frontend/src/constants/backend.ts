@@ -1,29 +1,15 @@
 import axios, { AxiosError } from "axios";
-import { useToken } from "hooks/auth";
 
 export const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
-export const useApi = () => {
-  const { token } = useToken();
-  if (token === null) {
-    return axios.create({
-      baseURL: BACKEND_URL,
-      headers: {
-        "Content-Type": "application/json",
-        Accepts: "application/json",
-      },
-    });
-  }
-  const [tokenValue, tokenType] = token;
-  return axios.create({
-    baseURL: BACKEND_URL,
-    headers: {
-      "Content-Type": "application/json",
-      Accepts: "application/json",
-      Authorization: `${tokenType} ${tokenValue}`,
-    },
-  });
-};
+export const api = axios.create({
+  withCredentials: true,
+  baseURL: BACKEND_URL,
+  headers: {
+    "Content-Type": "application/json",
+    Accepts: "application/json",
+  },
+});
 
 export const humanReadableError = (error: any | undefined) => {
   if (axios.isAxiosError(error)) {

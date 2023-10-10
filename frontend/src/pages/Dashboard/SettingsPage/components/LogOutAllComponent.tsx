@@ -1,23 +1,28 @@
-import { faDeleteLeft } from "@fortawesome/free-solid-svg-icons";
+import { faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { api, humanReadableError } from "constants/backend";
 import { deleteToken } from "hooks/auth";
 import { useState } from "react";
 import { Button, Form, Spinner } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 
-const DeleteAccountComponent = () => {
-  const [buttonEnabled, setButtonEnabled] = useState(false);
+interface Props {
+  setMessage: (message: [string, string] | null) => void;
+}
+
+const LogOutAllComponent = ({ setMessage }: Props) => {
   const [useSpinner, setUseSpinner] = useState(false);
+  const navigate = useNavigate();
 
   const handleDeleteAccount = async (e: React.FormEvent) => {
     e.preventDefault();
     setUseSpinner(true);
     try {
-      await api.delete<boolean>("/users/myself");
+      await api.delete<boolean>("/users/logout/all");
       deleteToken();
+      navigate("/login");
     } catch (error) {
-      console.log(humanReadableError(error));
-      setButtonEnabled(false);
+      setMessage(["Error", humanReadableError(error)]);
     } finally {
       setUseSpinner(false);
     }
@@ -25,30 +30,19 @@ const DeleteAccountComponent = () => {
 
   return (
     <Form.Group>
-      <Form.Check
-        type="switch"
-        label="Confirm account deletion"
-        onChange={(e) => {
-          setButtonEnabled(e.target.checked);
-        }}
-        checked={buttonEnabled}
-        className="mb-3"
-      />
-
       {useSpinner ? (
         <Spinner />
       ) : (
         <Button
-          variant="danger"
+          variant="warning"
           id="button-addon2"
-          disabled={!buttonEnabled}
           onClick={handleDeleteAccount}
         >
-          <FontAwesomeIcon icon={faDeleteLeft} /> Delete Account
+          <FontAwesomeIcon icon={faSignOutAlt} /> Log Out Everywhere
         </Button>
       )}
     </Form.Group>
   );
 };
 
-export default DeleteAccountComponent;
+export default LogOutAllComponent;

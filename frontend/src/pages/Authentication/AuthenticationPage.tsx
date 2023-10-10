@@ -1,24 +1,27 @@
 import logo from "assets/logo.png";
-import { useToken } from "hooks/auth";
+import { getToken } from "hooks/auth";
 import LogInComponent from "pages/Authentication/components/LogInComponent";
 import { useCallback, useState } from "react";
 import { Col, Container, Image, Modal, Row } from "react-bootstrap";
-import { Navigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import GoogleAuthComponent from "./components/GoogleAuthComponent";
 
 const AuthenticationPage = () => {
   const [message, setMessage] = useState<[string, string] | null>(null);
   const [searchParams] = useSearchParams();
-
-  const { token } = useToken();
+  const navigate = useNavigate();
 
   const getRedirect = useCallback(() => {
     const redirect = searchParams.get("redirect");
     return redirect !== null ? redirect : "/";
   }, [searchParams]);
 
-  if (token !== null) {
-    return <Navigate to={getRedirect()} />;
+  const redirectOnLogin = useCallback(() => {
+    navigate(getRedirect());
+  }, [navigate, getRedirect]);
+
+  if (getToken() !== null) {
+    redirectOnLogin();
   }
 
   return (
@@ -45,7 +48,11 @@ const AuthenticationPage = () => {
             </Col>
           </Row>
 
-          <GoogleAuthComponent setMessage={setMessage} />
+          <GoogleAuthComponent
+            setMessage={setMessage}
+            redirectOnLogin={redirectOnLogin}
+          />
+
           <LogInComponent setMessage={setMessage} />
 
           <Modal

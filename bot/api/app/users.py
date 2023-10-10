@@ -10,7 +10,7 @@ from google.oauth2 import id_token as google_id_token
 from pydantic.main import BaseModel
 
 from bot.api.email import OneTimePassPayload, send_delete_email, send_otp_email
-from bot.api.model import User
+from bot.api.model import Token, User
 from bot.api.token import create_token, load_token
 from bot.settings import load_settings
 
@@ -92,7 +92,12 @@ async def otp(data: OneTimePass, response: Response) -> UserLoginResponse:
     login_response = await get_login_response(user_obj)
     is_prod = load_settings().is_prod
     response.set_cookie(
-        key=TOKEN_COOKIE_KEY, value=login_response.token, httponly=True, secure=is_prod, samesite="Strict"
+        key=TOKEN_COOKIE_KEY,
+        value=login_response.token,
+        httponly=True,
+        secure=is_prod,
+        # samesite="Strict",
+        samesite="None",
     )
     return login_response
 
@@ -171,6 +176,9 @@ async def logout_user(response: Response) -> bool:
 
 
 @users_router.delete("/logout/all")
-async def logout_all_users() -> bool:
-    await User.update(banned=True).where(User.banned is False).gino.status()
+async def logout_all_users(data: UserTokenData = Depends(get_current_user)) -> bool:
+    user_obj = await User.get_or_none(id=data.user_id)
+    if not user_obj:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
+    await Token.filter(user=user_obj).delete()
     return True

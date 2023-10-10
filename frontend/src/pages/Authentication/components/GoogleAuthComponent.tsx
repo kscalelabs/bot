@@ -1,6 +1,6 @@
 import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
-import { humanReadableError, useApi } from "constants/backend";
-import { useToken } from "hooks/auth";
+import { api, humanReadableError } from "constants/backend";
+import { setToken } from "hooks/auth";
 import { useEffect, useState } from "react";
 import { Col, Row } from "react-bootstrap";
 
@@ -8,6 +8,7 @@ const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID || "";
 
 interface Props {
   setMessage: (message: [string, string] | null) => void;
+  redirectOnLogin: () => void;
 }
 
 interface UserLoginResponse {
@@ -15,11 +16,8 @@ interface UserLoginResponse {
   token_type: string;
 }
 
-const GoogleAuthComponent = ({ setMessage }: Props) => {
+const GoogleAuthComponent = ({ setMessage, redirectOnLogin }: Props) => {
   const [credential, setCredential] = useState<string | null>(null);
-
-  const api = useApi();
-  const { setToken } = useToken();
 
   useEffect(() => {
     (async () => {
@@ -29,6 +27,7 @@ const GoogleAuthComponent = ({ setMessage }: Props) => {
             token: credential,
           });
           setToken([response.data.token, response.data.token_type]);
+          redirectOnLogin();
         } catch (error) {
           setMessage(["Error", humanReadableError(error)]);
         } finally {

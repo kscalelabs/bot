@@ -1,6 +1,6 @@
 import logo from "assets/logo.svg";
-import { useApi } from "constants/backend";
-import { useToken } from "hooks/auth";
+import { api } from "constants/backend";
+import { deleteToken } from "hooks/auth";
 import DashboardContent from "pages/Dashboard/DashboardContent/DashboardContent";
 import GalleryPage from "pages/Dashboard/GalleryPage/GalleryPage";
 import HistoryPage from "pages/Dashboard/HistoryPage/HistoryPage";
@@ -16,17 +16,14 @@ interface UserInfoResponse {
 }
 
 const NavigationBar = () => {
-  const { setToken } = useToken();
   const navigate = useNavigate();
 
   const logout = useCallback(() => {
-    setToken(null);
+    deleteToken();
     navigate("/login");
-  }, [navigate, setToken]);
+  }, [navigate]);
 
   const [email, setEmail] = useState<string | null>(null);
-
-  const api = useApi();
 
   useEffect(() => {
     (async () => {
@@ -39,7 +36,7 @@ const NavigationBar = () => {
         }
       }
     })();
-  }, [api, email, logout]);
+  }, [email, logout]);
 
   return (
     <>

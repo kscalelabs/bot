@@ -24,7 +24,6 @@ class Token(Model):
     )
     issued = fields.DatetimeField(auto_now_add=True)
     expires = fields.DatetimeField(null=True)
-    disabled = fields.BooleanField(default=False)
 
 
 # Pydantic models for FastAPI

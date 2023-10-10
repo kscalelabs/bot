@@ -1,4 +1,4 @@
-import { humanReadableError, useApi } from "constants/backend";
+import { api, humanReadableError } from "constants/backend";
 import { useState } from "react";
 import {
   Button,
@@ -15,8 +15,6 @@ interface Props {
 const LogInComponent = ({ setMessage }: Props) => {
   const [email, setEmail] = useState("");
   const [showSpinner, setShowSpinner] = useState(false);
-
-  const api = useApi();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
