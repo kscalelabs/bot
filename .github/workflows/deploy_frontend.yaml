@@ -36,7 +36,8 @@ jobs:
 
       - name: Write .env.production
         run: |
-          echo "REACT_APP_API_URL=$API_URL" > .env.production
+          echo "REACT_APP_BACKEND_URL=$API_URL" > .env.production
+          echo "REACT_APP_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env.production
 
       - name: Build
         run: npm run build
