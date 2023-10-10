@@ -1,63 +1,112 @@
-import { api } from "constants/backend";
+import axios, { AxiosError } from "axios";
+import { api, apiNoRetry } from "constants/backend";
 import React, { useEffect } from "react";
 import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 
-const TOKEN_VALUE_KEY = "__DPSH_TOKEN_VALUE";
-const TOKEN_TYPE_KEY = "__DPSH_TOKEN_TYPE";
+const REFRESH_TOKEN_KEY = "__DPSH_REFRESH_TOKEN";
+const SESSION_TOKEN_KEY = "__DPSH_SESSION_TOKEN";
+
+type TokenType = "refresh" | "session";
+
+const getLocalStorageValueKey = (tokenType: TokenType) => {
+  switch (tokenType) {
+    case "refresh":
+      return REFRESH_TOKEN_KEY;
+    case "session":
+      return SESSION_TOKEN_KEY;
+    default:
+      throw new Error("Invalid token type");
+  }
+};
 
 interface RequiresLoginProps {
   children: React.ReactNode;
 }
 
-export const getToken = (): [string, string] | null => {
-  const tokenValue = localStorage.getItem(TOKEN_VALUE_KEY);
-  if (tokenValue === null) return null;
-  const tokenType = localStorage.getItem(TOKEN_TYPE_KEY);
-  if (tokenType === null) return null;
-  return [tokenValue, tokenType];
+export const getToken = (tokenType: TokenType): string | null => {
+  return localStorage.getItem(getLocalStorageValueKey(tokenType));
 };
 
-export const setToken = (token: [string, string]) => {
-  const [tokenValue, tokenType] = token;
-  localStorage.setItem(TOKEN_VALUE_KEY, tokenValue);
-  localStorage.setItem(TOKEN_TYPE_KEY, tokenType);
+export const setToken = (token: string, tokenType: TokenType) => {
+  localStorage.setItem(getLocalStorageValueKey(tokenType), token);
 };
 
-export const deleteToken = () => {
-  localStorage.removeItem(TOKEN_VALUE_KEY);
-  localStorage.removeItem(TOKEN_TYPE_KEY);
+export const deleteToken = (tokenType: TokenType) => {
+  localStorage.removeItem(getLocalStorageValueKey(tokenType));
+};
+
+export const deleteTokens = () => {
+  deleteToken("refresh");
+  deleteToken("session");
 };
 
 // Add the token to the Authorization header for every request, and invalidate
 // the token if the server returns a 401.
 api.interceptors.request.use(
   (config) => {
-    const token = getToken();
+    const token = getToken("session");
     if (token !== null) {
-      const [tokenValue, tokenType] = token;
-      config.headers.Authorization = `${tokenType} ${tokenValue}`;
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
   (error) => {
     return Promise.reject(error);
-  },
+  }
 );
+
+interface RefreshTokenResponse {
+  token: string;
+  token_type: string;
+}
 
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response.status === 401) {
-      const navigate = useNavigate();
-      deleteToken();
-      navigate("/login");
+  async (error) => {
+    const originalRequest = error.config;
+    if (error.response.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      const refreshToken = getToken("refresh");
+      if (refreshToken === null) {
+        return Promise.reject(error);
+      }
+
+      let sessionToken;
+      try {
+        // Gets a new token using the refresh token.
+        const response = await apiNoRetry.post<RefreshTokenResponse>(
+          "/users/refresh",
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${refreshToken}`,
+            },
+          }
+        );
+        sessionToken = response.data.token;
+      } catch (refreshError) {
+        if (axios.isAxiosError(refreshError)) {
+          const axiosRefreshError = refreshError as AxiosError;
+          if (axiosRefreshError.response?.status === 401) {
+            deleteToken("session");
+            const navigate = useNavigate();
+            navigate("/login");
+          }
+        }
+        return Promise.reject(refreshError);
+      }
+
+      // Retries the original request with the new token.
+      setToken(sessionToken, "session");
+      originalRequest.headers.Authorization = `Bearer ${sessionToken}`;
+      return await api(originalRequest);
     }
     return Promise.reject(error);
-  },
+  }
 );
 
 export const RequiresLogin = ({ children }: RequiresLoginProps) => {
-  if (getToken() === null) {
+  if (getToken("refresh") === null) {
     // const redirect = window.location.pathname;
     // Using HashRouter, so we need to include the hash in the redirect
     const redirect = window.location.hash.substring(1);
@@ -88,7 +137,7 @@ export const OneTimePasswordWrapper = ({
           const response = await api.post<UserLoginResponse>("/users/otp", {
             payload,
           });
-          setToken([response.data.token, response.data.token_type]);
+          setToken(response.data.token, "refresh");
         } catch (error) {
         } finally {
           searchParams.delete("otp");

@@ -1,6 +1,6 @@
 import logo from "assets/logo.svg";
 import { api } from "constants/backend";
-import { deleteToken } from "hooks/auth";
+import { deleteTokens } from "hooks/auth";
 import DashboardContent from "pages/Dashboard/DashboardContent/DashboardContent";
 import GalleryPage from "pages/Dashboard/GalleryPage/GalleryPage";
 import MakePage from "pages/Dashboard/MakePage/MakePage";
@@ -18,7 +18,7 @@ const NavigationBar = () => {
   const navigate = useNavigate();
 
   const logout = useCallback(() => {
-    deleteToken();
+    deleteTokens();
     navigate("/login");
   }, [navigate]);
 

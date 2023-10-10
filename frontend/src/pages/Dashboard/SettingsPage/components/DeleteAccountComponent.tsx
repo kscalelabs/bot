@@ -1,7 +1,7 @@
 import { faDeleteLeft } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { api, humanReadableError } from "constants/backend";
-import { deleteToken } from "hooks/auth";
+import { deleteTokens } from "hooks/auth";
 import { useState } from "react";
 import { Button, Form, Spinner } from "react-bootstrap";
 
@@ -14,7 +14,7 @@ const DeleteAccountComponent = () => {
     setUseSpinner(true);
     try {
       await api.delete<boolean>("/users/myself");
-      deleteToken();
+      deleteTokens();
     } catch (error) {
       console.log(humanReadableError(error));
       setButtonEnabled(false);

@@ -7,6 +7,11 @@ export const api = axios.create({
   baseURL: BACKEND_URL,
 });
 
+export const apiNoRetry = axios.create({
+  withCredentials: true,
+  baseURL: BACKEND_URL,
+});
+
 export const humanReadableError = (error: any | undefined) => {
   if (axios.isAxiosError(error)) {
     const axiosError = error as AxiosError;

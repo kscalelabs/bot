@@ -122,14 +122,14 @@ class GoogleLogin(BaseModel):
 
 
 @users_router.post("/google")
-async def google_login(data: GoogleLogin) -> UserLoginResponse:
+async def google_login(data: GoogleLogin, response: Response) -> UserLoginResponse:
     try:
         idinfo = google_id_token.verify_oauth2_token(data.token, google_requests.Request())
         email = idinfo["email"]
     except ValueError:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid Google token")
     user_obj = await create_or_get(email)
-    return await get_login_response(user_obj)
+    return await get_login_response(response, user_obj)
 
 
 def get_token_from_cookie(token: str | None = Cookie(None)) -> str:
@@ -159,12 +159,12 @@ async def get_refresh_token(request: Request) -> RefreshTokenData:
 
 async def get_session_token(request: Request) -> SessionTokenData:
     # Tries Authorization header.
-    authorization = request.headers.get("Authorization")
+    authorization = request.headers.get("Authorization") or request.headers.get("authorization")
     if authorization:
         scheme, credentials = get_authorization_scheme_param(authorization)
         if not (scheme and credentials):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-        if scheme.lower() != TOKEN_TYPE:
+        if scheme.lower() != TOKEN_TYPE.lower():
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
         return SessionTokenData.decode(credentials)
 

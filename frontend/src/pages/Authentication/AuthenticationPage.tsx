@@ -20,7 +20,7 @@ const AuthenticationPage = () => {
     navigate(getRedirect());
   }, [navigate, getRedirect]);
 
-  if (getToken() !== null) {
+  if (getToken("refresh") !== null) {
     redirectOnLogin();
   }
 

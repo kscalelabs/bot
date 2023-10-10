@@ -26,7 +26,7 @@ const GoogleAuthComponent = ({ setMessage, redirectOnLogin }: Props) => {
           const response = await api.post<UserLoginResponse>("/users/google", {
             token: credential,
           });
-          setToken([response.data.token, response.data.token_type]);
+          setToken(response.data.token, "refresh");
           redirectOnLogin();
         } catch (error) {
           setMessage(["Error", humanReadableError(error)]);
