@@ -26,6 +26,17 @@ class Token(Model):
     expires = fields.DatetimeField(null=True)
 
 
+class Audio(Model):
+    uuid = fields.UUIDField(pk=True)
+    user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
+        "models.User",
+        related_name="audios",
+        on_delete=fields.CASCADE,
+        index=True,
+    )
+    generated = fields.BooleanField(index=True)
+
+
 # Pydantic models for FastAPI
 User_Pydantic = pydantic_model_creator(User, name="User")
 Token_Pydantic = pydantic_model_creator(Token, name="Token")

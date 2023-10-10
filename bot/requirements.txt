@@ -20,6 +20,13 @@ google-api-python-client
 bcrypt
 tortoise-orm[asyncpg]
 
+# File storage dependencies.
+aioboto3
+
+# Processing dependencies.
+numpy
+soundfile
+
 # Testing dependencies.
 pytest
 pytest-asyncio

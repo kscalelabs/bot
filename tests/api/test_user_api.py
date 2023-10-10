@@ -8,7 +8,7 @@ from bot.api.email import OneTimePassPayload
 
 
 @pytest.mark.asyncio
-async def test_user_signup(app_client: TestClient, mock_send_email: MockType) -> None:
+async def test_user_auth_functions(app_client: TestClient, mock_send_email: MockType) -> None:
     # Using my personal email so that if the mock function starts to fail
     # I will be inudated with emails letting me know how dumb I am.
     test_email = "ben@dpsh.dev"

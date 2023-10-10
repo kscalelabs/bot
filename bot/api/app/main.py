@@ -10,6 +10,7 @@ Usage:
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from bot.api.app.make import make_router
 from bot.api.app.users import users_router
 from bot.api.db import close_db, init_db
 from bot.settings import load_settings
@@ -48,3 +49,4 @@ async def read_index() -> bool:
 
 
 app.include_router(users_router, prefix="/users", tags=["users"])
+app.include_router(make_router, prefix="/make", tags=["make"])

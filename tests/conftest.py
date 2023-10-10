@@ -89,8 +89,9 @@ def mock_load_settings(mocker: MockerFixture, tmpdir_factory: TempdirFactory) ->
     settings.database.password = None
 
     # Sets the default image settings.
-    image_root_dir = tmpdir_factory.mktemp("images")
-    settings.image.root_dir = str(image_root_dir)
+    file_root_dir = tmpdir_factory.mktemp("files")
+    settings.file.fs_type = "file"
+    settings.file.root_dir = str(file_root_dir)
 
     # Sets the default email settings.
     settings.email.host = "localhost"
@@ -114,9 +115,30 @@ def mock_send_email(mocker: MockerFixture) -> MockType:
     return mock
 
 
+@pytest.fixture(scope="function", autouse=True)
+def mock_queue_for_generation(mocker: MockerFixture) -> MockType:
+    mock = mocker.patch("bot.api.audio.queue_for_generation")
+    mock.return_value = None
+    return mock
+
+
 @pytest.fixture()
 def app_client() -> Generator[TestClient, None, None]:
     from bot.api.app.main import app
 
     with TestClient(app) as app_client:
         yield app_client
+
+
+@pytest.fixture()
+async def authenticated_user(app_client: TestClient) -> tuple[TestClient, str]:
+    from bot.api.email import OneTimePassPayload
+
+    test_email = "ben@dpsh.dev"
+
+    # Logs the user in using the OTP.
+    otp = OneTimePassPayload(email=test_email)
+    response = app_client.post("/users/otp", json={"payload": await otp.encode()})
+    assert response.status_code == 200, response.json()
+
+    return app_client, test_email

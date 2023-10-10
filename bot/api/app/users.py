@@ -129,11 +129,6 @@ async def get_current_user_http_auth(authorization: HTTPAuthorizationCredentials
 
 
 async def get_current_user(request: Request) -> UserTokenData:
-    # Tries Cookie.
-    cookie_token = request.cookies.get(TOKEN_COOKIE_KEY)
-    if cookie_token:
-        return await UserTokenData.decode(cookie_token)
-
     # Tries Authorization header.
     authorization = request.headers.get("Authorization")
     if authorization:
@@ -143,6 +138,11 @@ async def get_current_user(request: Request) -> UserTokenData:
         if scheme.lower() != "bearer":
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
         return await UserTokenData.decode(credentials)
+
+    # Tries Cookie.
+    cookie_token = request.cookies.get(TOKEN_COOKIE_KEY)
+    if cookie_token:
+        return await UserTokenData.decode(cookie_token)
 
     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 

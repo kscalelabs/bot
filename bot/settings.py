@@ -31,10 +31,14 @@ class DatabaseSettings:
 
 
 @dataclass
-class ImageSettings:
-    # When reading and writing images to S3, use `safe_open` to ensure that
-    # the file is closed after reading/writing.
+class FileSettings:
+    fs_type: str = ml.conf_field(MISSING)
     root_dir: str = ml.conf_field(MISSING)
+    audio_file_ext: str = ml.conf_field("flac")
+    audio_sample_rate: int = ml.conf_field(16000)
+    audio_min_sample_rate: int = ml.conf_field(8000)
+    audio_max_mb: int = ml.conf_field(10)
+    s3_bucket: str = ml.conf_field(MISSING)
 
 
 @dataclass
@@ -61,7 +65,7 @@ class Settings:
     is_prod: bool = ml.conf_field(True)
     site: SiteSettings = ml.conf_field(SiteSettings())
     database: DatabaseSettings = ml.conf_field(DatabaseSettings())
-    image: ImageSettings = ml.conf_field(ImageSettings())
+    file: FileSettings = ml.conf_field(FileSettings())
     email: EmailSettings = ml.conf_field(EmailSettings())
     crypto: CryptoSettings = ml.conf_field(CryptoSettings())
 
