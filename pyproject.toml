@@ -41,8 +41,10 @@ disable_error_code = ["attr-defined"]
 [[tool.mypy.overrides]]
 
 module = [
-    "aioboto3",
+    "aioboto3.*",
+    "codec.*",
     "google.*",
+    "sounddevice.*",
     "soundfile.*",
 ]
 
