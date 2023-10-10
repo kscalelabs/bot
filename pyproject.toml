@@ -41,10 +41,9 @@ disable_error_code = ["attr-defined"]
 [[tool.mypy.overrides]]
 
 module = [
-    "codec.*",
-    "discord.*",
-    "torchaudio.*",
-    "sounddevice.*",
+    "aioboto3",
+    "google.*",
+    "soundfile.*",
 ]
 
 ignore_missing_imports = true

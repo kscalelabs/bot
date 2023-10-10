@@ -9,7 +9,7 @@ const SettingsPage = () => {
   return (
     <Container>
       <Row className="justify-content-center">
-        <Col md={4}>
+        <Col md={8}>
           <Row className="mb-4">
             <h1>Settings</h1>
           </Row>

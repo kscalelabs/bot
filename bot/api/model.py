@@ -14,7 +14,7 @@ class User(Model):
 
 class Token(Model):
     uuid = fields.UUIDField(pk=True)
-    user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
+    user: fields.ForeignKeyRelation[User] | None = fields.ForeignKeyField(
         "models.User",
         related_name="tokens",
         on_delete=fields.CASCADE,
@@ -33,6 +33,7 @@ class Audio(Model):
         related_name="audios",
         on_delete=fields.CASCADE,
         index=True,
+        null=False,
     )
     generated = fields.BooleanField(index=True)
 

@@ -3,7 +3,6 @@ import { api } from "constants/backend";
 import { deleteToken } from "hooks/auth";
 import DashboardContent from "pages/Dashboard/DashboardContent/DashboardContent";
 import GalleryPage from "pages/Dashboard/GalleryPage/GalleryPage";
-import HistoryPage from "pages/Dashboard/HistoryPage/HistoryPage";
 import MakePage from "pages/Dashboard/MakePage/MakePage";
 import SettingsPage from "pages/Dashboard/SettingsPage/SettingsPage";
 import Error404Page from "pages/Error/Error404Page";
@@ -82,9 +81,6 @@ const NavigationBar = () => {
                 align="end"
               >
                 <NavDropdown.Header>{email}</NavDropdown.Header>
-                <NavDropdown.Item onClick={() => navigate("/history")}>
-                  <i className="fa fa-history" /> History
-                </NavDropdown.Item>
                 <NavDropdown.Item onClick={() => navigate("/settings")}>
                   <i className="fa fa-cog" /> Settings
                 </NavDropdown.Item>
@@ -109,7 +105,6 @@ const Dashboard = () => {
           <Route index element={<DashboardContent />} />
           <Route path="gallery" element={<GalleryPage />} />
           <Route path="make" element={<MakePage />} />
-          <Route path="history" element={<HistoryPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="*" element={<Error404Page />} />
         </Routes>

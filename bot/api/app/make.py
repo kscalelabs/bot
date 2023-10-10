@@ -2,7 +2,6 @@
 
 from uuid import UUID
 
-import soundfile as sf
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, status
 from pydantic.main import BaseModel
 
@@ -41,10 +40,9 @@ async def upload(
     user_data: UserTokenData = Depends(get_current_user),
     file_size_verified: int = Depends(verify_file_size),
 ) -> UploadResponse:
-    audio_file = sf.SoundFile(file.file)
     audio_entry = await Audio.create(user_id=user_data.user_id, generated=False)
     uuid = audio_entry.uuid
-    await save_uuid(uuid, audio_file)
+    await save_uuid(uuid, file.file)
     return UploadResponse(uuid=uuid)
 
 

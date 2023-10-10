@@ -11,7 +11,8 @@ import functools
 import os
 import shutil
 import tempfile
-from typing import Literal, cast, get_args
+from typing import BinaryIO, Literal, cast, get_args
+from uuid import UUID
 
 import aioboto3
 import librosa
@@ -29,44 +30,46 @@ def get_fs_type() -> FSType:
     return cast(FSType, fs_type_str)
 
 
-def get_path(uuid: str) -> str:
+def get_path(uuid: UUID) -> str:
     settings = load_settings()
     return f"{settings.file.root_dir}/{uuid}.{settings.file.audio_file_ext}"
 
 
-async def save_uuid(uuid: str, file: sf.SoundFile) -> None:
+async def save_uuid(uuid: UUID, file: BinaryIO) -> None:
     settings = load_settings().file
-    sr, min_sr = settings.audio_sample_rate, settings.audio_min_sample_rate
-    if file.samplerate < min_sr:
-        raise ValueError(f"Sample rate must be at least {min_sr} Hz, got {file.samplerate}")
+    target_sr, min_sr = settings.audio_sample_rate, settings.audio_min_sample_rate
+
+    # Reads the file into memory.
+    data, orig_sr = sf.read(file)
+    if orig_sr < min_sr:
+        raise ValueError(f"Sample rate must be at least {min_sr} Hz")
 
     # Resamples to the target sample rate.
-    data = file.read()
-    data = librosa.resample(data, orig_sr=file.samplerate, target_sr=sr)
+    data = librosa.resample(data.T, orig_sr=orig_sr, target_sr=target_sr, res_type="kaiser_fast").T
 
-    # Saves to a temporary file.
+    # Saves to the filesystem.
     ext = settings.audio_file_ext
     fs_type, fs_path = get_fs_type(), get_path(uuid)
-    temp_file = tempfile.NamedTemporaryFile(suffix=f".{ext}")
-    sf.write(temp_file.name, data, sr, format="flac")
 
     match fs_type:
         case "file":
-            # Since we're just moving it, we don't need to delete it afterwards.
+            with tempfile.NamedTemporaryFile(suffix=f".{ext}", delete=False) as temp_file:
+                sf.write(temp_file.name, data, target_sr, format=ext)
             shutil.move(temp_file.name, fs_path)
 
         case "s3":
-            s3_bucket = settings.s3_bucket
-            async with aioboto3.resource("s3") as s3:
-                bucket = await s3.Bucket(s3_bucket)
-                await bucket.upload_file(temp_file.name, fs_path)
-            temp_file.close()
+            with tempfile.NamedTemporaryFile(suffix=f".{ext}") as temp_file:
+                sf.write(temp_file.name, data, orig_sr, format="flac")
+                s3_bucket = settings.s3_bucket
+                async with aioboto3.resource("s3") as s3:
+                    bucket = await s3.Bucket(s3_bucket)
+                    await bucket.upload_file(temp_file.name, fs_path)
 
         case _:
             raise ValueError(f"Invalid file system type: {fs_type}")
 
 
-async def delete_uuid(uuid: str) -> None:
+async def delete_uuid(uuid: UUID) -> None:
     fs_type, fs_path = get_fs_type(), get_path(uuid)
 
     match fs_type:
@@ -82,7 +85,7 @@ async def delete_uuid(uuid: str) -> None:
             raise ValueError(f"Invalid file system type: {fs_type}")
 
 
-async def queue_for_generation(orig_uuid: str, ref_uuid: str, gen_uuid: str) -> None:
+async def queue_for_generation(orig_uuid: UUID, ref_uuid: UUID, gen_uuid: UUID) -> None:
     """Queues a pair of audio samples for generation.
 
     After generation is finished, we save the file to the ``gen_uuid`` path.

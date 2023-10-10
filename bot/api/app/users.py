@@ -97,7 +97,7 @@ async def otp(data: OneTimePass, response: Response) -> UserLoginResponse:
         httponly=True,
         secure=is_prod,
         # samesite="Strict",
-        samesite="None",
+        samesite="none",
     )
     return login_response
 

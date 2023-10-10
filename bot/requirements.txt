@@ -24,7 +24,9 @@ tortoise-orm[asyncpg]
 aioboto3
 
 # Processing dependencies.
+librosa
 numpy
+resampy
 soundfile
 
 # Testing dependencies.

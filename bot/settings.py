@@ -4,6 +4,7 @@ import functools
 import os
 from dataclasses import dataclass
 from pathlib import Path
+from typing import cast
 
 import ml.api as ml
 from omegaconf import II, MISSING, OmegaConf
@@ -37,6 +38,7 @@ class FileSettings:
     audio_file_ext: str = ml.conf_field("flac")
     audio_sample_rate: int = ml.conf_field(16000)
     audio_min_sample_rate: int = ml.conf_field(8000)
+    audio_res_type: str = ml.conf_field("kaiser_fast")
     audio_max_mb: int = ml.conf_field(10)
     s3_bucket: str = ml.conf_field(MISSING)
 
@@ -90,4 +92,4 @@ def load_settings() -> Settings:
         raw_configs = (OmegaConf.load(config) for config in config_paths)
         config = OmegaConf.merge(OmegaConf.structured(Settings), *raw_configs)
     OmegaConf.resolve(config)
-    return config
+    return cast(Settings, config)

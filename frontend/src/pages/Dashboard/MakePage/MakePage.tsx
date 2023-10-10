@@ -5,15 +5,17 @@ import { Col, Container, Row } from "react-bootstrap";
 const MakePage = () => {
   return (
     <Container>
-      <Col>
-        <Row>
-          <h1>Make</h1>
-        </Row>
-        <Row>
-          <AudioRecorder />
-          <AudioUploader />
-        </Row>
-      </Col>
+      <Row className="justify-content-center">
+        <Col md={8}>
+          <Row>
+            <h1>Make</h1>
+          </Row>
+          <Row>
+            <AudioRecorder />
+            <AudioUploader />
+          </Row>
+        </Col>
+      </Row>
     </Container>
   );
 };

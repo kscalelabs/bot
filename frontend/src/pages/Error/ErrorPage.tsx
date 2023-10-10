@@ -17,11 +17,7 @@ const ErrorPage = (props: Props) => {
   };
 
   return (
-    <Container
-      fluid
-      className="h-100 d-flex justify-content-center align-items-center"
-      style={{ minHeight: "100vh" }}
-    >
+    <Container>
       <Row className="text-center">
         <Col>
           <Row className="aspect-ratio aspect-ratio-1x1">

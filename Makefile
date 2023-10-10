@@ -70,6 +70,7 @@ format:
 static-checks:
 	@black --diff --check $(py-files)
 	@ruff $(py-files)
+	@mypy --install-types --non-interactive $(py-files)
 .PHONY: lint
 
 mypy-daemon:
