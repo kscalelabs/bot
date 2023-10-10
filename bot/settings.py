@@ -55,8 +55,8 @@ class EmailSettings:
 @dataclass
 class CryptoSettings:
     jwt_secret: str = ml.conf_field(MISSING)
-    expire_token_minutes: int = ml.conf_field(60 * 24)
-    expire_otp_minutes: int = ml.conf_field(10)
+    expire_token_minutes: int = ml.conf_field(30)
+    expire_otp_minutes: int = ml.conf_field(5)
     algorithm: str = ml.conf_field("HS256")
 
 

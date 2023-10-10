@@ -12,6 +12,19 @@ class User(Model):
     banned = fields.BooleanField(default=False)
 
 
+class Token(Model):
+    id = fields.IntField(pk=True)
+    user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
+        "models.User",
+        related_name="tokens",
+        on_delete=fields.CASCADE,
+        index=True,
+        null=False,
+    )
+    issued = fields.DatetimeField(auto_now_add=True)
+    disabled = fields.BooleanField(default=False)
+
+
 class Audio(Model):
     uuid = fields.UUIDField(pk=True)
     user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(

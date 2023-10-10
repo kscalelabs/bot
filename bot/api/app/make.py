@@ -5,7 +5,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, status
 from pydantic.main import BaseModel
 
-from bot.api.app.users import UserTokenData, get_current_user
+from bot.api.app.users import SessionTokenData, get_session_token
 from bot.api.audio import queue_for_generation, save_uuid
 from bot.api.model import Audio
 from bot.settings import load_settings
@@ -37,7 +37,7 @@ async def verify_file_size(request: Request) -> int:
 @make_router.post("/upload", response_model=UploadResponse)
 async def upload(
     file: UploadFile,
-    user_data: UserTokenData = Depends(get_current_user),
+    user_data: SessionTokenData = Depends(get_session_token),
     file_size_verified: int = Depends(verify_file_size),
 ) -> UploadResponse:
     audio_entry = await Audio.create(user_id=user_data.user_id, generated=False)
@@ -56,7 +56,7 @@ class RunResponse(BaseModel):
 
 
 @make_router.post("/run", response_model=RunResponse)
-async def run(data: RunRequest, user_data: UserTokenData = Depends(get_current_user)) -> RunResponse:
+async def run(data: RunRequest, user_data: SessionTokenData = Depends(get_session_token)) -> RunResponse:
     audio = await Audio.create(user_id=user_data.user_id, generated=True)
     gen_uuid = audio.uuid
     await queue_for_generation(data.orig_uuid, data.ref_uuid, gen_uuid)

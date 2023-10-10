@@ -3,32 +3,62 @@
 from email.utils import parseaddr as parse_email_address
 
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.security import HTTPBearer
 from fastapi.security.utils import get_authorization_scheme_param
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token as google_id_token
 from pydantic.main import BaseModel
 
 from bot.api.email import OneTimePassPayload, send_delete_email, send_otp_email
-from bot.api.model import User
-from bot.api.token import create_token, load_token
+from bot.api.model import Token, User
+from bot.api.token import create_refresh_token, create_token, load_refresh_token, load_token
 from bot.settings import load_settings
 
 users_router = APIRouter()
 
 security = HTTPBearer()
 
-TOKEN_COOKIE_KEY = "__DPSH_TOKEN"
+REFRESH_TOKEN_COOKIE_KEY = "__DPSH_REFRESH_TOKEN"
+SESSION_TOKEN_COOKIE_KEY = "__DPSH_SESSION_TOKEN"
+
+TOKEN_TYPE = "Bearer"
 
 
-class UserTokenData(BaseModel):
+def set_token_cookie(response: Response, token: str, key: str) -> None:
+    is_prod = load_settings().is_prod
+    response.set_cookie(
+        key=key,
+        value=token,
+        httponly=True,
+        secure=is_prod,
+        # samesite="strict",
+        samesite="none",
+    )
+
+
+class RefreshTokenData(BaseModel):
+    user_id: int
+    token_id: int
+
+    @classmethod
+    async def encode(cls, user: User) -> str:
+        return await create_refresh_token(user)
+
+    @classmethod
+    def decode(cls, payload: str) -> "RefreshTokenData":
+        user_id, token_id = load_refresh_token(payload)
+        return cls(user_id=user_id, token_id=token_id)
+
+
+class SessionTokenData(BaseModel):
     user_id: int
 
     def encode(self) -> str:
-        return create_token({"uid": self.user_id})
+        expire_minutes = load_settings().crypto.expire_token_minutes
+        return create_token({"uid": self.user_id}, expire_minutes=expire_minutes)
 
     @classmethod
-    def decode(cls, payload: str) -> "UserTokenData":
+    def decode(cls, payload: str) -> "SessionTokenData":
         data = load_token(payload)
         return cls(user_id=data["uid"])
 
@@ -74,28 +104,17 @@ async def create_or_get(email: str) -> User:
     return user_obj
 
 
-async def get_login_response(user_obj: User) -> UserLoginResponse:
-    return UserLoginResponse(
-        token=UserTokenData(user_id=user_obj.id).encode(),
-        token_type="bearer",
-    )
+async def get_login_response(response: Response, user_obj: User) -> UserLoginResponse:
+    refresh_token = await RefreshTokenData.encode(user_obj)
+    set_token_cookie(response, refresh_token, REFRESH_TOKEN_COOKIE_KEY)
+    return UserLoginResponse(token=refresh_token, token_type=TOKEN_TYPE)
 
 
 @users_router.post("/otp", response_model=UserLoginResponse)
 async def otp(data: OneTimePass, response: Response) -> UserLoginResponse:
     payload = OneTimePassPayload.decode(data.payload)
     user_obj = await create_or_get(payload.email)
-    login_response = await get_login_response(user_obj)
-    is_prod = load_settings().is_prod
-    response.set_cookie(
-        key=TOKEN_COOKIE_KEY,
-        value=login_response.token,
-        httponly=True,
-        secure=is_prod,
-        # samesite="Strict",
-        samesite="none",
-    )
-    return login_response
+    return await get_login_response(response, user_obj)
 
 
 class GoogleLogin(BaseModel):
@@ -119,26 +138,40 @@ def get_token_from_cookie(token: str | None = Cookie(None)) -> str:
     return token
 
 
-async def get_current_user_http_auth(authorization: HTTPAuthorizationCredentials = Depends(security)) -> UserTokenData:
-    token = authorization.credentials
-    return UserTokenData.decode(token)
-
-
-async def get_current_user(request: Request) -> UserTokenData:
+async def get_refresh_token(request: Request) -> RefreshTokenData:
     # Tries Authorization header.
     authorization = request.headers.get("Authorization")
     if authorization:
         scheme, credentials = get_authorization_scheme_param(authorization)
         if not (scheme and credentials):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-        if scheme.lower() != "bearer":
+        if scheme.lower() != TOKEN_TYPE.lower():
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-        return UserTokenData.decode(credentials)
+        return RefreshTokenData.decode(credentials)
 
     # Tries Cookie.
-    cookie_token = request.cookies.get(TOKEN_COOKIE_KEY)
+    cookie_token = request.cookies.get(REFRESH_TOKEN_COOKIE_KEY)
     if cookie_token:
-        return UserTokenData.decode(cookie_token)
+        return RefreshTokenData.decode(cookie_token)
+
+    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+
+
+async def get_session_token(request: Request) -> SessionTokenData:
+    # Tries Authorization header.
+    authorization = request.headers.get("Authorization")
+    if authorization:
+        scheme, credentials = get_authorization_scheme_param(authorization)
+        if not (scheme and credentials):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+        if scheme.lower() != TOKEN_TYPE:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+        return SessionTokenData.decode(credentials)
+
+    # Tries Cookie.
+    cookie_token = request.cookies.get(SESSION_TOKEN_COOKIE_KEY)
+    if cookie_token:
+        return SessionTokenData.decode(cookie_token)
 
     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
@@ -148,7 +181,7 @@ class UserInfoResponse(BaseModel):
 
 
 @users_router.get("/me", response_model=UserInfoResponse)
-async def get_user_info(data: UserTokenData = Depends(get_current_user)) -> UserInfoResponse:
+async def get_user_info(data: SessionTokenData = Depends(get_session_token)) -> UserInfoResponse:
     user_obj = await User.get_or_none(id=data.user_id)
     if not user_obj:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
@@ -156,7 +189,7 @@ async def get_user_info(data: UserTokenData = Depends(get_current_user)) -> User
 
 
 @users_router.delete("/myself")
-async def delete_user(data: UserTokenData = Depends(get_current_user)) -> bool:
+async def delete_user(data: SessionTokenData = Depends(get_session_token)) -> bool:
     user_obj = await User.get_or_none(id=data.user_id)
     if not user_obj:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
@@ -166,6 +199,22 @@ async def delete_user(data: UserTokenData = Depends(get_current_user)) -> bool:
 
 
 @users_router.delete("/logout")
-async def logout_user(response: Response) -> bool:
-    response.delete_cookie(key=TOKEN_COOKIE_KEY)
+async def logout_user(response: Response, data: SessionTokenData = Depends(get_session_token)) -> bool:
+    response.delete_cookie(key=SESSION_TOKEN_COOKIE_KEY)
+    response.delete_cookie(key=REFRESH_TOKEN_COOKIE_KEY)
     return True
+
+
+class RefreshTokenResponse(BaseModel):
+    token: str
+    token_type: str
+
+
+@users_router.post("/refresh", response_model=RefreshTokenResponse)
+async def refresh(response: Response, data: RefreshTokenData = Depends(get_refresh_token)) -> RefreshTokenResponse:
+    token = await Token.get_or_none(id=data.token_id)
+    if not token or token.disabled:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid token")
+    session_token = SessionTokenData(user_id=data.user_id).encode()
+    set_token_cookie(response, session_token, SESSION_TOKEN_COOKIE_KEY)
+    return RefreshTokenResponse(token=session_token, token_type=TOKEN_TYPE)

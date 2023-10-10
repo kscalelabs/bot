@@ -134,4 +134,8 @@ def authenticated_user(app_client: TestClient) -> tuple[TestClient, str]:
     response = app_client.post("/users/otp", json={"payload": otp.encode()})
     assert response.status_code == 200, response.json()
 
+    # Gets a session token.
+    response = app_client.post("/users/refresh")
+    assert response.status_code == 200, response.json()
+
     return app_client, test_email

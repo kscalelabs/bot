@@ -28,11 +28,20 @@ def test_user_auth_functions(app_client: TestClient, mock_send_email: MockType) 
     response = app_client.post("/users/otp", json={"payload": otp.encode()})
     assert response.status_code == 200, response.json()
 
+    # Checks that we get a 401 without a session token.
+    response = app_client.get("/users/me")
+    assert response.status_code == 401, response.json()
+    assert response.json()["detail"] == "Not authenticated"
+
+    # Get a session token.
+    response = app_client.post("/users/refresh")
+    assert response.status_code == 200, response.json()
+    assert response.json()["token_type"] == "Bearer"
+
     # Gets the user's profile using the token.
     response = app_client.get("/users/me")
     assert response.status_code == 200, response.json()
-    data = response.json()
-    assert data["email"] == test_email
+    assert response.json()["email"] == test_email
 
     # Log the user out.
     response = app_client.delete("/users/logout")
@@ -46,6 +55,10 @@ def test_user_auth_functions(app_client: TestClient, mock_send_email: MockType) 
 
     # Log the user back in.
     response = app_client.post("/users/otp", json={"payload": otp.encode()})
+    assert response.status_code == 200, response.json()
+
+    # Gets another session token.
+    response = app_client.post("/users/refresh")
     assert response.status_code == 200, response.json()
 
     # Delete the user.
