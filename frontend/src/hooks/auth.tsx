@@ -28,6 +28,8 @@ export const deleteToken = () => {
   localStorage.removeItem(TOKEN_TYPE_KEY);
 };
 
+// Add the token to the Authorization header for every request, and invalidate
+// the token if the server returns a 401.
 api.interceptors.request.use(
   (config) => {
     const token = getToken();
