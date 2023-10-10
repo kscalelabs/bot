@@ -10,7 +10,7 @@ const AudioUploader = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     setErrorMessage(null);
 
