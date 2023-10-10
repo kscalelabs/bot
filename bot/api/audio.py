@@ -17,6 +17,7 @@ from uuid import UUID
 import aioboto3
 import librosa
 import soundfile as sf
+from pydub import AudioSegment
 
 from bot.settings import load_settings
 
@@ -35,12 +36,21 @@ def get_path(uuid: UUID) -> str:
     return f"{settings.file.root_dir}/{uuid}.{settings.file.audio_file_ext}"
 
 
-async def save_uuid(uuid: UUID, file: BinaryIO) -> None:
+async def save_uuid(uuid: UUID, file: BinaryIO, filename: str) -> None:
     settings = load_settings().file
     target_sr, min_sr = settings.audio_sample_rate, settings.audio_min_sample_rate
 
-    # Reads the file into memory.
-    data, orig_sr = sf.read(file)
+    # Soundfile can't handle webm files, so we convert to wav first.
+    file_extension = filename.split(".")[-1].lower() if "." in filename else None
+    if file_extension == "webm":
+        audio = AudioSegment.from_file(file, "webm")
+        with tempfile.NamedTemporaryFile(suffix=".wav") as temp_file:
+            audio.export(temp_file.name, format="wav")
+            data, orig_sr = sf.read(temp_file.name)
+    else:
+        # Reads the file into memory.
+        data, orig_sr = sf.read(file)
+
     if orig_sr < min_sr:
         raise ValueError(f"Sample rate must be at least {min_sr} Hz")
 

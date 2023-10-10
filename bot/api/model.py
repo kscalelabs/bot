@@ -1,6 +1,8 @@
 # mypy: disable-error-code="var-annotated"
 """Defines the table models for the API."""
 
+import enum
+
 from tortoise import fields
 from tortoise.contrib.pydantic import pydantic_model_creator
 from tortoise.models import Model
@@ -25,6 +27,24 @@ class Token(Model):
     disabled = fields.BooleanField(default=False)
 
 
+class AudioSource(enum.Enum):
+    UPLOAD = "upload"
+    RECORDING = "recording"
+    GENERATED = "generated"
+
+
+def cast_audio_source(s: str) -> AudioSource:
+    match s:
+        case "upload":
+            return AudioSource.UPLOAD
+        case "recording":
+            return AudioSource.RECORDING
+        case "generated":
+            return AudioSource.GENERATED
+        case _:
+            raise ValueError(f"Invalid audio source {s}")
+
+
 class Audio(Model):
     uuid = fields.UUIDField(pk=True)
     user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
@@ -34,7 +54,7 @@ class Audio(Model):
         index=True,
         null=False,
     )
-    generated = fields.BooleanField(index=True)
+    source = fields.CharEnumField(enum_type=AudioSource, index=True)
 
 
 # Pydantic models for FastAPI

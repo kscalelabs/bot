@@ -29,7 +29,11 @@ async def test_make_functions(
     # Tests uploading two audio files to the "/make/upload" endpoint.
     uuids: list[str] = []
     for _ in range(2):
-        response = app_client.post("/make/upload", files={"file": ("test.wav", audio_file_raw)})
+        response = app_client.post(
+            "/make/upload",
+            files={"file": ("test.wav", audio_file_raw)},
+            data={"source": "upload"},
+        )
         assert response.status_code == 200, (response.status_code, response.json())
         data = response.json()
         uuids.append(data["uuid"])

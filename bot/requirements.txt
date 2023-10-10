@@ -26,6 +26,7 @@ aioboto3
 # Processing dependencies.
 librosa
 numpy
+pydub
 resampy
 soundfile
 

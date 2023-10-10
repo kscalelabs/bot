@@ -24,6 +24,7 @@
     "react-bootstrap": "^2.9.0",
     "react-dom": "^18.2.0",
     "react-fontawesome": "^1.7.1",
+    "react-media-recorder": "^1.6.5",
     "react-router-dom": "^6.16.0",
     "react-scripts": "^5.0.1",
     "typescript": "^4.9.5",

@@ -47,6 +47,7 @@ api.interceptors.request.use(
     const token = getToken("session");
     if (token !== null) {
       config.headers.Authorization = `Bearer ${token}`;
+      config.headers["Access-Control-Allow-Origin"] = "*";
     }
     return config;
   },
@@ -80,6 +81,7 @@ api.interceptors.response.use(
           {
             headers: {
               Authorization: `Bearer ${refreshToken}`,
+              "Access-Control-Allow-Origin": "*",
             },
           }
         );

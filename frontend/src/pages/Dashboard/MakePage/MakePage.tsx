@@ -1,5 +1,4 @@
-import AudioRecorder from "components/audio/AudioRecoder";
-import AudioUploader from "components/audio/AudioUploader";
+import AudioInput from "components/input/AudioInput";
 import { Col, Container, Row } from "react-bootstrap";
 
 const MakePage = () => {
@@ -10,9 +9,10 @@ const MakePage = () => {
           <Row>
             <h1>Make</h1>
           </Row>
-          <Row>
-            <AudioRecorder />
-            <AudioUploader />
+          <Row className="mb-3">
+            <Col>
+              <AudioInput />
+            </Col>
           </Row>
         </Col>
       </Row>
