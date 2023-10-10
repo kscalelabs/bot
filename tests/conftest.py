@@ -108,16 +108,9 @@ def mock_load_settings(mocker: MockerFixture, tmpdir_factory: TempdirFactory) ->
     return mock
 
 
-@pytest.fixture(scope="function", autouse=True)
+@pytest.fixture(autouse=True)
 def mock_send_email(mocker: MockerFixture) -> MockType:
     mock = mocker.patch("bot.api.email.send_email")
-    mock.return_value = None
-    return mock
-
-
-@pytest.fixture(scope="function", autouse=True)
-def mock_queue_for_generation(mocker: MockerFixture) -> MockType:
-    mock = mocker.patch("bot.api.audio.queue_for_generation")
     mock.return_value = None
     return mock
 

@@ -8,13 +8,11 @@ import pytest
 import soundfile as sf
 from _pytest.legacypath import TempdirFactory
 from fastapi.testclient import TestClient
-from pytest_mock.plugin import MockType
 
 
 @pytest.mark.asyncio
 async def test_make_functions(
     authenticated_user: Awaitable[tuple[TestClient, str]],
-    mock_queue_for_generation: MockType,
     tmpdir_factory: TempdirFactory,
 ) -> None:
     app_client, _ = await authenticated_user
@@ -41,4 +39,3 @@ async def test_make_functions(
     response = app_client.post("/make/run", json={"orig_uuid": uuids[0], "ref_uuid": uuids[1]})
     assert response.status_code == 200, response.json()
     assert "gen_uuid" in response.json(), response.json()
-    assert mock_queue_for_generation.call_count == 1

@@ -35,10 +35,7 @@ const AudioRecorder = () => {
     const formData = new FormData();
     formData.append("audio", audioData, "audio.wav");
     try {
-      const response = await api.post<UploadAudioResponse>(
-        "/make/upload",
-        formData
-      );
+      await api.post<UploadAudioResponse>("/make/upload", formData);
     } catch (error) {
       setErrorMessage(humanReadableError(error));
     }
