@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Col, Container, Modal, Row } from "react-bootstrap";
 import DeleteAccountComponent from "./components/DeleteAccountComponent";
-import LogOutAllComponent from "./components/LogOutAllComponent";
 
 const SettingsPage = () => {
   const [message, setMessage] = useState<[string, string] | null>(null);
@@ -12,9 +11,6 @@ const SettingsPage = () => {
         <Col md={8}>
           <Row className="mb-4">
             <h1>Settings</h1>
-          </Row>
-          <Row className="mb-4">
-            <LogOutAllComponent setMessage={setMessage} />
           </Row>
           <Row>
             <DeleteAccountComponent />

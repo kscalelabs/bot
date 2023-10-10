@@ -1,14 +1,12 @@
 """Runs tests on the user APIs."""
 
-import pytest
 from fastapi.testclient import TestClient
 from pytest_mock.plugin import MockType
 
 from bot.api.email import OneTimePassPayload
 
 
-@pytest.mark.asyncio
-async def test_user_auth_functions(app_client: TestClient, mock_send_email: MockType) -> None:
+def test_user_auth_functions(app_client: TestClient, mock_send_email: MockType) -> None:
     # Using my personal email so that if the mock function starts to fail
     # I will be inudated with emails letting me know how dumb I am.
     test_email = "ben@dpsh.dev"
@@ -27,7 +25,7 @@ async def test_user_auth_functions(app_client: TestClient, mock_send_email: Mock
 
     # Uses the one-time pass to set client cookies.
     otp = OneTimePassPayload(email=test_email)
-    response = app_client.post("/users/otp", json={"payload": await otp.encode()})
+    response = app_client.post("/users/otp", json={"payload": otp.encode()})
     assert response.status_code == 200, response.json()
 
     # Gets the user's profile using the token.
@@ -47,16 +45,7 @@ async def test_user_auth_functions(app_client: TestClient, mock_send_email: Mock
     assert response.json()["detail"] == "Not authenticated"
 
     # Log the user back in.
-    response = app_client.post("/users/otp", json={"payload": await otp.encode()})
-    assert response.status_code == 200, response.json()
-
-    # Log the user out everywhere.
-    response = app_client.delete("/users/logout/all")
-    assert response.status_code == 200, response.json()
-    assert response.json() is True
-
-    # Log the user back in.
-    response = app_client.post("/users/otp", json={"payload": await otp.encode()})
+    response = app_client.post("/users/otp", json={"payload": otp.encode()})
     assert response.status_code == 200, response.json()
 
     # Delete the user.
@@ -66,5 +55,5 @@ async def test_user_auth_functions(app_client: TestClient, mock_send_email: Mock
 
     # Make sure the user is gone.
     response = app_client.get("/users/me")
-    assert response.status_code == 401, response.json()
-    assert response.json()["detail"] == "Token is disabled"
+    assert response.status_code == 400, response.json()
+    assert response.json()["detail"] == "User not found"

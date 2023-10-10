@@ -10,7 +10,7 @@ from google.oauth2 import id_token as google_id_token
 from pydantic.main import BaseModel
 
 from bot.api.email import OneTimePassPayload, send_delete_email, send_otp_email
-from bot.api.model import Token, User
+from bot.api.model import User
 from bot.api.token import create_token, load_token
 from bot.settings import load_settings
 
@@ -24,17 +24,13 @@ TOKEN_COOKIE_KEY = "__DPSH_TOKEN"
 class UserTokenData(BaseModel):
     user_id: int
 
-    async def encode(self) -> str:
-        return await create_token({}, user=await User.get(id=self.user_id))
+    def encode(self) -> str:
+        return create_token({"uid": self.user_id})
 
     @classmethod
-    async def encode_from_user(cls, user: User) -> str:
-        return await create_token({}, user=user)
-
-    @classmethod
-    async def decode(cls, payload: str) -> "UserTokenData":
-        token, _ = await load_token(payload)
-        return cls(user_id=token.user_id)
+    def decode(cls, payload: str) -> "UserTokenData":
+        data = load_token(payload)
+        return cls(user_id=data["uid"])
 
 
 class UserSignup(BaseModel):
@@ -80,14 +76,14 @@ async def create_or_get(email: str) -> User:
 
 async def get_login_response(user_obj: User) -> UserLoginResponse:
     return UserLoginResponse(
-        token=await UserTokenData.encode_from_user(user_obj),
+        token=UserTokenData(user_id=user_obj.id).encode(),
         token_type="bearer",
     )
 
 
 @users_router.post("/otp", response_model=UserLoginResponse)
 async def otp(data: OneTimePass, response: Response) -> UserLoginResponse:
-    payload = await OneTimePassPayload.decode(data.payload)
+    payload = OneTimePassPayload.decode(data.payload)
     user_obj = await create_or_get(payload.email)
     login_response = await get_login_response(user_obj)
     is_prod = load_settings().is_prod
@@ -125,7 +121,7 @@ def get_token_from_cookie(token: str | None = Cookie(None)) -> str:
 
 async def get_current_user_http_auth(authorization: HTTPAuthorizationCredentials = Depends(security)) -> UserTokenData:
     token = authorization.credentials
-    return await UserTokenData.decode(token)
+    return UserTokenData.decode(token)
 
 
 async def get_current_user(request: Request) -> UserTokenData:
@@ -137,12 +133,12 @@ async def get_current_user(request: Request) -> UserTokenData:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
         if scheme.lower() != "bearer":
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-        return await UserTokenData.decode(credentials)
+        return UserTokenData.decode(credentials)
 
     # Tries Cookie.
     cookie_token = request.cookies.get(TOKEN_COOKIE_KEY)
     if cookie_token:
-        return await UserTokenData.decode(cookie_token)
+        return UserTokenData.decode(cookie_token)
 
     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
@@ -172,13 +168,4 @@ async def delete_user(data: UserTokenData = Depends(get_current_user)) -> bool:
 @users_router.delete("/logout")
 async def logout_user(response: Response) -> bool:
     response.delete_cookie(key=TOKEN_COOKIE_KEY)
-    return True
-
-
-@users_router.delete("/logout/all")
-async def logout_all_users(data: UserTokenData = Depends(get_current_user)) -> bool:
-    user_obj = await User.get_or_none(id=data.user_id)
-    if not user_obj:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
-    await Token.filter(user=user_obj).delete()
     return True

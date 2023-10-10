@@ -124,14 +124,14 @@ def app_client() -> Generator[TestClient, None, None]:
 
 
 @pytest.fixture()
-async def authenticated_user(app_client: TestClient) -> tuple[TestClient, str]:
+def authenticated_user(app_client: TestClient) -> tuple[TestClient, str]:
     from bot.api.email import OneTimePassPayload
 
     test_email = "ben@dpsh.dev"
 
     # Logs the user in using the OTP.
     otp = OneTimePassPayload(email=test_email)
-    response = app_client.post("/users/otp", json={"payload": await otp.encode()})
+    response = app_client.post("/users/otp", json={"payload": otp.encode()})
     assert response.status_code == 200, response.json()
 
     return app_client, test_email
