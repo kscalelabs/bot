@@ -2,26 +2,32 @@ import { faDeleteLeft } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { api, humanReadableError } from "constants/backend";
 import { deleteTokens } from "hooks/auth";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Button, Form, Spinner } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 
 const DeleteAccountComponent = () => {
   const [buttonEnabled, setButtonEnabled] = useState(false);
   const [useSpinner, setUseSpinner] = useState(false);
+  const navigate = useNavigate();
 
-  const handleDeleteAccount = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setUseSpinner(true);
-    try {
-      await api.delete<boolean>("/users/myself");
-      deleteTokens();
-    } catch (error) {
-      console.log(humanReadableError(error));
-      setButtonEnabled(false);
-    } finally {
-      setUseSpinner(false);
-    }
-  };
+  const handleDeleteAccount = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      setUseSpinner(true);
+      try {
+        await api.delete<boolean>("/users/myself");
+        deleteTokens();
+        navigate("/login");
+      } catch (error) {
+        console.log(humanReadableError(error));
+        setButtonEnabled(false);
+      } finally {
+        setUseSpinner(false);
+      }
+    },
+    [navigate]
+  );
 
   return (
     <Form.Group>

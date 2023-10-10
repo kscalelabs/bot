@@ -3,7 +3,7 @@ import { getToken } from "hooks/auth";
 import LogInComponent from "pages/Authentication/components/LogInComponent";
 import { useCallback, useState } from "react";
 import { Col, Container, Image, Modal, Row } from "react-bootstrap";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import GoogleAuthComponent from "./components/GoogleAuthComponent";
 
 const AuthenticationPage = () => {
@@ -21,7 +21,7 @@ const AuthenticationPage = () => {
   }, [navigate, getRedirect]);
 
   if (getToken("refresh") !== null) {
-    redirectOnLogin();
+    return <Navigate to={getRedirect()} />;
   }
 
   return (

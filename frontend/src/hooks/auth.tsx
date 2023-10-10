@@ -128,23 +128,28 @@ export const OneTimePasswordWrapper = ({
   children,
 }: OneTimePasswordWrapperProps) => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
     (async () => {
       const payload = searchParams.get("otp");
       if (payload !== null) {
         try {
-          const response = await api.post<UserLoginResponse>("/users/otp", {
-            payload,
-          });
+          const response = await apiNoRetry.post<UserLoginResponse>(
+            "/users/otp",
+            {
+              payload,
+            }
+          );
           setToken(response.data.token, "refresh");
+          navigate("/");
         } catch (error) {
         } finally {
           searchParams.delete("otp");
         }
       }
     })();
-  }, [searchParams]);
+  }, [searchParams, navigate]);
 
   return <>{children}</>;
 };
