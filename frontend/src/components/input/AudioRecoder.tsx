@@ -28,7 +28,7 @@ const AudioRecorder = () => {
 
       const formData = new FormData();
       formData.append("file", blob, "audio.webm");
-      formData.append("source", "recording");
+      formData.append("source", "recorded");
 
       try {
         const response = await api.post<UploadAudioResponse>(

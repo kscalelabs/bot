@@ -42,7 +42,7 @@ async def upload(
     file_size_verified: int = Depends(verify_file_size),
 ) -> UploadResponse:
     source_enum = cast_audio_source(source)
-    assert source_enum in (AudioSource.UPLOAD, AudioSource.RECORDING), "Invalid audio source"
+    assert source_enum in (AudioSource.uploaded, AudioSource.recorded), "Invalid audio source"
     audio_entry = await Audio.create(user_id=user_data.user_id, source=source_enum)
 
     try:

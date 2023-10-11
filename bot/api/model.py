@@ -28,19 +28,19 @@ class Token(Model):
 
 
 class AudioSource(enum.Enum):
-    UPLOAD = "upload"
-    RECORDING = "recording"
-    GENERATED = "generated"
+    uploaded = "uploaded"
+    recorded = "recorded"
+    generated = "generated"
 
 
 def cast_audio_source(s: str) -> AudioSource:
     match s:
-        case "upload":
-            return AudioSource.UPLOAD
-        case "recording":
-            return AudioSource.RECORDING
+        case "uploaded":
+            return AudioSource.uploaded
+        case "recorded":
+            return AudioSource.recorded
         case "generated":
-            return AudioSource.GENERATED
+            return AudioSource.generated
         case _:
             raise ValueError(f"Invalid audio source {s}")
 
@@ -55,6 +55,7 @@ class Audio(Model):
         null=False,
     )
     source = fields.CharEnumField(enum_type=AudioSource, index=True)
+    created = fields.DatetimeField(auto_now_add=True)
 
 
 # Pydantic models for FastAPI

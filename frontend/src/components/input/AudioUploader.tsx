@@ -26,7 +26,7 @@ const AudioUploader = () => {
 
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("source", "upload")
+    formData.append("source", "uploaded")
 
     try {
       const response = await api.post<UploadAudioResponse>(
