@@ -1,14 +1,16 @@
 import AudioInput from "components/input/AudioInput";
+import ListAudios from "components/list/ListAudios";
 import { Col, Container, Row } from "react-bootstrap";
-import ListAudios from "./components/ListAudios";
 
 const MakePage = () => {
   return (
-    <Container>
+    <Container className="mt-5 mb-5">
       <Row className="justify-content-center">
         <Col md={8}>
-          <Row>
-            <h1>Make</h1>
+          <Row className="mb-3">
+            <Col className="text-center">
+              <h1>Make</h1>
+            </Col>
           </Row>
           <Row className="mb-3">
             <Col>
@@ -20,7 +22,7 @@ const MakePage = () => {
               <AudioInput tabs={["mix"]} />
             </Col>
           </Row>
-          <ListAudios />
+          <ListAudios paginationLimit={4} />
         </Col>
       </Row>
     </Container>

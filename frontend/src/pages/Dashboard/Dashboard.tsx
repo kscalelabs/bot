@@ -1,4 +1,3 @@
-import logo from "assets/logo.svg";
 import { api } from "constants/backend";
 import { deleteTokens } from "hooks/auth";
 import DashboardContent from "pages/Dashboard/DashboardContent/DashboardContent";
@@ -8,6 +7,7 @@ import Error404Page from "pages/Error/Error404Page";
 import { useCallback, useEffect, useState } from "react";
 import { Container, Nav, NavDropdown, Navbar } from "react-bootstrap";
 import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import LibraryPage from "./LibraryPage/LibraryPage";
 
 interface UserInfoResponse {
   email: string;
@@ -28,6 +28,8 @@ const NavigationBar = () => {
     switch (location.pathname) {
       case "/make":
         return "make";
+      case "/library":
+        return "library";
       default:
         return "";
     }
@@ -55,12 +57,6 @@ const NavigationBar = () => {
       </style>
       <Navbar>
         <Container>
-          {/* Site icon */}
-          <Navbar.Brand href="#" onClick={() => navigate("/")}>
-            <img src={logo} alt="logo" width="30" height="30" />
-          </Navbar.Brand>
-
-          {/* Navbar choices */}
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav
@@ -70,8 +66,21 @@ const NavigationBar = () => {
               activeKey={getActiveTab()}
             >
               <Nav.Item>
+                <Nav.Link eventKey="dashboard" onClick={() => navigate("/")}>
+                  Dashboard
+                </Nav.Link>
+              </Nav.Item>
+              <Nav.Item>
                 <Nav.Link eventKey="make" onClick={() => navigate("/make")}>
                   Make
+                </Nav.Link>
+              </Nav.Item>
+              <Nav.Item>
+                <Nav.Link
+                  eventKey="library"
+                  onClick={() => navigate("/library")}
+                >
+                  Library
                 </Nav.Link>
               </Nav.Item>
             </Nav>
@@ -107,6 +116,7 @@ const Dashboard = () => {
         <Routes>
           <Route index element={<DashboardContent />} />
           <Route path="make" element={<MakePage />} />
+          <Route path="library" element={<LibraryPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="*" element={<Error404Page />} />
         </Routes>

@@ -71,7 +71,7 @@ const AudioUploader = () => {
       </Form.Group>
       {showSuccess && (
         <Alert
-          variant="primary"
+          variant="success"
           className="mt-3"
           onClose={() => setShowSuccess(false)}
           dismissible

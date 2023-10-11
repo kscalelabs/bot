@@ -1,45 +1,32 @@
+import { faClose } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import AudioPlayback from "components/playback/AudioPlayback";
-import { useClipboard } from "hooks/clipboard";
 import { Button, ButtonGroup, Card, CardProps } from "react-bootstrap";
 
 interface ComponentProps {
   uuid: string | null;
+  setUuid: (uuid: string | null) => void;
   title: string;
-  setUuid?: (uuid: string | null) => void;
 }
 
 type Props = ComponentProps & CardProps;
 
 const AudioSelection = (props: Props) => {
-  const { uuid, title, setUuid = () => {}, ...cardProps } = props;
-
-  const { uuid: clipboardUuid } = useClipboard();
+  const { uuid, setUuid, title, ...cardProps } = props;
 
   return (
     <Card {...cardProps}>
       <Card.Header>{title}</Card.Header>
       <Card.Body>
         {uuid === null ? (
-          clipboardUuid === null ? (
-            <div>Make a selection</div>
-          ) : (
-            <Button onClick={() => setUuid(clipboardUuid)}>Paste</Button>
-          )
+          <div>Make a selection</div>
         ) : (
           <>
-            <AudioPlayback uuid={uuid} />
-            <ButtonGroup className="mt-3">
+            <AudioPlayback uuid={uuid} showSelectionButtons={false} />
+            <ButtonGroup className="mt-3 me-2">
               <Button onClick={() => setUuid(null)} variant="danger">
-                Clear
+                <FontAwesomeIcon icon={faClose} /> Clear
               </Button>
-              {clipboardUuid !== null && (
-                <Button
-                  onClick={() => setUuid(clipboardUuid)}
-                  disabled={clipboardUuid === uuid}
-                >
-                  Paste
-                </Button>
-              )}
             </ButtonGroup>
           </>
         )}

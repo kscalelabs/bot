@@ -1,5 +1,6 @@
 import AudioPlayback from "components/playback/AudioPlayback";
 import { api, humanReadableError } from "constants/backend";
+import { useClipboard } from "hooks/clipboard";
 import { useState } from "react";
 import { Alert, Button, Card, Col, Row, Spinner } from "react-bootstrap";
 import AudioSelection from "./AudioSelection";
@@ -12,12 +13,11 @@ const AudioMixer = () => {
   const [preErrorMessage, setPreErrorMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showSpinner, setShowSpinner] = useState(false);
-
-  const [sourceUuid, setSourceUuid] = useState<string | null>(null);
-  const [referenceUuid, setReferenceUuid] = useState<string | null>(null);
-
   const [showSuccess, setShowSuccess] = useState(false);
   const [lastUuid, setLastUuid] = useState<string | null>(null);
+
+  const { sourceUuid, setSourceUuid, referenceUuid, setReferenceUuid } =
+    useClipboard();
 
   const handleSubmit = async () => {
     if (sourceUuid === null && referenceUuid === null) {
@@ -103,7 +103,7 @@ const AudioMixer = () => {
       )}
       {showSuccess && (
         <Alert
-          variant="primary"
+          variant="success"
           className="mt-3"
           onClose={() => setShowSuccess(false)}
           dismissible
@@ -113,7 +113,12 @@ const AudioMixer = () => {
         </Alert>
       )}
       {lastUuid !== null && (
-        <AudioPlayback className="mt-3" uuid={lastUuid} title="Last Upload" />
+        <AudioPlayback
+          className="mt-3"
+          uuid={lastUuid}
+          title="Last Upload"
+          showSelectionButtons={false}
+        />
       )}
     </Card.Body>
   );

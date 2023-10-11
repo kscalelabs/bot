@@ -1,8 +1,10 @@
 import React, { createContext, useContext, useState } from "react";
 
 interface ClipboardContextProps {
-  uuid: string | null;
-  setUuid: (uuid: string | null) => void;
+  sourceUuid: string | null;
+  referenceUuid: string | null;
+  setSourceUuid: (uuid: string | null) => void;
+  setReferenceUuid: (uuid: string | null) => void;
 }
 
 const ClipboardContext = createContext<ClipboardContextProps | undefined>(
@@ -15,10 +17,13 @@ interface ClipboardProviderProps {
 
 export const ClipboardProvider = (props: ClipboardProviderProps) => {
   const { children } = props;
-  const [uuid, setUuid] = useState<string | null>(null);
+  const [sourceUuid, setSourceUuid] = useState<string | null>(null);
+  const [referenceUuid, setReferenceUuid] = useState<string | null>(null);
 
   return (
-    <ClipboardContext.Provider value={{ uuid, setUuid }}>
+    <ClipboardContext.Provider
+      value={{ sourceUuid, referenceUuid, setSourceUuid, setReferenceUuid }}
+    >
       {children}
     </ClipboardContext.Provider>
   );

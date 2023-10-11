@@ -18,9 +18,13 @@ class InfoMeResponse(BaseModel):
 
 @audio_router.get("/info/me", response_model=InfoMeResponse)
 async def info_me(
+    source: AudioSource | None = None,
     user_data: SessionTokenData = Depends(get_session_token),
 ) -> InfoMeResponse:
-    count = await Audio.filter(user_id=user_data.user_id).count()
+    query = Audio.filter(user_id=user_data.user_id)
+    if source is not None:
+        query = query.filter(source=source)
+    count = await query.count()
     return InfoMeResponse(count=count)
 
 

@@ -1,9 +1,21 @@
 import AudioPlayback from "components/playback/AudioPlayback";
 import { api, humanReadableError } from "constants/backend";
 import { useEffect, useState } from "react";
-import { Alert, Button, ButtonGroup, Col, Row, Spinner } from "react-bootstrap";
+import {
+  Alert,
+  Button,
+  ButtonGroup,
+  ButtonToolbar,
+  Col,
+  Row,
+  Spinner,
+} from "react-bootstrap";
 
-const PAGINATE_LIMIT = 10;
+const DEFAULT_PAGINATE_LIMIT = 10;
+
+interface Props {
+  paginationLimit?: number;
+}
 
 interface InfoMeResponse {
   count: number;
@@ -19,7 +31,8 @@ interface QueryMeResponse {
   uuids: string[];
 }
 
-const ListAudios = () => {
+const ListAudios = (props: Props) => {
+  const { paginationLimit = DEFAULT_PAGINATE_LIMIT } = props;
   const [info, setInfo] = useState<InfoMeResponse | null>(null);
   const [audios, setAudios] = useState<string[] | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -31,23 +44,23 @@ const ListAudios = () => {
         try {
           const response = await api.get<InfoMeResponse>("/audio/info/me");
           const newStart = Math.max(
-            Math.min(start, response.data.count - PAGINATE_LIMIT),
+            Math.min(start, response.data.count - paginationLimit),
             0
           );
           setInfo(response.data);
           setStart(newStart);
+          setAudios(null);
         } catch (error) {
           setErrorMessage(humanReadableError(error));
         }
       })();
-    } else {
+    } else if (audios === null) {
       (async () => {
         try {
           const response = await api.get<QueryMeResponse>("/audio/query/me", {
             params: {
               start: start,
-              limit: PAGINATE_LIMIT,
-              source: "recorded",
+              limit: paginationLimit,
             } as QueryMeRequest,
           });
           setAudios(response.data.uuids);
@@ -56,33 +69,32 @@ const ListAudios = () => {
         }
       })();
     }
-  }, [info, start]);
+  }, [info, audios, start]);
 
   const handleRefresh = () => {
     setAudios(null);
     setInfo(null);
   };
 
-  console.log(info, start, PAGINATE_LIMIT);
+  console.log(info, start, paginationLimit);
 
   return (
     <>
-      {audios === null ? (
-        <Row>
-          <Col className="text-center">
+      <Row>
+        <Col className="text-center">
+          {info === null ? (
             <Spinner />
-          </Col>
-        </Row>
-      ) : (
-        <>
-          <Row>
-            <ButtonGroup>
-              <Button onClick={handleRefresh}>Refresh</Button>
-              {info !== null && info.count > PAGINATE_LIMIT && (
-                <>
+          ) : (
+            <ButtonToolbar>
+              <ButtonGroup className="me-2">
+                <Button onClick={handleRefresh}>Refresh</Button>
+              </ButtonGroup>
+              {info.count > paginationLimit && (
+                <ButtonGroup>
                   <Button
                     onClick={() => {
-                      setStart(Math.max(start - PAGINATE_LIMIT, 0));
+                      setStart(Math.max(start - paginationLimit, 0));
+                      setAudios(null);
                     }}
                     disabled={start <= 0}
                   >
@@ -90,28 +102,37 @@ const ListAudios = () => {
                   </Button>
                   <Button
                     onClick={() => {
-                      setStart(start + PAGINATE_LIMIT);
+                      setStart(start + paginationLimit);
+                      setAudios(null);
                     }}
-                    disabled={start + PAGINATE_LIMIT >= info.count}
+                    disabled={start + paginationLimit >= info.count}
                   >
                     Next
                   </Button>
-                </>
+                </ButtonGroup>
               )}
-            </ButtonGroup>
-          </Row>
-          <Row>
-            <Col>
-              <Row>
-                {audios.map((uuid) => (
-                  <Col sm={12} md={6} lg={6} key={uuid} className="mt-3">
-                    <AudioPlayback uuid={uuid} />
-                  </Col>
-                ))}
-              </Row>
-            </Col>
-          </Row>
-        </>
+            </ButtonToolbar>
+          )}
+        </Col>
+      </Row>
+      {audios === null ? (
+        <Row>
+          <Col className="text-center">
+            <Spinner />
+          </Col>
+        </Row>
+      ) : (
+        <Row>
+          <Col>
+            <Row>
+              {audios.map((uuid) => (
+                <Col sm={12} md={6} lg={6} key={uuid} className="mt-3">
+                  <AudioPlayback uuid={uuid} />
+                </Col>
+              ))}
+            </Row>
+          </Col>
+        </Row>
       )}
       {errorMessage && (
         <Row>
