@@ -1,6 +1,6 @@
 import { api } from "constants/backend";
 import { deleteTokens } from "hooks/auth";
-import DashboardContent from "pages/Dashboard/DashboardContent/DashboardContent";
+import HomePage from "pages/Dashboard/HomePage/HomePage";
 import MakePage from "pages/Dashboard/MakePage/MakePage";
 import SettingsPage from "pages/Dashboard/SettingsPage/SettingsPage";
 import Error404Page from "pages/Error/Error404Page";
@@ -66,8 +66,8 @@ const NavigationBar = () => {
               activeKey={getActiveTab()}
             >
               <Nav.Item>
-                <Nav.Link eventKey="dashboard" onClick={() => navigate("/")}>
-                  Dashboard
+                <Nav.Link eventKey="home" onClick={() => navigate("/")}>
+                  Home
                 </Nav.Link>
               </Nav.Item>
               <Nav.Item>
@@ -114,7 +114,7 @@ const Dashboard = () => {
       <NavigationBar />
       <Container>
         <Routes>
-          <Route index element={<DashboardContent />} />
+          <Route index element={<HomePage />} />
           <Route path="make" element={<MakePage />} />
           <Route path="library" element={<LibraryPage />} />
           <Route path="settings" element={<SettingsPage />} />

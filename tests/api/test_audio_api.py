@@ -41,7 +41,7 @@ async def test_audio_functions(
             uuid_list.append(data["uuid"])
 
     # Gets the info for the current user.
-    response = app_client.post("/audio/info/me")
+    response = app_client.get("/audio/info/me")
     assert response.status_code == 200, response.json()
     assert response.json()["count"] == 10
 

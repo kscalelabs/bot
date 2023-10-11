@@ -69,7 +69,7 @@ const ListAudios = (props: Props) => {
         }
       })();
     }
-  }, [info, audios, start]);
+  }, [info, audios, start, paginationLimit]);
 
   const handleRefresh = () => {
     setAudios(null);
