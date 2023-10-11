@@ -7,7 +7,7 @@ from pydantic.main import BaseModel
 
 from bot.api.app.users import SessionTokenData, get_session_token
 from bot.api.audio import queue_for_generation, save_uuid
-from bot.api.model import Audio, AudioSource, cast_audio_source
+from bot.api.model import Audio, AudioSource, Generation, cast_audio_source
 from bot.settings import load_settings
 
 make_router = APIRouter()
@@ -65,7 +65,12 @@ class RunResponse(BaseModel):
 
 @make_router.post("/run", response_model=RunResponse)
 async def run(data: RunRequest, user_data: SessionTokenData = Depends(get_session_token)) -> RunResponse:
-    audio = await Audio.create(user_id=user_data.user_id, source=cast_audio_source("generated"))
-    gen_uuid = audio.uuid
-    await queue_for_generation(data.orig_uuid, data.ref_uuid, gen_uuid)
-    return RunResponse(gen_uuid=gen_uuid)
+    gen_audio = await Audio.create(user_id=user_data.user_id, source=cast_audio_source("generated"))
+    generation = await Generation.create(
+        user_id=user_data.user_id,
+        source_id=data.orig_uuid,
+        reference_id=data.ref_uuid,
+        output_id=gen_audio.uuid,
+    )
+    await queue_for_generation(generation)
+    return RunResponse(gen_uuid=gen_audio.uuid)

@@ -41,13 +41,13 @@ async def test_audio_functions(
             uuid_list.append(data["uuid"])
 
     # Gets the info for the current user.
-    response = app_client.post("/audio/me")
+    response = app_client.post("/audio/info/me")
     assert response.status_code == 200, response.json()
     assert response.json()["count"] == 10
 
     # Tests querying the audio files for the user.
     for source, uuid_list in (("uploaded", upload_uuids), ("recorded", record_uuids)):
-        response = app_client.get("/audio/query", params={"start": 0, "limit": 5, "source": source})
+        response = app_client.get("/audio/query/me", params={"start": 0, "limit": 5, "source": source})
         assert response.status_code == 200, response.json()
         data = response.json()
         assert data["uuids"] == uuid_list[::-1]

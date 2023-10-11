@@ -16,7 +16,7 @@ const DeleteAccountComponent = () => {
       e.preventDefault();
       setUseSpinner(true);
       try {
-        await api.delete<boolean>("/users/myself");
+        await api.delete<boolean>("/users/me");
         deleteTokens();
         navigate("/login");
       } catch (error) {

@@ -19,6 +19,7 @@ import librosa
 import soundfile as sf
 from pydub import AudioSegment
 
+from bot.api.model import Generation
 from bot.settings import load_settings
 
 FSType = Literal["file", "s3"]
@@ -95,13 +96,9 @@ async def delete_uuid(uuid: UUID) -> None:
             raise ValueError(f"Invalid file system type: {fs_type}")
 
 
-async def queue_for_generation(orig_uuid: UUID, ref_uuid: UUID, gen_uuid: UUID) -> None:
+async def queue_for_generation(generation: Generation) -> None:
     """Queues a pair of audio samples for generation.
 
-    After generation is finished, we save the file to the ``gen_uuid`` path.
-
     Args:
-        orig_uuid: The UUID of the original audio file.
-        ref_uuid: The UUID of the reference audio file.
-        gen_uuid: The UUID of the generated audio file.
+        generation: The generation triplet to queue.
     """

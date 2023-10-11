@@ -38,7 +38,7 @@ const AuthenticationPage = () => {
             </Col>
           </Row>
 
-          <Row className="mb-3">
+          <Row className="mb-5">
             <Col>
               <h3 style={{ fontFamily: "monospace" }}>
                 don't panic

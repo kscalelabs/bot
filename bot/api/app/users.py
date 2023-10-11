@@ -188,7 +188,7 @@ async def get_user_info(data: SessionTokenData = Depends(get_session_token)) -> 
     return UserInfoResponse(email=user_obj.email)
 
 
-@users_router.delete("/myself")
+@users_router.delete("/me")
 async def delete_user(data: SessionTokenData = Depends(get_session_token)) -> bool:
     user_obj = await User.get_or_none(id=data.user_id)
     if not user_obj:

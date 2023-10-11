@@ -58,6 +58,41 @@ class Audio(Model):
     created = fields.DatetimeField(auto_now_add=True)
 
 
+class Generation(Model):
+    id = fields.IntField(pk=True)
+    user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
+        "models.User",
+        related_name="generations",
+        on_delete=fields.CASCADE,
+        index=True,
+        null=False,
+    )
+    source: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
+        "models.Audio",
+        related_name="generations_as_source",
+        on_delete=fields.CASCADE,
+        index=True,
+        null=False,
+    )
+    reference: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
+        "models.Audio",
+        related_name="generations_as_reference",
+        on_delete=fields.CASCADE,
+        index=True,
+        null=False,
+    )
+    output: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
+        "models.Audio",
+        related_name="generations_as_output",
+        on_delete=fields.CASCADE,
+        index=True,
+        null=False,
+    )
+    model = fields.CharField(max_length=255, index=True, null=True)
+    created = fields.DatetimeField(auto_now_add=True)
+
+
 # Pydantic models for FastAPI
 User_Pydantic = pydantic_model_creator(User, name="User")
 Audio_Pydantic = pydantic_model_creator(Audio, name="Audio")
+Generation_Pydantic = pydantic_model_creator(Generation, name="Generation")

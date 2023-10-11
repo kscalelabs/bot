@@ -32,7 +32,7 @@ async def test_make_functions(
         response = app_client.post(
             "/make/upload",
             files={"file": ("test.wav", audio_file_raw)},
-            data={"source": "upload"},
+            data={"source": "uploaded"},
         )
         assert response.status_code == 200, (response.status_code, response.json())
         data = response.json()

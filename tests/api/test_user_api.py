@@ -62,7 +62,7 @@ def test_user_auth_functions(app_client: TestClient, mock_send_email: MockType) 
     assert response.status_code == 200, response.json()
 
     # Delete the user.
-    response = app_client.delete("/users/myself")
+    response = app_client.delete("/users/me")
     assert response.status_code == 200, response.json()
     assert response.json() is True
 

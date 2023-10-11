@@ -8,7 +8,7 @@ import SettingsPage from "pages/Dashboard/SettingsPage/SettingsPage";
 import Error404Page from "pages/Error/Error404Page";
 import { useCallback, useEffect, useState } from "react";
 import { Container, Nav, NavDropdown, Navbar } from "react-bootstrap";
-import { Route, Routes, useNavigate } from "react-router-dom";
+import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
 
 interface UserInfoResponse {
   email: string;
@@ -16,6 +16,7 @@ interface UserInfoResponse {
 
 const NavigationBar = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const logout = useCallback(() => {
     deleteTokens();
@@ -23,6 +24,17 @@ const NavigationBar = () => {
   }, [navigate]);
 
   const [email, setEmail] = useState<string | null>(null);
+
+  const getActiveTab = useCallback(() => {
+    switch (location.pathname) {
+      case "/make":
+        return "record";
+      case "/gallery":
+        return "upload";
+      default:
+        return "";
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     (async () => {
@@ -56,21 +68,23 @@ const NavigationBar = () => {
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav
               className="mr-auto"
-              variant="pills"
+              variant="underline"
               style={{ justifyContent: "center", flex: "1" }}
+              activeKey={getActiveTab()}
             >
-              <Nav.Link
-                onClick={() => navigate("/make")}
-                style={{ margin: "0 1em" }}
-              >
-                <i className="fa fa-star" /> Make
-              </Nav.Link>
-              <Nav.Link
-                onClick={() => navigate("/gallery")}
-                style={{ margin: "0 1em" }}
-              >
-                <i className="fa fa-picture-o" /> Gallery
-              </Nav.Link>
+              <Nav.Item>
+                <Nav.Link eventKey="make" onClick={() => navigate("/make")}>
+                  Make
+                </Nav.Link>
+              </Nav.Item>
+              <Nav.Item>
+                <Nav.Link
+                  eventKey="gallery"
+                  onClick={() => navigate("/gallery")}
+                >
+                  Gallery
+                </Nav.Link>
+              </Nav.Item>
             </Nav>
 
             {/* Navbar dropdown */}
