@@ -42,6 +42,11 @@ jobs:
             python-requirements-${{ env.pythonLocation }}
             python-requirements-
 
+      - name: Install ffmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+      
       - name: Install package
         run: |
           pip install --upgrade --upgrade-strategy eager --extra-index-url https://download.pytorch.org/whl/cpu -e '.[dev]'

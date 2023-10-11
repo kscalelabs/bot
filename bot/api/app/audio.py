@@ -1,5 +1,6 @@
 """Defines the API endpoint for querying images."""
 
+from typing import cast
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
@@ -39,5 +40,5 @@ async def query_me(
     query = Audio.filter(user_id=user_data.user_id)
     if source is not None:
         query = query.filter(source=source)
-    uuids = await query.order_by("-created").offset(start).limit(limit).values_list("uuid", flat=True)
+    uuids = cast(list[UUID], await query.order_by("-created").offset(start).limit(limit).values_list("uuid", flat=True))
     return QueryMeResponse(uuids=uuids)
