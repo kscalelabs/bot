@@ -1,8 +1,8 @@
 import AudioPlayback from "components/playback/AudioPlayback";
 import { api, humanReadableError } from "constants/backend";
 import { useEffect, useState } from "react";
-import { Alert, Button, Card, ProgressBar, Spinner } from "react-bootstrap";
-import { ReactMediaRecorder } from "react-media-recorder";
+import { Alert, Button, Card, Spinner } from "react-bootstrap";
+import { useReactMediaRecorder } from "react-media-recorder";
 
 const TIMEOUT_MS = 10000;
 
@@ -18,8 +18,14 @@ const AudioRecorder = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [percentComplete, setPercentComplete] = useState<number | null>(null);
-  const [timeoutId, setTimeoutId] = useState<number | null>(null);
   const [intervalId, setIntervalId] = useState<number | null>(null);
+
+  const { startRecording, stopRecording } = useReactMediaRecorder({
+    audio: true,
+    onStop: (blobUrl, blob) => {
+      setAudioBlob([blobUrl, blob]);
+    },
+  });
 
   useEffect(() => {
     (async () => {
@@ -65,58 +71,51 @@ const AudioRecorder = () => {
         {showSpinner ? (
           <Spinner />
         ) : (
-          <ReactMediaRecorder
-            audio
-            render={({ startRecording, stopRecording }) => (
-              <Button
-                onClick={() => {
-                  if (isRecording) {
-                    setIsRecording(false);
-                    setPercentComplete(null);
-                    stopRecording();
-                    if (timeoutId !== null) {
-                      clearTimeout(timeoutId);
-                    }
-                    if (intervalId !== null) {
-                      clearInterval(intervalId);
-                    }
-                  } else {
-                    setIsRecording(true);
-                    startRecording();
+          <Button
+            onClick={() => {
+              const start = () => {
+                setIsRecording(true);
+                startRecording();
 
-                    // Automatically stop recording to avoid long recordings.
-                    const timeout = setTimeout(() => {
-                      setIsRecording(false);
-                      stopRecording();
-                    }, TIMEOUT_MS);
-                    setTimeoutId(timeout as unknown as number);
+                // Show the progress bar.
+                const interval = setInterval(() => {
+                  setPercentComplete((prev) => {
+                    if (prev === null) return 1;
+                    const next = Math.min(prev + 1, 100);
+                    if (next === 100) {
+                      clearInterval(interval);
+                      stop();
+                    }
+                    return next;
+                  });
+                }, TIMEOUT_MS / 100);
+                setIntervalId(interval as unknown as number);
+              };
 
-                    // Show the progress bar.
-                    setPercentComplete(0);
-                    const interval = setInterval(() => {
-                      setPercentComplete((prev) => {
-                        if (prev === null) return null;
-                        return Math.min(prev + 1, 100);
-                      });
-                    }, TIMEOUT_MS / 100);
-                    setIntervalId(interval as unknown as number);
-                  }
-                  setErrorMessage(null);
-                }}
-                variant={isRecording ? "danger" : "primary"}
-              >
-                {isRecording ? "Stop" : "Start"}
-              </Button>
-            )}
-            onStop={(blobUrl, blob) => {
-              setAudioBlob([blobUrl, blob]);
+              const stop = () => {
+                setIsRecording(false);
+                setPercentComplete(null);
+                stopRecording();
+                if (intervalId !== null) {
+                  clearInterval(intervalId as unknown as number);
+                }
+              };
+
+              if (isRecording) {
+                stop();
+              } else {
+                start();
+              }
+              setErrorMessage(null);
             }}
-          />
-        )}
-      </div>
-      <div>
-        {percentComplete !== null && (
-          <ProgressBar className="mt-3" now={percentComplete} />
+            variant={isRecording ? "danger" : "primary"}
+          >
+            {isRecording
+              ? percentComplete === null
+                ? "Stop"
+                : `Stop (${percentComplete}%)`
+              : "Start"}
+          </Button>
         )}
       </div>
       {errorMessage && (
@@ -146,7 +145,7 @@ const AudioRecorder = () => {
         </Alert>
       )}
       {lastUuid !== null && (
-        <AudioPlayback uuid={lastUuid} title="Last Upload" />
+        <AudioPlayback className="mt-3" uuid={lastUuid} title="Last Upload" />
       )}
     </Card.Body>
   );
