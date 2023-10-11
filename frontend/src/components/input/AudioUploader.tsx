@@ -26,7 +26,7 @@ const AudioUploader = () => {
 
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("source", "uploaded")
+    formData.append("source", "uploaded");
 
     try {
       const response = await api.post<UploadAudioResponse>(
@@ -57,7 +57,7 @@ const AudioUploader = () => {
           </div>
         ) : (
           <>
-            <Form.Label>Upload an audio recording</Form.Label>
+            <Form.Label>Upload an audio recording.</Form.Label>
             <Form.Control
               type="file"
               onChange={handleFileChange}

@@ -1,12 +1,20 @@
 import AudioRecorder from "components/input/AudioRecoder";
 import { useState } from "react";
 import { Card, Nav } from "react-bootstrap";
+import AudioMixer from "./AudioMixer";
 import AudioUploader from "./AudioUploader";
 
-type Tab = "record" | "upload";
+type Tab = "record" | "upload" | "mix";
 
-const AudioInput = () => {
-  const [currentTab, setCurrentTab] = useState<Tab>("record");
+interface Props {
+  tabs?: Tab[];
+}
+
+const AudioInput = (props: Props) => {
+  const { tabs = ["record", "upload", "mix"] } = props;
+  if (tabs.length === 0) throw new Error("Tabs must not be empty");
+
+  const [currentTab, setCurrentTab] = useState<Tab>(tabs[0]);
 
   const getCurrentTab = () => {
     switch (currentTab) {
@@ -14,6 +22,8 @@ const AudioInput = () => {
         return <AudioRecorder />;
       case "upload":
         return <AudioUploader />;
+      case "mix":
+        return <AudioMixer />;
     }
   };
 
@@ -21,17 +31,26 @@ const AudioInput = () => {
     <Card>
       <Card.Header>
         <Nav
-          variant="pills"
+          variant="tabs"
           activeKey={currentTab}
           onSelect={(event) => {
             setCurrentTab(event as Tab);
           }}
         >
           <Nav.Item>
-            <Nav.Link eventKey="record">Record</Nav.Link>
+            <Nav.Link eventKey="record" hidden={!tabs.includes("record")}>
+              Record
+            </Nav.Link>
           </Nav.Item>
           <Nav.Item>
-            <Nav.Link eventKey="upload">Upload</Nav.Link>
+            <Nav.Link eventKey="upload" hidden={!tabs.includes("upload")}>
+              Upload
+            </Nav.Link>
+          </Nav.Item>
+          <Nav.Item>
+            <Nav.Link eventKey="mix" hidden={!tabs.includes("mix")}>
+              Mix
+            </Nav.Link>
           </Nav.Item>
         </Nav>
       </Card.Header>

@@ -16,7 +16,7 @@ class InfoMeResponse(BaseModel):
     count: int
 
 
-@audio_router.post("/info/me", response_model=InfoMeResponse)
+@audio_router.get("/info/me", response_model=InfoMeResponse)
 async def info_me(
     user_data: SessionTokenData = Depends(get_session_token),
 ) -> InfoMeResponse:

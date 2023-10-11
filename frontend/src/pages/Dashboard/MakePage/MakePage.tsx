@@ -1,5 +1,6 @@
 import AudioInput from "components/input/AudioInput";
 import { Col, Container, Row } from "react-bootstrap";
+import ListAudios from "./components/ListAudios";
 
 const MakePage = () => {
   return (
@@ -11,9 +12,15 @@ const MakePage = () => {
           </Row>
           <Row className="mb-3">
             <Col>
-              <AudioInput />
+              <AudioInput tabs={["record", "upload"]} />
             </Col>
           </Row>
+          <Row className="mb-3">
+            <Col>
+              <AudioInput tabs={["mix"]} />
+            </Col>
+          </Row>
+          <ListAudios />
         </Col>
       </Row>
     </Container>

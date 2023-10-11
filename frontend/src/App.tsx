@@ -1,5 +1,6 @@
 import "App.css";
 import { OneTimePasswordWrapper, RequiresLogin } from "hooks/auth";
+import { ClipboardProvider } from "hooks/clipboard";
 import AuthenticationPage from "pages/Authentication/AuthenticationPage";
 import Dashboard from "pages/Dashboard/Dashboard";
 import Error404Page from "pages/Error/Error404Page";
@@ -9,18 +10,20 @@ const App = () => {
   return (
     <Router>
       <OneTimePasswordWrapper>
-        <Routes>
-          <Route
-            path="/*"
-            element={
-              <RequiresLogin>
-                <Dashboard />
-              </RequiresLogin>
-            }
-          />
-          <Route path="/login" element={<AuthenticationPage />} />
-          <Route path="*" element={<Error404Page />} />
-        </Routes>
+        <ClipboardProvider>
+          <Routes>
+            <Route
+              path="/*"
+              element={
+                <RequiresLogin>
+                  <Dashboard />
+                </RequiresLogin>
+              }
+            />
+            <Route path="/login" element={<AuthenticationPage />} />
+            <Route path="*" element={<Error404Page />} />
+          </Routes>
+        </ClipboardProvider>
       </OneTimePasswordWrapper>
     </Router>
   );

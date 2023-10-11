@@ -2,7 +2,6 @@ import logo from "assets/logo.svg";
 import { api } from "constants/backend";
 import { deleteTokens } from "hooks/auth";
 import DashboardContent from "pages/Dashboard/DashboardContent/DashboardContent";
-import GalleryPage from "pages/Dashboard/GalleryPage/GalleryPage";
 import MakePage from "pages/Dashboard/MakePage/MakePage";
 import SettingsPage from "pages/Dashboard/SettingsPage/SettingsPage";
 import Error404Page from "pages/Error/Error404Page";
@@ -28,9 +27,7 @@ const NavigationBar = () => {
   const getActiveTab = useCallback(() => {
     switch (location.pathname) {
       case "/make":
-        return "record";
-      case "/gallery":
-        return "upload";
+        return "make";
       default:
         return "";
     }
@@ -77,14 +74,6 @@ const NavigationBar = () => {
                   Make
                 </Nav.Link>
               </Nav.Item>
-              <Nav.Item>
-                <Nav.Link
-                  eventKey="gallery"
-                  onClick={() => navigate("/gallery")}
-                >
-                  Gallery
-                </Nav.Link>
-              </Nav.Item>
             </Nav>
 
             {/* Navbar dropdown */}
@@ -117,7 +106,6 @@ const Dashboard = () => {
       <Container>
         <Routes>
           <Route index element={<DashboardContent />} />
-          <Route path="gallery" element={<GalleryPage />} />
           <Route path="make" element={<MakePage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="*" element={<Error404Page />} />
