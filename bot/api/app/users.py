@@ -2,11 +2,10 @@
 
 from email.utils import parseaddr as parse_email_address
 
+import aiohttp
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
 from fastapi.security import HTTPBearer
 from fastapi.security.utils import get_authorization_scheme_param
-from google.auth.transport import requests as google_requests
-from google.oauth2 import id_token as google_id_token
 from pydantic.main import BaseModel
 
 from bot.api.email import OneTimePassPayload, send_delete_email, send_otp_email
@@ -121,13 +120,25 @@ class GoogleLogin(BaseModel):
     token: str
 
 
+async def get_google_user_info(token: str) -> dict:
+    response = await aiohttp.ClientSession().get(
+        "https://www.googleapis.com/oauth2/v3/userinfo",
+        params={"access_token": token},
+    )
+    if response.status != 200:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid Google token")
+    return await response.json()
+
+
 @users_router.post("/google")
 async def google_login(data: GoogleLogin, response: Response) -> UserLoginResponse:
     try:
-        idinfo = google_id_token.verify_oauth2_token(data.token, google_requests.Request())
+        idinfo = await get_google_user_info(data.token)
         email = idinfo["email"]
     except ValueError:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid Google token")
+    if idinfo.get("email_verified") is not True:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Google email not verified")
     user_obj = await create_or_get(email)
     return await get_login_response(response, user_obj)
 

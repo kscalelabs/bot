@@ -22,9 +22,13 @@ const AudioSelection = (props: Props) => {
           <div>Make a selection</div>
         ) : (
           <>
-            <AudioPlayback uuid={uuid} showSelectionButtons={false} />
+            <AudioPlayback
+              uuid={uuid}
+              showDeleteButton={false}
+              showSelectionButtons={false}
+            />
             <ButtonGroup className="mt-3 me-2">
-              <Button onClick={() => setUuid(null)} variant="danger">
+              <Button onClick={() => setUuid(null)} variant="warning">
                 <FontAwesomeIcon icon={faClose} /> Clear
               </Button>
             </ButtonGroup>

@@ -1,4 +1,4 @@
-import { faDeleteLeft } from "@fortawesome/free-solid-svg-icons";
+import { faCancel } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { api, humanReadableError } from "constants/backend";
 import { deleteTokens } from "hooks/auth";
@@ -50,7 +50,7 @@ const DeleteAccountComponent = () => {
           disabled={!buttonEnabled}
           onClick={handleDeleteAccount}
         >
-          <FontAwesomeIcon icon={faDeleteLeft} /> Delete Account
+          <FontAwesomeIcon icon={faCancel} /> Delete Account
         </Button>
       )}
     </Form.Group>

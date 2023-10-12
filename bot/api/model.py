@@ -4,14 +4,13 @@
 import enum
 
 from tortoise import fields
-from tortoise.contrib.pydantic import pydantic_model_creator
 from tortoise.models import Model
 
 
 class User(Model):
     id = fields.IntField(pk=True)
-    email = fields.CharField(max_length=255, unique=True)
-    banned = fields.BooleanField(default=False)
+    email = fields.CharField(max_length=255, unique=True, index=True)
+    banned = fields.BooleanField(default=False, index=True)
 
 
 class Token(Model):
@@ -47,6 +46,7 @@ def cast_audio_source(s: str) -> AudioSource:
 
 class Audio(Model):
     uuid = fields.UUIDField(pk=True)
+    name = fields.CharField(max_length=255, null=True)
     user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
         "models.User",
         related_name="audios",
@@ -56,6 +56,11 @@ class Audio(Model):
     )
     source = fields.CharEnumField(enum_type=AudioSource, index=True)
     created = fields.DatetimeField(auto_now_add=True)
+    available = fields.BooleanField(default=False)
+    num_frames = fields.IntField(null=True)
+    num_channels = fields.IntField(null=True)
+    sample_rate = fields.IntField(null=True)
+    duration = fields.FloatField(null=True)
 
 
 class Generation(Model):
@@ -92,7 +97,20 @@ class Generation(Model):
     created = fields.DatetimeField(auto_now_add=True)
 
 
-# Pydantic models for FastAPI
-User_Pydantic = pydantic_model_creator(User, name="User")
-Audio_Pydantic = pydantic_model_creator(Audio, name="Audio")
-Generation_Pydantic = pydantic_model_creator(Generation, name="Generation")
+class Favorites(Model):
+    id = fields.IntField(pk=True)
+    user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
+        "models.User",
+        related_name="favorites",
+        on_delete=fields.CASCADE,
+        index=True,
+        null=False,
+    )
+    audio: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
+        "models.Audio",
+        related_name="favorites",
+        on_delete=fields.CASCADE,
+        index=True,
+        null=False,
+    )
+    created = fields.DatetimeField(auto_now_add=True)

@@ -8,14 +8,17 @@ import {
   ButtonToolbar,
   Col,
   Row,
+  RowProps,
   Spinner,
 } from "react-bootstrap";
 
 const DEFAULT_PAGINATE_LIMIT = 10;
 
-interface Props {
+interface ListProps {
   paginationLimit?: number;
 }
+
+type Props = ListProps & RowProps;
 
 interface InfoMeResponse {
   count: number;
@@ -32,7 +35,7 @@ interface QueryMeResponse {
 }
 
 const ListAudios = (props: Props) => {
-  const { paginationLimit = DEFAULT_PAGINATE_LIMIT } = props;
+  const { paginationLimit = DEFAULT_PAGINATE_LIMIT, ...rowProps } = props;
   const [info, setInfo] = useState<InfoMeResponse | null>(null);
   const [audios, setAudios] = useState<string[] | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -79,79 +82,82 @@ const ListAudios = (props: Props) => {
   console.log(info, start, paginationLimit);
 
   return (
-    <>
-      <Row>
-        <Col className="text-center">
-          {info === null ? (
-            <Spinner />
-          ) : (
-            <ButtonToolbar>
-              <ButtonGroup className="me-2">
-                <Button onClick={handleRefresh}>Refresh</Button>
-              </ButtonGroup>
-              {info.count > paginationLimit && (
-                <ButtonGroup>
-                  <Button
-                    onClick={() => {
-                      setStart(Math.max(start - paginationLimit, 0));
-                      setAudios(null);
-                    }}
-                    disabled={start <= 0}
-                  >
-                    Previous
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      setStart(start + paginationLimit);
-                      setAudios(null);
-                    }}
-                    disabled={start + paginationLimit >= info.count}
-                  >
-                    Next
-                  </Button>
-                </ButtonGroup>
-              )}
-            </ButtonToolbar>
-          )}
-        </Col>
-      </Row>
-      {audios === null ? (
+    <Row {...rowProps}>
+      <Col>
         <Row>
           <Col className="text-center">
-            <Spinner />
+            {info === null ? (
+              <Spinner />
+            ) : (
+              <ButtonToolbar>
+                <ButtonGroup className="me-2">
+                  <Button onClick={handleRefresh}>Refresh</Button>
+                </ButtonGroup>
+                {info.count > paginationLimit && (
+                  <ButtonGroup>
+                    <Button
+                      onClick={() => {
+                        setStart(Math.max(start - paginationLimit, 0));
+                        setAudios(null);
+                      }}
+                      disabled={start <= 0}
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setStart(start + paginationLimit);
+                        setAudios(null);
+                      }}
+                      disabled={start + paginationLimit >= info.count}
+                    >
+                      Next
+                    </Button>
+                  </ButtonGroup>
+                )}
+              </ButtonToolbar>
+            )}
           </Col>
         </Row>
-      ) : (
-        <Row>
-          <Col>
+        {info !== null &&
+          (audios === null ? (
             <Row>
-              {audios.map((uuid) => (
-                <Col sm={12} md={6} lg={6} key={uuid} className="mt-3">
-                  <AudioPlayback uuid={uuid} />
-                </Col>
-              ))}
+              <Col className="text-center">
+                <Spinner />
+              </Col>
             </Row>
-          </Col>
-        </Row>
-      )}
-      {errorMessage && (
-        <Row>
-          <Alert
-            variant="warning"
-            className="mt-3"
-            onClose={() => setErrorMessage(null)}
-            dismissible
-          >
-            <Alert.Heading>Oh snap!</Alert.Heading>
-            <div>
-              An error occurred while fetching your information.
-              <br />
-              <code>{errorMessage}</code>
-            </div>
-          </Alert>
-        </Row>
-      )}
-    </>
+          ) : (
+            <Row>
+              <Col>
+                <Row>
+                  {audios.map((uuid) => (
+                    <Col sm={12} md={6} lg={6} key={uuid} className="mt-3">
+                      <AudioPlayback uuid={uuid} />
+                    </Col>
+                  ))}
+                </Row>
+              </Col>
+            </Row>
+          ))}
+        {errorMessage && (
+          <Row>
+            <Alert
+              variant="warning"
+              className="mt-3"
+              onClose={() => setErrorMessage(null)}
+              dismissible
+            >
+              <Alert.Heading>Oh snap!</Alert.Heading>
+              <div>
+                An error occurred while fetching your information.
+                <br />
+                <code>{errorMessage}</code>
+              </div>
+            </Alert>
+          </Row>
+        )}
+      </Col>
+    </Row>
   );
 };
 

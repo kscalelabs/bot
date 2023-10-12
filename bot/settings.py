@@ -40,6 +40,7 @@ class FileSettings:
     audio_min_sample_rate: int = ml.conf_field(8000)
     audio_res_type: str = ml.conf_field("kaiser_fast")
     audio_max_mb: int = ml.conf_field(10)
+    audio_max_duration: float = ml.conf_field(10.0)
     s3_bucket: str = ml.conf_field(MISSING)
 
 
@@ -58,6 +59,7 @@ class CryptoSettings:
     expire_token_minutes: int = ml.conf_field(30)
     expire_otp_minutes: int = ml.conf_field(5)
     algorithm: str = ml.conf_field("HS256")
+    google_client_id: str = ml.conf_field(MISSING)
 
 
 @dataclass

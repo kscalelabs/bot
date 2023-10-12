@@ -117,6 +117,7 @@ const AudioMixer = () => {
           className="mt-3"
           uuid={lastUuid}
           title="Last Upload"
+          showDeleteButton={false}
           showSelectionButtons={false}
         />
       )}

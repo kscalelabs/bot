@@ -1,5 +1,6 @@
-import logo from "assets/logo.png";
+import logo from "assets/logo_nb.webp";
 import { getToken } from "hooks/auth";
+import { useTheme } from "hooks/theme";
 import LogInComponent from "pages/Authentication/components/LogInComponent";
 import { useCallback, useState } from "react";
 import { Col, Container, Image, Modal, Row } from "react-bootstrap";
@@ -9,6 +10,8 @@ import GoogleAuthComponent from "./components/GoogleAuthComponent";
 const AuthenticationPage = () => {
   const [message, setMessage] = useState<[string, string] | null>(null);
   const [searchParams] = useSearchParams();
+  const { colors } = useTheme();
+  const { backgroundColor, color } = colors;
   const navigate = useNavigate();
 
   const getRedirect = useCallback(() => {
@@ -28,19 +31,29 @@ const AuthenticationPage = () => {
     <Container
       fluid
       className="h-100 d-flex justify-content-center align-items-center"
-      style={{ minHeight: "100vh" }}
+      style={{
+        backgroundColor,
+        color,
+        minHeight: "100vh",
+      }}
     >
       <Row className="text-center" style={{ width: "20em" }}>
         <Col>
           <Row className="aspect-ratio aspect-ratio-1x1">
             <Col>
-              <Image src={logo} alt="Logo" />
+              <Image
+                src={logo}
+                alt="Logo"
+                style={{
+                  maxHeight: "20vh",
+                }}
+              />
             </Col>
           </Row>
 
           <Row className="mb-5">
             <Col>
-              <h3 style={{ fontFamily: "monospace" }}>
+              <h3>
                 don't panic
                 <br />
                 stay human
@@ -48,12 +61,24 @@ const AuthenticationPage = () => {
             </Col>
           </Row>
 
+          <LogInComponent setMessage={setMessage} />
+
+          <Row className="mb-3 mt-4">
+            <Col>
+              <hr />
+            </Col>
+            <Col xs="auto">
+              <h6>or</h6>
+            </Col>
+            <Col>
+              <hr />
+            </Col>
+          </Row>
+
           <GoogleAuthComponent
             setMessage={setMessage}
             redirectOnLogin={redirectOnLogin}
           />
-
-          <LogInComponent setMessage={setMessage} />
 
           <Modal
             show={message !== null}

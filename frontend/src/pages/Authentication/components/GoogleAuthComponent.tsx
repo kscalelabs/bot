@@ -1,8 +1,10 @@
-import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
+import { faGoogle } from "@fortawesome/free-brands-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
 import { api, humanReadableError } from "constants/backend";
 import { setToken } from "hooks/auth";
 import { useEffect, useState } from "react";
-import { Col, Row } from "react-bootstrap";
+import { Button, Col, Row } from "react-bootstrap";
 
 const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID || "";
 
@@ -16,8 +18,9 @@ interface UserLoginResponse {
   token_type: string;
 }
 
-const GoogleAuthComponent = ({ setMessage, redirectOnLogin }: Props) => {
+const GoogleAuthComponentInner = ({ setMessage, redirectOnLogin }: Props) => {
   const [credential, setCredential] = useState<string | null>(null);
+  const [disableButton, setDisableButton] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -37,32 +40,42 @@ const GoogleAuthComponent = ({ setMessage, redirectOnLogin }: Props) => {
     })();
   });
 
+  const login = useGoogleLogin({
+    onSuccess: (tokenResponse) => {
+      const credential = tokenResponse.access_token;
+      if (credential === undefined) {
+        setMessage(["Error", "Failed to login using Google OAuth."]);
+      } else {
+        setCredential(credential);
+      }
+    },
+    onError: () => {
+      setMessage(["Error", "Failed to login using Google OAuth."]);
+      setDisableButton(false);
+    },
+  });
+
+  return (
+    <Row className="mb-3">
+      <Col className="d-flex justify-content-center">
+        <Button
+          onClick={() => {
+            setDisableButton(true);
+            login();
+          }}
+          disabled={disableButton || credential !== null}
+        >
+          <FontAwesomeIcon icon={faGoogle} />
+        </Button>
+      </Col>
+    </Row>
+  );
+};
+
+const GoogleAuthComponent = (props: Props) => {
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <Row className="mb-3">
-        <Col className="d-flex justify-content-center">
-          {credential === null ? (
-            <GoogleLogin
-              onSuccess={(credentialResponse) => {
-                const credential = credentialResponse.credential;
-                if (credential === undefined) {
-                  setMessage(["Error", "Failed to login using Google OAuth."]);
-                } else {
-                  setCredential(credential);
-                }
-              }}
-              onError={() => {
-                setMessage(["Error", "Failed to login using Google OAuth."]);
-              }}
-              useOneTap={false}
-            />
-          ) : (
-            <div className="spinner-border" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-          )}
-        </Col>
-      </Row>
+      <GoogleAuthComponentInner {...props} />
     </GoogleOAuthProvider>
   );
 };

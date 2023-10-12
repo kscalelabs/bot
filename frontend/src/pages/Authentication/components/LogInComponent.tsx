@@ -37,25 +37,30 @@ const LogInComponent = ({ setMessage }: Props) => {
 
   return (
     <Form onSubmit={handleSubmit} className="mb-3">
-      <FloatingLabel controlId="floatingInput" label="Email" className="mb-3">
-        <Form.Control
-          type="email"
-          placeholder="name@example.com"
-          onChange={(e) => {
-            setEmail(e.target.value);
-          }}
-          value={email}
-        />
-      </FloatingLabel>
-
       {showSpinner ? (
         <Spinner />
       ) : (
-        <ButtonGroup>
-          <Button variant="primary" type="submit">
-            Login
-          </Button>
-        </ButtonGroup>
+        <>
+          <FloatingLabel
+            controlId="floatingInput"
+            label="Email"
+            className="mb-3"
+          >
+            <Form.Control
+              type="email"
+              placeholder="name@example.com"
+              onChange={(e) => {
+                setEmail(e.target.value);
+              }}
+              value={email}
+            />
+          </FloatingLabel>
+          <ButtonGroup>
+            <Button variant="primary" type="submit">
+              Login
+            </Button>
+          </ButtonGroup>
+        </>
       )}
     </Form>
   );

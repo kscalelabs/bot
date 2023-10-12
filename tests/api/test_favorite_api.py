@@ -1,4 +1,4 @@
-"""Tests the audio API functions."""
+"""Tests the favorites API functions."""
 
 import os
 
@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 
 
 @pytest.mark.asyncio
-async def test_audio_functions(
+async def test_favotires_functions(
     authenticated_user: tuple[TestClient, str],
     tmpdir_factory: TempdirFactory,
 ) -> None:
@@ -40,30 +40,27 @@ async def test_audio_functions(
             data = response.json()
             uuid_list.append(data["uuid"])
 
-    # Gets the info for the current user.
-    response = app_client.get("/audio/info/me")
-    assert response.status_code == 200, response.json()
-    assert response.json()["count"] == 10
-
-    # Tests querying the audio files for the user.
-    for source, uuid_list in (("uploaded", upload_uuids), ("recorded", record_uuids)):
-        response = app_client.get("/audio/query/me", params={"start": 0, "limit": 5, "source": source})
+    # Favorites the first three.
+    for uuid in upload_uuids[:3]:
+        response = app_client.post("/favorites/add", json={"uuid": uuid})
         assert response.status_code == 200, response.json()
-        data = response.json()
-        assert data["uuids"] == uuid_list[::-1]
+        assert response.json() is True
 
-    # Gets information about the uploaded audio samples.
-    response = app_client.get("/audio/query/ids", params={"uuids": upload_uuids})
+    # Queries the user's favorites.
+    response = app_client.get("/favorites/query/me", params={"start": 0, "limit": 5})
     assert response.status_code == 200, response.json()
     data = response.json()
-    assert len(data["infos"]) == 5
+    assert len(data["uuids"]) == 3
+    assert data["uuids"] == upload_uuids[:3][::-1]
 
-    # Deletes a sample.
-    response = app_client.delete("/audio/delete", params={"uuid": upload_uuids[0]})
+    # Removes the first favorite.
+    response = app_client.delete("/favorites/remove", params={"uuid": upload_uuids[0]})
     assert response.status_code == 200, response.json()
+    assert response.json() is True
 
-    # Gets information about the uploaded audio samples.
-    response = app_client.get("/audio/query/ids", params={"uuids": upload_uuids})
+    # Queries the user's favorites again.
+    response = app_client.get("/favorites/query/me", params={"start": 0, "limit": 5})
     assert response.status_code == 200, response.json()
     data = response.json()
-    assert len(data["infos"]) == 4
+    assert len(data["uuids"]) == 2
+    assert data["uuids"] == upload_uuids[1:3][::-1]

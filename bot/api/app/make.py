@@ -2,13 +2,24 @@
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    Form,
+    HTTPException,
+    Request,
+    UploadFile,
+    status,
+)
 from pydantic.main import BaseModel
 
 from bot.api.app.users import SessionTokenData, get_session_token
-from bot.api.audio import queue_for_generation, save_uuid
+from bot.api.audio import queue_for_generation, save_audio
 from bot.api.model import Audio, AudioSource, Generation, cast_audio_source
 from bot.settings import load_settings
+
+DEFAULT_NAME = "Untitled"
 
 make_router = APIRouter()
 
@@ -37,21 +48,22 @@ async def verify_file_size(request: Request) -> int:
 @make_router.post("/upload", response_model=UploadResponse)
 async def upload(
     file: UploadFile,
+    background_tasks: BackgroundTasks,
     source: str = Form(...),
     user_data: SessionTokenData = Depends(get_session_token),
     file_size_verified: int = Depends(verify_file_size),
 ) -> UploadResponse:
     source_enum = cast_audio_source(source)
     assert source_enum in (AudioSource.uploaded, AudioSource.recorded), "Invalid audio source"
-    audio_entry = await Audio.create(user_id=user_data.user_id, source=source_enum)
-
-    try:
-        uuid = audio_entry.uuid
-        await save_uuid(uuid, file.file, file.filename)
-    except Exception:
-        await audio_entry.delete()
-        raise
-    return UploadResponse(uuid=uuid)
+    name = DEFAULT_NAME if file.filename is None else file.filename
+    audio_entry = await Audio.create(
+        user_id=user_data.user_id,
+        name=name,
+        source=source_enum,
+        available=False,
+    )
+    background_tasks.add_task(save_audio, audio_entry, file.file, name)
+    return UploadResponse(uuid=audio_entry.uuid)
 
 
 class RunRequest(BaseModel):
@@ -65,7 +77,11 @@ class RunResponse(BaseModel):
 
 @make_router.post("/run", response_model=RunResponse)
 async def run(data: RunRequest, user_data: SessionTokenData = Depends(get_session_token)) -> RunResponse:
-    gen_audio = await Audio.create(user_id=user_data.user_id, source=cast_audio_source("generated"))
+    gen_audio = await Audio.create(
+        user_id=user_data.user_id,
+        source=cast_audio_source("generated"),
+        available=False,
+    )
     generation = await Generation.create(
         user_id=user_data.user_id,
         source_id=data.orig_uuid,

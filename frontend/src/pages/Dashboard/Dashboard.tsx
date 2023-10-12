@@ -1,5 +1,13 @@
+import {
+  faCog,
+  faMoon,
+  faSignOut,
+  faSun,
+} from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { api } from "constants/backend";
 import { deleteTokens } from "hooks/auth";
+import { useTheme } from "hooks/theme";
 import HomePage from "pages/Dashboard/HomePage/HomePage";
 import MakePage from "pages/Dashboard/MakePage/MakePage";
 import SettingsPage from "pages/Dashboard/SettingsPage/SettingsPage";
@@ -14,6 +22,9 @@ interface UserInfoResponse {
 }
 
 const NavigationBar = () => {
+  const { theme, setTheme } = useTheme();
+
+  const [darkMode, setDarkMode] = useState<boolean>(theme === "dark");
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -24,12 +35,21 @@ const NavigationBar = () => {
 
   const [email, setEmail] = useState<string | null>(null);
 
+  const toggleDarkMode = useCallback(() => {
+    setDarkMode((prev) => {
+      setTheme(prev ? "light" : "dark");
+      return !prev;
+    });
+  }, [setTheme]);
+
   const getActiveTab = useCallback(() => {
     switch (location.pathname) {
       case "/make":
         return "make";
       case "/library":
         return "library";
+      case "/":
+        return "home";
       default:
         return "";
     }
@@ -94,10 +114,21 @@ const NavigationBar = () => {
               >
                 <NavDropdown.Header>{email}</NavDropdown.Header>
                 <NavDropdown.Item onClick={() => navigate("/settings")}>
-                  <i className="fa fa-cog" /> Settings
+                  <FontAwesomeIcon icon={faCog} /> Settings
+                </NavDropdown.Item>
+                <NavDropdown.Item onClick={toggleDarkMode}>
+                  {darkMode ? (
+                    <span>
+                      <FontAwesomeIcon icon={faSun} /> Light Mode
+                    </span>
+                  ) : (
+                    <span>
+                      <FontAwesomeIcon icon={faMoon} /> Dark Mode
+                    </span>
+                  )}
                 </NavDropdown.Item>
                 <NavDropdown.Item onClick={logout}>
-                  <i className="fa fa-sign-out" /> Logout
+                  <FontAwesomeIcon icon={faSignOut} /> Log Out
                 </NavDropdown.Item>
               </NavDropdown>
             </Nav>
@@ -109,8 +140,18 @@ const NavigationBar = () => {
 };
 
 const Dashboard = () => {
+  const { colors } = useTheme();
+  const { backgroundColor, color } = colors;
+
   return (
-    <Container fluid>
+    <Container
+      fluid
+      style={{
+        backgroundColor,
+        color,
+        minHeight: "100vh",
+      }}
+    >
       <NavigationBar />
       <Container>
         <Routes>

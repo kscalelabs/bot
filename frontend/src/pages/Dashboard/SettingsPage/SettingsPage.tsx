@@ -9,8 +9,10 @@ const SettingsPage = () => {
     <Container>
       <Row className="justify-content-center">
         <Col md={8}>
-          <Row className="mb-4">
-            <h1>Settings</h1>
+          <Row className="mb-3">
+            <Col className="text-center">
+              <h1>Settings</h1>
+            </Col>
           </Row>
           <Row>
             <DeleteAccountComponent />

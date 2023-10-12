@@ -9,14 +9,17 @@ Usage:
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from mangum import Mangum
 
 from bot.api.app.audio import audio_router
+from bot.api.app.favorites import favorites_router
 from bot.api.app.make import make_router
 from bot.api.app.users import users_router
 from bot.api.db import close_db, init_db
 from bot.settings import load_settings
 
 app = FastAPI()
+handler = Mangum(app)
 
 # Site settings.
 settings = load_settings()
@@ -52,3 +55,4 @@ async def read_index() -> bool:
 app.include_router(users_router, prefix="/users", tags=["users"])
 app.include_router(make_router, prefix="/make", tags=["make"])
 app.include_router(audio_router, prefix="/audio", tags=["audio"])
+app.include_router(favorites_router, prefix="/favorites", tags=["favorites"])
