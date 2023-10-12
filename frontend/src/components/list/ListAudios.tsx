@@ -48,7 +48,7 @@ const ListAudios = (props: Props) => {
           const response = await api.get<InfoMeResponse>("/audio/info/me");
           const newStart = Math.max(
             Math.min(start, response.data.count - paginationLimit),
-            0
+            0,
           );
           setInfo(response.data);
           setStart(newStart);

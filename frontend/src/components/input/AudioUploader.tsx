@@ -14,7 +14,7 @@ const AudioUploader = () => {
   const [lastUuid, setLastUuid] = useState<string | null>(null);
 
   const handleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     setErrorMessage(null);
     setShowSuccess(false);
@@ -36,7 +36,7 @@ const AudioUploader = () => {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-        }
+        },
       );
       setShowSuccess(true);
       setLastUuid(response.data.uuid);

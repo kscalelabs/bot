@@ -49,7 +49,7 @@ const AudioRecorder = () => {
             headers: {
               "Content-Type": "multipart/form-data",
             },
-          }
+          },
         );
         setShowSuccess(true);
         setLastUuid(response.data.uuid);

@@ -8,7 +8,7 @@ interface ClipboardContextProps {
 }
 
 const ClipboardContext = createContext<ClipboardContextProps | undefined>(
-  undefined
+  undefined,
 );
 
 interface ClipboardProviderProps {
