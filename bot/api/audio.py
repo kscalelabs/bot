@@ -33,7 +33,7 @@ def _get_path(uuid: UUID) -> str:
 def _get_extension(filename: str | None, default: str) -> str:
     if filename is None:
         return default
-    return filename.split(".")[-1].lower() if "." in filename else None
+    return filename.split(".")[-1].lower() if "." in filename else default
 
 
 async def save_audio(audio_entry: Audio, file: BinaryIO, filename: str | None) -> None:
