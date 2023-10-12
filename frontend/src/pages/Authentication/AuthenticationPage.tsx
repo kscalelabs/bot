@@ -34,6 +34,7 @@ const AuthenticationPage = () => {
       style={{
         backgroundColor,
         color,
+        minHeight: "100vh",
       }}
     >
       <Row className="text-center" style={{ width: "20em" }}>
