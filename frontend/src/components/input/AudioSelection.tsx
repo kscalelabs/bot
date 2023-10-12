@@ -1,18 +1,31 @@
 import { faClose } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import AudioPlayback from "components/playback/AudioPlayback";
-import { Button, ButtonGroup, Card, CardProps } from "react-bootstrap";
+import { useClipboard } from "hooks/clipboard";
+import {
+  Button,
+  ButtonGroup,
+  Card,
+  CardProps,
+  OverlayTrigger,
+  Tooltip,
+} from "react-bootstrap";
 
 interface ComponentProps {
-  uuid: string | null;
-  setUuid: (uuid: string | null) => void;
-  title: string;
+  isSource: boolean;
 }
 
 type Props = ComponentProps & CardProps;
 
 const AudioSelection = (props: Props) => {
-  const { uuid, setUuid, title, ...cardProps } = props;
+  const { isSource, ...cardProps } = props;
+
+  const { sourceUuid, setSourceUuid, referenceUuid, setReferenceUuid } =
+    useClipboard();
+
+  const title = isSource ? "Source" : "Reference";
+  const uuid = isSource ? sourceUuid : referenceUuid;
+  const setUuid = isSource ? setSourceUuid : setReferenceUuid;
 
   return (
     <Card {...cardProps}>
@@ -28,9 +41,14 @@ const AudioSelection = (props: Props) => {
               showSelectionButtons={false}
             />
             <ButtonGroup className="mt-3 me-2">
-              <Button onClick={() => setUuid(null)} variant="warning">
-                <FontAwesomeIcon icon={faClose} /> Clear
-              </Button>
+              <OverlayTrigger
+                placement="top"
+                overlay={<Tooltip id="tooltip-top">Clear</Tooltip>}
+              >
+                <Button onClick={() => setUuid(null)} variant="warning">
+                  <FontAwesomeIcon icon={faClose} />
+                </Button>
+              </OverlayTrigger>
             </ButtonGroup>
           </>
         )}

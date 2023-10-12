@@ -7,6 +7,7 @@ export interface AudioDataResponse {
 
 export interface QueryIdResponse {
   uuid: string;
+  name: string;
   source: string;
   created: Date;
   available: boolean;

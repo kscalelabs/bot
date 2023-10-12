@@ -1,4 +1,3 @@
-import AudioInput from "components/input/AudioInput";
 import ListAudios from "components/list/ListAudios";
 import { Col, Container, Row } from "react-bootstrap";
 
@@ -12,12 +11,7 @@ const LibraryPage = () => {
               <h1>Library</h1>
             </Col>
           </Row>
-          <ListAudios className="mb-3" />
-          <Row>
-            <Col>
-              <AudioInput tabs={["mix"]} />
-            </Col>
-          </Row>
+          <ListAudios showRefreshButton={false} className="mb-3" />
         </Col>
       </Row>
     </Container>

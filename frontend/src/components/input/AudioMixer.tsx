@@ -16,8 +16,7 @@ const AudioMixer = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [lastUuid, setLastUuid] = useState<string | null>(null);
 
-  const { sourceUuid, setSourceUuid, referenceUuid, setReferenceUuid } =
-    useClipboard();
+  const { sourceUuid, referenceUuid } = useClipboard();
 
   const handleSubmit = async () => {
     if (sourceUuid === null && referenceUuid === null) {
@@ -58,18 +57,10 @@ const AudioMixer = () => {
       <Card.Text>Mix two audio samples together.</Card.Text>
       <Row>
         <Col xs={12} md={6} className="mt-3">
-          <AudioSelection
-            uuid={sourceUuid}
-            title="Source"
-            setUuid={setSourceUuid}
-          />
+          <AudioSelection isSource={true} />
         </Col>
         <Col xs={12} md={6} className="mt-3">
-          <AudioSelection
-            uuid={referenceUuid}
-            title="Reference"
-            setUuid={setReferenceUuid}
-          />
+          <AudioSelection isSource={false} />
         </Col>
       </Row>
       <div className="d-flex justify-content-center mt-3">

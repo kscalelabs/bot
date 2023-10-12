@@ -56,6 +56,8 @@ export const ThemeProvider = (props: ThemeProviderProps) => {
 
   useEffect(() => {
     document.body.setAttribute("data-bs-theme", theme);
+    document.body.style.backgroundColor = COLORS[theme].backgroundColor;
+    document.body.style.color = COLORS[theme].color;
   }, [theme]);
 
   return (

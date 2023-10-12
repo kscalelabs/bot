@@ -13,13 +13,28 @@ const MakePage = () => {
             </Col>
           </Row>
           <Row className="mb-3">
+            <Col className="text-center">
+              <h2>Add</h2>
+            </Col>
+          </Row>
+          <Row>
             <Col>
               <AudioInput tabs={["record", "upload"]} />
             </Col>
           </Row>
-          <Row className="mb-3">
+          <Row className="mt-5 mb-3">
+            <Col className="text-center">
+              <h2>Mix</h2>
+            </Col>
+          </Row>
+          <Row>
             <Col>
               <AudioInput tabs={["mix"]} />
+            </Col>
+          </Row>
+          <Row className="mt-5 mb-3">
+            <Col className="text-center">
+              <h2>Listen</h2>
             </Col>
           </Row>
           <ListAudios paginationLimit={4} />

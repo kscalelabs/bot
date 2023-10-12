@@ -2,18 +2,22 @@ import {
   faCancel,
   faClipboard,
   faClipboardCheck,
+  faRefresh,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { api, humanReadableError } from "constants/backend";
+import { QueryIdResponse, QueryIdsResponse } from "constants/types";
 import { useClipboard } from "hooks/clipboard";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Button,
   ButtonGroup,
   ButtonToolbar,
   Card,
   CardProps,
+  Form,
   OverlayTrigger,
+  Spinner,
   Tooltip,
 } from "react-bootstrap";
 
@@ -22,6 +26,7 @@ interface AudioProps {
   title?: string;
   showDeleteButton?: boolean;
   showSelectionButtons?: boolean;
+  response?: QueryIdResponse;
 }
 
 type Props = AudioProps & CardProps;
@@ -31,15 +36,22 @@ const AudioPlayback: React.FC<Props> = ({
   title = null,
   showDeleteButton = true,
   showSelectionButtons = true,
+  response = null,
   ...cardProps
 }) => {
-  const [deleting, setDeleting] = useState(false);
+  const [acting, setActing] = useState(false);
   const [deleted, setDeleted] = useState(false);
   const { sourceUuid, setSourceUuid, referenceUuid, setReferenceUuid } =
     useClipboard();
+  const [localResponse, setLocalResponse] = useState<QueryIdResponse | null>(
+    response
+  );
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [editing, setEditing] = useState<boolean | null>(false);
+  const [name, setName] = useState<string>("");
 
   const handleDelete = async () => {
-    setDeleting(true);
+    setActing(true);
 
     try {
       await api.delete<boolean>("/audio/delete", {
@@ -56,9 +68,54 @@ const AudioPlayback: React.FC<Props> = ({
       setDeleted(true);
     } catch (error) {
       alert(humanReadableError(error));
-      setDeleting(false);
+      setActing(false);
     }
   };
+
+  const handleRefresh = () => {
+    setLocalResponse(null);
+  };
+
+  const handleEditButtonClick = async () => {
+    if (editing) {
+      try {
+        setEditing(null);
+        await api.post<boolean>("/audio/update", {
+          uuid,
+          name,
+        });
+        setName(name ?? "");
+      } catch (error) {
+        setName(localResponse?.name ?? "");
+        setErrorMessage(humanReadableError(error));
+      } finally {
+        setEditing(false);
+      }
+    } else {
+      setEditing(true);
+    }
+  };
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const response = await api.post<QueryIdsResponse>("/audio/query/ids", {
+          uuids: [uuid],
+        });
+        if (response.data.infos.length === 0) {
+          setDeleted(true);
+          return;
+        }
+        setLocalResponse(response.data.infos[0]);
+        const name = response.data.infos[0].name;
+        if (name !== null) {
+          setName(name);
+        }
+      } catch (error) {
+        setErrorMessage(humanReadableError(error));
+      }
+    })();
+  }, [uuid]);
 
   return (
     <Card {...cardProps}>
@@ -69,11 +126,59 @@ const AudioPlayback: React.FC<Props> = ({
         </Card.Body>
       ) : (
         <Card.Body>
-          <Card.Title>Audio</Card.Title>
-          <Card.Text>{uuid}</Card.Text>
+          {!localResponse ? (
+            <Spinner />
+          ) : (
+            <>
+              <Card.Title>
+                {editing === null ? (
+                  <Spinner />
+                ) : (
+                  <>
+                    {editing ? (
+                      <Form.Control
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        onBlur={handleEditButtonClick}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            handleEditButtonClick();
+                          }
+                        }}
+                        autoFocus
+                      />
+                    ) : (
+                      <span>{name ?? localResponse.name}</span>
+                    )}
+                    <Button
+                      variant="link"
+                      size="sm"
+                      onClick={handleEditButtonClick}
+                    >
+                      {editing ? "Save" : "Edit"}
+                    </Button>
+                  </>
+                )}
+              </Card.Title>
+              <Card.Text>
+                <strong>Source:</strong> {localResponse.source}
+                <br />
+                <strong>Created:</strong>{" "}
+                {new Date(localResponse.created).toLocaleString()}
+                {localResponse.data && (
+                  <>
+                    <br />
+                    <strong>Duration:</strong> {localResponse.data.duration}{" "}
+                    seconds
+                  </>
+                )}
+              </Card.Text>
+            </>
+          )}
           <ButtonToolbar>
             {showSelectionButtons && (
-              <ButtonGroup className="me-2">
+              <ButtonGroup className="mt-2 me-2">
                 <OverlayTrigger
                   placement="top"
                   overlay={<Tooltip id="tooltip-top">Use as source</Tooltip>}
@@ -116,21 +221,59 @@ const AudioPlayback: React.FC<Props> = ({
                 </OverlayTrigger>
               </ButtonGroup>
             )}
+            {localResponse !== null && !localResponse.available && (
+              <ButtonGroup className="mt-2 me-2">
+                <OverlayTrigger
+                  placement="top"
+                  overlay={<Tooltip id="tooltip-top">Refresh</Tooltip>}
+                >
+                  <Button
+                    onClick={handleRefresh}
+                    variant="primary"
+                    disabled={acting}
+                  >
+                    <FontAwesomeIcon icon={faRefresh} />
+                  </Button>
+                </OverlayTrigger>
+              </ButtonGroup>
+            )}
             {showDeleteButton && (
+              <ButtonGroup className="mt-2 me-2">
+                <OverlayTrigger
+                  placement="top"
+                  overlay={
+                    <Tooltip id="tooltip-top">Permanently delete</Tooltip>
+                  }
+                >
+                  <Button
+                    onClick={handleDelete}
+                    variant="danger"
+                    disabled={acting}
+                  >
+                    <FontAwesomeIcon icon={faCancel} />
+                  </Button>
+                </OverlayTrigger>
+              </ButtonGroup>
+            )}
+          </ButtonToolbar>
+          {errorMessage !== null && (
+            <Card.Text className="mt-2 text-danger">
               <OverlayTrigger
                 placement="top"
-                overlay={<Tooltip id="tooltip-top">Permanently delete</Tooltip>}
+                overlay={<Tooltip id="tooltip-top">Dismiss</Tooltip>}
               >
                 <Button
-                  onClick={handleDelete}
-                  variant="danger"
-                  disabled={deleting}
+                  onClick={() => setErrorMessage(null)}
+                  variant="outline-danger"
+                  size="sm"
+                  className="me-2"
                 >
                   <FontAwesomeIcon icon={faCancel} />
                 </Button>
               </OverlayTrigger>
-            )}
-          </ButtonToolbar>
+              {errorMessage}
+            </Card.Text>
+          )}
         </Card.Body>
       )}
     </Card>

@@ -46,7 +46,7 @@ def cast_audio_source(s: str) -> AudioSource:
 
 class Audio(Model):
     uuid = fields.UUIDField(pk=True)
-    name = fields.CharField(max_length=255, null=True)
+    name = fields.CharField(max_length=255, default="Untitled", index=True)
     user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
         "models.User",
         related_name="audios",
@@ -94,23 +94,4 @@ class Generation(Model):
         null=False,
     )
     model = fields.CharField(max_length=255, index=True, null=True)
-    created = fields.DatetimeField(auto_now_add=True)
-
-
-class Favorites(Model):
-    id = fields.IntField(pk=True)
-    user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
-        "models.User",
-        related_name="favorites",
-        on_delete=fields.CASCADE,
-        index=True,
-        null=False,
-    )
-    audio: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
-        "models.Audio",
-        related_name="favorites",
-        on_delete=fields.CASCADE,
-        index=True,
-        null=False,
-    )
     created = fields.DatetimeField(auto_now_add=True)

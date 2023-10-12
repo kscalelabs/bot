@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 const DeleteAccountComponent = () => {
   const [buttonEnabled, setButtonEnabled] = useState(false);
   const [useSpinner, setUseSpinner] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const handleDeleteAccount = useCallback(
@@ -20,13 +21,13 @@ const DeleteAccountComponent = () => {
         deleteTokens();
         navigate("/login");
       } catch (error) {
-        console.log(humanReadableError(error));
         setButtonEnabled(false);
+        setErrorMessage(humanReadableError(error));
       } finally {
         setUseSpinner(false);
       }
     },
-    [navigate],
+    [navigate]
   );
 
   return (
@@ -39,7 +40,13 @@ const DeleteAccountComponent = () => {
         }}
         checked={buttonEnabled}
         className="mb-3"
+        isInvalid={errorMessage !== null}
       />
+      {errorMessage !== null && (
+        <Form.Control.Feedback type="invalid">
+          {errorMessage}
+        </Form.Control.Feedback>
+      )}
 
       {useSpinner ? (
         <Spinner />

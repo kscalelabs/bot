@@ -1,10 +1,10 @@
 """Defines the API endpoint for querying images."""
 
 import datetime
-from typing import cast
+from typing import Any, cast
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends
 from pydantic.main import BaseModel
 
 from bot.api.app.users import SessionTokenData, get_session_token
@@ -21,10 +21,13 @@ class InfoMeResponse(BaseModel):
 
 @audio_router.get("/info/me", response_model=InfoMeResponse)
 async def info_me(
+    q: str | None = None,
     source: AudioSource | None = None,
     user_data: SessionTokenData = Depends(get_session_token),
 ) -> InfoMeResponse:
     query = Audio.filter(user_id=user_data.user_id)
+    if q is not None:
+        query = query.filter(name__icontains=q)
     if source is not None:
         query = query.filter(source=source)
     count = await query.count()
@@ -39,12 +42,15 @@ class QueryMeResponse(BaseModel):
 async def query_me(
     start: int,
     limit: int,
+    q: str | None = None,
     source: AudioSource | None = None,
     user_data: SessionTokenData = Depends(get_session_token),
 ) -> QueryMeResponse:
     assert start >= 0, "Start must be non-negative"
     assert limit <= MAX_UUIDS_PER_QUERY, "Can only return 100 samples at a time"
     query = Audio.filter(user_id=user_data.user_id)
+    if q is not None:
+        query = query.filter(name__icontains=q)
     if source is not None:
         query = query.filter(source=source)
     uuids = cast(list[UUID], await query.order_by("-created").offset(start).limit(limit).values_list("uuid", flat=True))
@@ -92,17 +98,21 @@ class QueryIdResponse(BaseModel):
         )
 
 
+class QueryIdsRequest(BaseModel):
+    uuids: list[UUID]
+
+
 class QueryIdsResponse(BaseModel):
     infos: list[QueryIdResponse]
 
 
-@audio_router.get("/query/ids", response_model=QueryIdsResponse)
+@audio_router.post("/query/ids", response_model=QueryIdsResponse)
 async def query_ids(
-    uuids: list[UUID] = Query(...),
+    data: QueryIdsRequest,
     user_data: SessionTokenData = Depends(get_session_token),
 ) -> QueryIdsResponse:
     values = QueryIdResponse.keys()
-    query = await Audio.filter(user_id=user_data.user_id, uuid__in=uuids).values(*values)
+    query = await Audio.filter(user_id=user_data.user_id, uuid__in=data.uuids).values(*values)
     infos = [QueryIdResponse.from_dict(info) for info in query]
     return QueryIdsResponse(infos=infos)
 
@@ -113,7 +123,17 @@ async def delete_audio(uuid: UUID, user_data: SessionTokenData = Depends(get_ses
     return True
 
 
-@audio_router.post("/update/name")
-async def update_name(uuid: UUID, new_name: str, user_data: SessionTokenData = Depends(get_session_token)) -> bool:
-    await Audio.filter(user_id=user_data.user_id, uuid=uuid).update(name=new_name)
+class UpdateRequest(BaseModel):
+    uuid: UUID
+    name: str | None = None
+
+
+@audio_router.post("/update")
+async def update_name(data: UpdateRequest, user_data: SessionTokenData = Depends(get_session_token)) -> bool:
+    kwargs: dict[str, Any] = {}
+    if data.name is not None:
+        kwargs["name"] = data.name
+    if not kwargs:
+        return True
+    await Audio.filter(user_id=user_data.user_id, uuid=data.uuid).update(**kwargs)
     return True

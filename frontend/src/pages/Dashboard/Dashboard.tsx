@@ -140,18 +140,8 @@ const NavigationBar = () => {
 };
 
 const Dashboard = () => {
-  const { colors } = useTheme();
-  const { backgroundColor, color } = colors;
-
   return (
-    <Container
-      fluid
-      style={{
-        backgroundColor,
-        color,
-        minHeight: "100vh",
-      }}
-    >
+    <Container fluid>
       <NavigationBar />
       <Container>
         <Routes>
