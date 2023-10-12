@@ -42,6 +42,7 @@ class FileSettings:
     audio_max_mb: int = ml.conf_field(10)
     audio_max_duration: float = ml.conf_field(10.0)
     s3_bucket: str = ml.conf_field(MISSING)
+    s3_url_expiration: int = ml.conf_field(3600)
 
 
 @dataclass

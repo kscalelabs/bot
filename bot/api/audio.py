@@ -4,6 +4,7 @@ import functools
 import logging
 import shutil
 import tempfile
+from datetime import timedelta
 from typing import BinaryIO, Literal, cast, get_args
 from uuid import UUID
 
@@ -11,6 +12,7 @@ import aioboto3
 from pydub import AudioSegment
 
 from bot.api.model import Audio, Generation
+from bot.api.utils import server_time
 from bot.settings import load_settings
 
 logger = logging.getLogger(__name__)
@@ -85,6 +87,52 @@ async def save_audio(audio_entry: Audio, file: BinaryIO, filename: str | None) -
     except Exception:
         logger.exception("Error processing %s", audio_entry.uuid)
         await audio_entry.delete()
+
+
+async def get_audio_url(audio_entry: Audio) -> tuple[str, bool]:
+    """Gets the file path or URL for serving the audio file.
+
+    Args:
+        audio_entry: The row in audio table containing the audio UUID.
+
+    Returns:
+        The file path or URL for serving the audio file, along with a boolean
+        indicating if it is a URL.
+    """
+    settings = load_settings().file
+    cur_time = server_time()
+    fs_type = get_fs_type()
+    fs_path = _get_path(audio_entry.uuid)
+
+    try:
+        match fs_type:
+            case "file":
+                if audio_entry.url is not None:
+                    return audio_entry.url, False
+                audio_entry.url = fs_path
+                await audio_entry.save()
+                return audio_entry.url, False
+
+            case "s3":
+                if audio_entry.url is not None and audio_entry.url_expires > cur_time:
+                    return audio_entry.url, True
+                s3_bucket = settings.s3_bucket
+                async with aioboto3.client("s3") as s3:
+                    audio_entry.url = await s3.generate_presigned_url(
+                        ClientMethod="get_object",
+                        Params={"Bucket": s3_bucket, "Key": fs_path},
+                        ExpiresIn=settings.s3_url_expiration,
+                    )
+                audio_entry.url_expires = cur_time + timedelta(seconds=settings.s3_url_expiration - 1)
+                await audio_entry.save()
+                return audio_entry.url, True
+
+            case _:
+                raise ValueError(f"Invalid file system type: {fs_type}")
+
+    except Exception:
+        logger.exception("Error processing %s", audio_entry.uuid)
+        raise
 
 
 async def queue_for_generation(generation: Generation) -> None:

@@ -64,7 +64,7 @@ const ListGenerations = (props: Props) => {
           const response = await api.get<InfoMeResponse>("/generation/info/me");
           const newStart = Math.max(
             Math.min(start, response.data.count - paginationLimit),
-            0,
+            0
           );
           setInfo(response.data);
           setStart(newStart);
@@ -83,7 +83,7 @@ const ListGenerations = (props: Props) => {
                 start: start,
                 limit: paginationLimit,
               } as QueryMeRequest,
-            },
+            }
           );
           setGenerations(response.data.generations);
         } catch (error) {
@@ -156,13 +156,13 @@ const ListGenerations = (props: Props) => {
                   ) : (
                     <Col>
                       {generations.map((generation, id) => (
-                        <Card className="mt-3">
+                        <Card className="mt-3" key={id}>
                           <Card.Header>
                             Created{" "}
                             {new Date(generation.created).toLocaleString()}
                           </Card.Header>
                           <Card.Body>
-                            <Row key={id}>
+                            <Row>
                               <Col sm={12} md={12} lg={4} className="mt-2">
                                 <AudioPlayback
                                   uuid={generation.source_id}

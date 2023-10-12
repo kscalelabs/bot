@@ -2,13 +2,16 @@ import {
   faCancel,
   faClipboard,
   faClipboardCheck,
+  faDownload,
+  faPause,
+  faPlay,
   faRefresh,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { api, humanReadableError } from "constants/backend";
 import { QueryIdResponse, QueryIdsResponse } from "constants/types";
 import { useClipboard } from "hooks/clipboard";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Button,
   ButtonGroup,
@@ -44,11 +47,16 @@ const AudioPlayback: React.FC<Props> = ({
   const { sourceUuid, setSourceUuid, referenceUuid, setReferenceUuid } =
     useClipboard();
   const [localResponse, setLocalResponse] = useState<QueryIdResponse | null>(
-    response,
+    response
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [editing, setEditing] = useState<boolean | null>(false);
   const [name, setName] = useState<string>("");
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const url = `/audio/media/${uuid}.flac`;
 
   const handleDelete = async () => {
     setActing(true);
@@ -133,6 +141,37 @@ const AudioPlayback: React.FC<Props> = ({
     })();
   }, [uuid]);
 
+  useEffect(() => {
+    if (localResponse !== null && localResponse.available) {
+      audioRef.current = new Audio(api.getUri({ url }));
+
+      const handleAudioEnd = () => {
+        setIsPlaying(false);
+      };
+
+      audioRef.current.addEventListener("ended", handleAudioEnd);
+
+      return () => {
+        if (audioRef.current !== null) {
+          audioRef.current.removeEventListener("ended", handleAudioEnd);
+          audioRef.current.pause();
+          audioRef.current.src = "";
+        }
+      };
+    }
+  }, [localResponse, url]);
+
+  const toggleAudio = () => {
+    if (audioRef.current !== null) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
+    }
+    setIsPlaying(!isPlaying);
+  };
+
   return (
     <Card {...cardProps}>
       {title !== null && <Card.Header>{title}</Card.Header>}
@@ -182,7 +221,12 @@ const AudioPlayback: React.FC<Props> = ({
                 <br />
                 <strong>Created:</strong>{" "}
                 {new Date(localResponse.created).toLocaleString()}
-                {localResponse.data && (
+                {localResponse.data === null ? (
+                  <>
+                    <br />
+                    <strong>Processing...</strong>
+                  </>
+                ) : (
                   <>
                     <br />
                     <strong>Duration:</strong>{" "}
@@ -197,7 +241,7 @@ const AudioPlayback: React.FC<Props> = ({
               <ButtonGroup className="mt-2 me-2">
                 <OverlayTrigger
                   placement="top"
-                  overlay={<Tooltip id="tooltip-top">Use as source</Tooltip>}
+                  overlay={<Tooltip>Use as source</Tooltip>}
                 >
                   <Button
                     onClick={() => setSourceUuid(uuid)}
@@ -217,7 +261,7 @@ const AudioPlayback: React.FC<Props> = ({
                 </OverlayTrigger>
                 <OverlayTrigger
                   placement="top"
-                  overlay={<Tooltip id="tooltip-top">Use as reference</Tooltip>}
+                  overlay={<Tooltip>Use as reference</Tooltip>}
                 >
                   <Button
                     onClick={() => setReferenceUuid(uuid)}
@@ -237,29 +281,56 @@ const AudioPlayback: React.FC<Props> = ({
                 </OverlayTrigger>
               </ButtonGroup>
             )}
-            {localResponse !== null && !localResponse.available && (
-              <ButtonGroup className="mt-2 me-2">
-                <OverlayTrigger
-                  placement="top"
-                  overlay={<Tooltip id="tooltip-top">Refresh</Tooltip>}
-                >
-                  <Button
-                    onClick={handleRefresh}
-                    variant="primary"
-                    disabled={acting}
+            {localResponse !== null &&
+              (localResponse.available ? (
+                <ButtonGroup className="mt-2 me-2">
+                  <OverlayTrigger
+                    placement="top"
+                    overlay={<Tooltip>{isPlaying ? "Pause" : "Play"}</Tooltip>}
                   >
-                    <FontAwesomeIcon icon={faRefresh} />
-                  </Button>
-                </OverlayTrigger>
-              </ButtonGroup>
-            )}
+                    <Button onClick={toggleAudio}>
+                      {isPlaying ? (
+                        <FontAwesomeIcon icon={faPause} />
+                      ) : (
+                        <FontAwesomeIcon icon={faPlay} />
+                      )}
+                    </Button>
+                  </OverlayTrigger>
+                  <OverlayTrigger
+                    placement="top"
+                    overlay={<Tooltip>Download</Tooltip>}
+                  >
+                    <Button
+                      as="a"
+                      variant="primary"
+                      href={api.getUri({ url })}
+                      download
+                    >
+                      <FontAwesomeIcon icon={faDownload} />
+                    </Button>
+                  </OverlayTrigger>
+                </ButtonGroup>
+              ) : (
+                <ButtonGroup className="mt-2 me-2">
+                  <OverlayTrigger
+                    placement="top"
+                    overlay={<Tooltip>Refresh</Tooltip>}
+                  >
+                    <Button
+                      onClick={handleRefresh}
+                      variant="primary"
+                      disabled={acting}
+                    >
+                      <FontAwesomeIcon icon={faRefresh} />
+                    </Button>
+                  </OverlayTrigger>
+                </ButtonGroup>
+              ))}
             {showDeleteButton && (
               <ButtonGroup className="mt-2 me-2">
                 <OverlayTrigger
                   placement="top"
-                  overlay={
-                    <Tooltip id="tooltip-top">Permanently delete</Tooltip>
-                  }
+                  overlay={<Tooltip>Permanently delete</Tooltip>}
                 >
                   <Button
                     onClick={handleDelete}
@@ -276,7 +347,7 @@ const AudioPlayback: React.FC<Props> = ({
             <Card.Text className="mt-2 text-danger">
               <OverlayTrigger
                 placement="top"
-                overlay={<Tooltip id="tooltip-top">Dismiss</Tooltip>}
+                overlay={<Tooltip>Dismiss</Tooltip>}
               >
                 <Button
                   onClick={() => setErrorMessage(null)}

@@ -4,13 +4,18 @@ import datetime
 from typing import Any, cast
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import FileResponse, RedirectResponse
 from pydantic.main import BaseModel
 
 from bot.api.app.users import SessionTokenData, get_session_token
+from bot.api.audio import get_audio_url
 from bot.api.model import Audio, AudioSource
+from bot.settings import load_settings
 
 MAX_UUIDS_PER_QUERY = 100
+
+settings = load_settings()
 
 audio_router = APIRouter()
 
@@ -137,3 +142,12 @@ async def update_name(data: UpdateRequest, user_data: SessionTokenData = Depends
         return True
     await Audio.filter(user_id=user_data.user_id, uuid=data.uuid).update(**kwargs)
     return True
+
+
+@audio_router.get(f"/media/{{uuid}}.{settings.file.audio_file_ext}")
+async def get_media(uuid: UUID) -> FileResponse:
+    audio = await Audio.get_or_none(uuid=uuid)
+    if audio is None or not audio.available:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Audio with UUID {uuid} not found")
+    audio_url, is_url = await get_audio_url(audio)
+    return RedirectResponse(audio_url) if is_url else FileResponse(audio_url)

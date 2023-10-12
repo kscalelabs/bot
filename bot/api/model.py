@@ -61,6 +61,8 @@ class Audio(Model):
     num_channels = fields.IntField(null=True)
     sample_rate = fields.IntField(null=True)
     duration = fields.FloatField(null=True)
+    url = fields.CharField(max_length=255, null=True)
+    url_expires = fields.DatetimeField(auto_now_add=True)
 
 
 class Generation(Model):

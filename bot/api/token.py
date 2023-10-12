@@ -7,15 +7,12 @@ import jwt
 from fastapi import HTTPException, status
 
 from bot.api.model import Token, User
+from bot.api.utils import server_time
 from bot.settings import load_settings
 
 logger = logging.getLogger(__name__)
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
-
-
-def _server_time() -> datetime.datetime:
-    return datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc)
 
 
 def create_token(data: dict, expire_minutes: int | None = None) -> str:
@@ -40,7 +37,7 @@ def create_token(data: dict, expire_minutes: int | None = None) -> str:
     # used to determine if the token is expired.
     expires: datetime.datetime | None = None
     if expire_minutes is not None:
-        expires = _server_time() + datetime.timedelta(minutes=expire_minutes)
+        expires = server_time() + datetime.timedelta(minutes=expire_minutes)
         to_encode.update({"exp": expires})
 
     encoded_jwt = jwt.encode(to_encode, settings.jwt_secret, algorithm=settings.algorithm)

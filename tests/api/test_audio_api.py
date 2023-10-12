@@ -52,6 +52,11 @@ async def test_audio_functions(
         data = response.json()
         assert data["uuids"] == uuid_list[::-1]
 
+    # Gets the URL for a sample.
+    response = app_client.get(f"/audio/media/{uuid_list[0]}")
+    assert response.status_code == 200, response.json()
+    assert "url" in response.json()
+
     # Gets information about the uploaded audio samples.
     response = app_client.post("/audio/query/ids", json={"uuids": upload_uuids})
     assert response.status_code == 200, response.json()
