@@ -72,8 +72,28 @@ const AudioPlayback: React.FC<Props> = ({
     }
   };
 
-  const handleRefresh = () => {
+  const refreshInfo = async () => {
+    try {
+      const response = await api.post<QueryIdsResponse>("/audio/query/ids", {
+        uuids: [uuid],
+      });
+      if (response.data.infos.length === 0) {
+        setDeleted(true);
+        return;
+      }
+      setLocalResponse(response.data.infos[0]);
+      const name = response.data.infos[0].name;
+      if (name !== null) {
+        setName(name);
+      }
+    } catch (error) {
+      setErrorMessage(humanReadableError(error));
+    }
+  };
+
+  const handleRefresh = async () => {
     setLocalResponse(null);
+    await refreshInfo();
   };
 
   const handleEditButtonClick = async () => {
@@ -98,22 +118,7 @@ const AudioPlayback: React.FC<Props> = ({
 
   useEffect(() => {
     (async () => {
-      try {
-        const response = await api.post<QueryIdsResponse>("/audio/query/ids", {
-          uuids: [uuid],
-        });
-        if (response.data.infos.length === 0) {
-          setDeleted(true);
-          return;
-        }
-        setLocalResponse(response.data.infos[0]);
-        const name = response.data.infos[0].name;
-        if (name !== null) {
-          setName(name);
-        }
-      } catch (error) {
-        setErrorMessage(humanReadableError(error));
-      }
+      await refreshInfo();
     })();
   }, [uuid]);
 
@@ -169,8 +174,8 @@ const AudioPlayback: React.FC<Props> = ({
                 {localResponse.data && (
                   <>
                     <br />
-                    <strong>Duration:</strong> {localResponse.data.duration}{" "}
-                    seconds
+                    <strong>Duration:</strong>{" "}
+                    {localResponse.data.duration.toFixed(1)} seconds
                   </>
                 )}
               </Card.Text>

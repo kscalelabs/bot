@@ -8,9 +8,8 @@ import {
   Button,
   ButtonGroup,
   ButtonToolbar,
+  Card,
   Col,
-  Form,
-  InputGroup,
   Row,
   RowProps,
   Spinner,
@@ -21,7 +20,6 @@ const DEFAULT_PAGINATE_LIMIT = 10;
 interface ListProps {
   paginationLimit?: number;
   showRefreshButton?: boolean;
-  showSearchBar?: boolean;
 }
 
 type Props = ListProps & RowProps;
@@ -33,72 +31,70 @@ interface InfoMeResponse {
 interface QueryMeRequest {
   start: number;
   limit: number;
-  source?: string;
+}
+
+interface SingleGenerationResponse {
+  output_id: string;
+  reference_id: string;
+  source_id: string;
+  created: Date;
 }
 
 interface QueryMeResponse {
-  uuids: string[];
+  generations: SingleGenerationResponse[];
 }
 
-const ListAudios = (props: Props) => {
+const ListGenerations = (props: Props) => {
   const {
     paginationLimit = DEFAULT_PAGINATE_LIMIT,
     showRefreshButton = true,
-    showSearchBar = true,
     ...rowProps
   } = props;
   const [info, setInfo] = useState<InfoMeResponse | null>(null);
-  const [audios, setAudios] = useState<string[] | null>(null);
+  const [generations, setGenerations] = useState<
+    SingleGenerationResponse[] | null
+  >(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [start, setStart] = useState(0);
-  const [searchTerm, setSearchTerm] = useState<string>("");
 
   useEffect(() => {
     if (info === null) {
       (async () => {
         try {
-          const response = await api.get<InfoMeResponse>("/audio/info/me");
+          const response = await api.get<InfoMeResponse>("/generation/info/me");
           const newStart = Math.max(
             Math.min(start, response.data.count - paginationLimit),
             0
           );
           setInfo(response.data);
           setStart(newStart);
-          setAudios(null);
+          setGenerations(null);
         } catch (error) {
           setErrorMessage(humanReadableError(error));
         }
       })();
-    } else if (audios === null) {
+    } else if (generations === null) {
       (async () => {
         try {
-          if (searchTerm.length > 0) {
-            const response = await api.get<QueryMeResponse>("/audio/query/me", {
-              params: {
-                start: start,
-                limit: paginationLimit,
-                q: searchTerm,
-              } as QueryMeRequest,
-            });
-            setAudios(response.data.uuids);
-          } else {
-            const response = await api.get<QueryMeResponse>("/audio/query/me", {
+          const response = await api.get<QueryMeResponse>(
+            "/generation/query/me",
+            {
               params: {
                 start: start,
                 limit: paginationLimit,
               } as QueryMeRequest,
-            });
-            setAudios(response.data.uuids);
-          }
+            }
+          );
+          setGenerations(response.data.generations);
         } catch (error) {
           setErrorMessage(humanReadableError(error));
         }
       })();
     }
-  }, [info, audios, start, paginationLimit, searchTerm]);
+  }, [info, generations, start, paginationLimit]);
 
   const handleRefresh = () => {
-    setAudios(null);
+    setGenerations(null);
     setInfo(null);
   };
 
@@ -123,7 +119,7 @@ const ListAudios = (props: Props) => {
                     <Button
                       onClick={() => {
                         setStart(Math.max(start - paginationLimit, 0));
-                        setAudios(null);
+                        setGenerations(null);
                       }}
                       disabled={start <= 0}
                     >
@@ -132,7 +128,7 @@ const ListAudios = (props: Props) => {
                     <Button
                       onClick={() => {
                         setStart(start + paginationLimit);
-                        setAudios(null);
+                        setGenerations(null);
                       }}
                       disabled={start + paginationLimit >= info.count}
                     >
@@ -140,28 +136,12 @@ const ListAudios = (props: Props) => {
                     </Button>
                   </ButtonGroup>
                 )}
-                {showSearchBar && (
-                  <InputGroup className="mt-2 me-2">
-                    <Form.Control
-                      type="text"
-                      placeholder="Search"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      onBlur={handleRefresh}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          handleRefresh();
-                        }
-                      }}
-                    />
-                  </InputGroup>
-                )}
               </ButtonToolbar>
             )}
           </Col>
         </Row>
         {info !== null &&
-          (audios === null ? (
+          (generations === null ? (
             <Row>
               <Col className="text-center">
                 <Spinner />
@@ -171,14 +151,41 @@ const ListAudios = (props: Props) => {
             <Row>
               <Col>
                 <Row>
-                  {audios.length === 0 ? (
+                  {generations.length === 0 ? (
                     <Col className="mt-3">No samples found</Col>
                   ) : (
-                    audios.map((uuid) => (
-                      <Col sm={12} md={6} lg={6} key={uuid} className="mt-3">
-                        <AudioPlayback uuid={uuid} />
-                      </Col>
-                    ))
+                    <Col>
+                      {generations.map((generation, id) => (
+                        <Card className="mt-3">
+                          <Card.Header>
+                            Created{" "}
+                            {new Date(generation.created).toLocaleString()}
+                          </Card.Header>
+                          <Card.Body>
+                            <Row key={id}>
+                              <Col sm={12} md={12} lg={4} className="mt-2">
+                                <AudioPlayback
+                                  uuid={generation.source_id}
+                                  title="Source"
+                                />
+                              </Col>
+                              <Col sm={12} md={12} lg={4} className="mt-2">
+                                <AudioPlayback
+                                  uuid={generation.reference_id}
+                                  title="Reference"
+                                />
+                              </Col>
+                              <Col sm={12} md={12} lg={4} className="mt-2">
+                                <AudioPlayback
+                                  uuid={generation.output_id}
+                                  title="Generated"
+                                />
+                              </Col>
+                            </Row>
+                          </Card.Body>
+                        </Card>
+                      ))}
+                    </Col>
                   )}
                 </Row>
               </Col>
@@ -206,4 +213,4 @@ const ListAudios = (props: Props) => {
   );
 };
 
-export default ListAudios;
+export default ListGenerations;

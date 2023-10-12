@@ -8,14 +8,15 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { api } from "constants/backend";
 import { deleteTokens } from "hooks/auth";
 import { useTheme } from "hooks/theme";
+import GenerationsPage from "pages/Dashboard/GenerationsPage/GenerationsPage";
 import HomePage from "pages/Dashboard/HomePage/HomePage";
+import LibraryPage from "pages/Dashboard/LibraryPage/LibraryPage";
 import MakePage from "pages/Dashboard/MakePage/MakePage";
 import SettingsPage from "pages/Dashboard/SettingsPage/SettingsPage";
 import Error404Page from "pages/Error/Error404Page";
 import { useCallback, useEffect, useState } from "react";
 import { Container, Nav, NavDropdown, Navbar } from "react-bootstrap";
 import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
-import LibraryPage from "./LibraryPage/LibraryPage";
 
 interface UserInfoResponse {
   email: string;
@@ -48,6 +49,8 @@ const NavigationBar = () => {
         return "make";
       case "/library":
         return "library";
+      case "/generations":
+        return "generations";
       case "/":
         return "home";
       default:
@@ -103,6 +106,14 @@ const NavigationBar = () => {
                   Library
                 </Nav.Link>
               </Nav.Item>
+              <Nav.Item>
+                <Nav.Link
+                  eventKey="generations"
+                  onClick={() => navigate("/generations")}
+                >
+                  Generations
+                </Nav.Link>
+              </Nav.Item>
             </Nav>
 
             {/* Navbar dropdown */}
@@ -148,6 +159,7 @@ const Dashboard = () => {
           <Route index element={<HomePage />} />
           <Route path="make" element={<MakePage />} />
           <Route path="library" element={<LibraryPage />} />
+          <Route path="generations" element={<GenerationsPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="*" element={<Error404Page />} />
         </Routes>

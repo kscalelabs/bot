@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
 
 from bot.api.app.audio import audio_router
+from bot.api.app.generation import generation_router
 from bot.api.app.make import make_router
 from bot.api.app.users import users_router
 from bot.api.db import close_db, init_db
@@ -54,3 +55,4 @@ async def read_index() -> bool:
 app.include_router(users_router, prefix="/users", tags=["users"])
 app.include_router(make_router, prefix="/make", tags=["make"])
 app.include_router(audio_router, prefix="/audio", tags=["audio"])
+app.include_router(generation_router, prefix="/generation", tags=["generation"])
