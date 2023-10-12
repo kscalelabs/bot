@@ -44,7 +44,7 @@ const AudioPlayback: React.FC<Props> = ({
   const { sourceUuid, setSourceUuid, referenceUuid, setReferenceUuid } =
     useClipboard();
   const [localResponse, setLocalResponse] = useState<QueryIdResponse | null>(
-    response,
+    response
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [editing, setEditing] = useState<boolean | null>(false);
@@ -72,7 +72,8 @@ const AudioPlayback: React.FC<Props> = ({
     }
   };
 
-  const refreshInfo = async () => {
+  const handleRefresh = async () => {
+    setLocalResponse(null);
     try {
       const response = await api.post<QueryIdsResponse>("/audio/query/ids", {
         uuids: [uuid],
@@ -89,11 +90,6 @@ const AudioPlayback: React.FC<Props> = ({
     } catch (error) {
       setErrorMessage(humanReadableError(error));
     }
-  };
-
-  const handleRefresh = async () => {
-    setLocalResponse(null);
-    await refreshInfo();
   };
 
   const handleEditButtonClick = async () => {
@@ -118,7 +114,22 @@ const AudioPlayback: React.FC<Props> = ({
 
   useEffect(() => {
     (async () => {
-      await refreshInfo();
+      try {
+        const response = await api.post<QueryIdsResponse>("/audio/query/ids", {
+          uuids: [uuid],
+        });
+        if (response.data.infos.length === 0) {
+          setDeleted(true);
+          return;
+        }
+        setLocalResponse(response.data.infos[0]);
+        const name = response.data.infos[0].name;
+        if (name !== null) {
+          setName(name);
+        }
+      } catch (error) {
+        setErrorMessage(humanReadableError(error));
+      }
     })();
   }, [uuid]);
 
