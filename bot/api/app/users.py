@@ -194,13 +194,17 @@ class UserInfoResponse(BaseModel):
 
 @users_router.get("/me", response_model=UserInfoResponse)
 async def get_user_info(data: SessionTokenData = Depends(get_session_token)) -> UserInfoResponse:
-    user_obj = await User.get(id=data.user_id)
+    user_obj = await User.get_or_none(id=data.user_id)
+    if user_obj is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
     return UserInfoResponse(email=user_obj.email)
 
 
 @users_router.delete("/me")
 async def delete_user(data: SessionTokenData = Depends(get_session_token)) -> bool:
-    user_obj = await User.get(id=data.user_id)
+    user_obj = await User.get_or_none(id=data.user_id)
+    if user_obj is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
     await user_obj.delete()
     await send_delete_email(user_obj.email)
     return True
