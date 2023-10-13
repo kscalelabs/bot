@@ -11,7 +11,7 @@ from uuid import UUID
 import aioboto3
 from pydub import AudioSegment
 
-from bot.api.model import Audio, Generation
+from bot.api.model import Audio, AudioSource, Generation
 from bot.api.utils import server_time
 from bot.settings import load_settings
 
@@ -135,9 +135,29 @@ async def get_audio_url(audio_entry: Audio) -> tuple[str, bool]:
         raise
 
 
-async def queue_for_generation(generation: Generation) -> None:
-    """Queues a pair of audio samples for generation.
+async def generate(
+    source_uuid: UUID,
+    reference_uuid: UUID,
+    user_id: int,
+) -> Generation:
+    """Generates a new audio file from a source and a reference.
 
     Args:
-        generation: The generation triplet to queue.
+        source_uuid: The UUID of the source audio.
+        reference_uuid: The UUID of the reference audio.
+        user_id: The ID of the user who requested the generation.
+
+    Returns:
+        The row in generation table containing the generation ID.
     """
+    # Runs the generation.
+
+    # Creates a new entry in the database for the generated audio.
+    gen_audio = await Audio.create(user_id=user_id, source=AudioSource.generated)
+    generation = await Generation.create(
+        user_id=user_id,
+        source_id=source_uuid,
+        reference_id=reference_uuid,
+        output_id=gen_audio.uuid,
+    )
+    return generation

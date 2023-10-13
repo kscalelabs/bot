@@ -41,7 +41,7 @@ async def test_generation_functions(
     # Tests running the model on the two uploaded files.
     gen_uuids: list[str] = []
     for _ in range(3):
-        response = app_client.post("/make/run", json={"orig_uuid": uuids[0], "ref_uuid": uuids[1]})
+        response = app_client.post("/make/run/sync", json={"orig_uuid": uuids[0], "ref_uuid": uuids[1]})
         assert response.status_code == 200, response.json()
         data = response.json()
         gen_uuids.append(data["gen_uuid"])

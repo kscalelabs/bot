@@ -38,7 +38,7 @@ const AudioMixer = () => {
     setShowSpinner(true);
 
     try {
-      const response = await api.post<RunResponse>("/make/run", {
+      const response = await api.post<RunResponse>("/make/run/sync", {
         orig_uuid: sourceUuid,
         ref_uuid: referenceUuid,
       });

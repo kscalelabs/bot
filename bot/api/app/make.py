@@ -15,8 +15,8 @@ from fastapi import (
 from pydantic.main import BaseModel
 
 from bot.api.app.users import SessionTokenData, get_session_token
-from bot.api.audio import queue_for_generation, save_audio
-from bot.api.model import Audio, AudioSource, Generation, cast_audio_source
+from bot.api.audio import generate, save_audio
+from bot.api.model import Audio, AudioSource, cast_audio_source
 from bot.settings import load_settings
 
 DEFAULT_NAME = "Untitled"
@@ -75,18 +75,7 @@ class RunResponse(BaseModel):
     gen_uuid: UUID
 
 
-@make_router.post("/run", response_model=RunResponse)
+@make_router.post("/run/sync", response_model=RunResponse)
 async def run(data: RunRequest, user_data: SessionTokenData = Depends(get_session_token)) -> RunResponse:
-    gen_audio = await Audio.create(
-        user_id=user_data.user_id,
-        source=cast_audio_source("generated"),
-        available=False,
-    )
-    generation = await Generation.create(
-        user_id=user_data.user_id,
-        source_id=data.orig_uuid,
-        reference_id=data.ref_uuid,
-        output_id=gen_audio.uuid,
-    )
-    await queue_for_generation(generation)
-    return RunResponse(gen_uuid=gen_audio.uuid)
+    generation = await generate(data.orig_uuid, data.ref_uuid, user_data.user_id)
+    return RunResponse(gen_uuid=generation.output_id)
