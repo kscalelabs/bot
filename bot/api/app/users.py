@@ -198,17 +198,13 @@ class UserInfoResponse(BaseModel):
 
 @users_router.get("/me", response_model=UserInfoResponse)
 async def get_user_info(data: SessionTokenData = Depends(get_session_token)) -> UserInfoResponse:
-    user_obj = await User.get_or_none(id=data.user_id)
-    if not user_obj:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
+    user_obj = await User.get(id=data.user_id)
     return UserInfoResponse(email=user_obj.email)
 
 
 @users_router.delete("/me")
 async def delete_user(data: SessionTokenData = Depends(get_session_token)) -> bool:
-    user_obj = await User.get_or_none(id=data.user_id)
-    if not user_obj:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
+    user_obj = await User.get(id=data.user_id)
     await user_obj.delete()
     await send_delete_email(user_obj.email)
     return True
@@ -248,9 +244,15 @@ async def is_admin(user_obj: User) -> bool:
     return email in settings.admin_emails
 
 
-@users_router.post("/admin")
-async def admin(data: AdminRequest, token_data: SessionTokenData = Depends(get_session_token)) -> bool:
-    admin_user_obj = await User.get_or_none(id=token_data.user_id)
+@users_router.get("/admin/check")
+async def admin_check(token_data: SessionTokenData = Depends(get_session_token)) -> bool:
+    user_obj = await User.get(id=token_data.user_id)
+    return await is_admin(user_obj)
+
+
+@users_router.post("/admin/act")
+async def admin_act(data: AdminRequest, token_data: SessionTokenData = Depends(get_session_token)) -> bool:
+    admin_user_obj = await User.get(id=token_data.user_id)
 
     # Validates that the logged in user can take admin actions.
     if not admin_user_obj:

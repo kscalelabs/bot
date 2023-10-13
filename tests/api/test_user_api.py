@@ -68,8 +68,13 @@ def test_user_auth_functions(app_client: TestClient, mock_send_email: MockType) 
     response = app_client.post("/users/refresh")
     assert response.status_code == 200, response.json()
 
+    # Checks the current user is an admin account.
+    response = app_client.get("/users/admin/check")
+    assert response.status_code == 200, response.json()
+    assert response.json() is True
+
     # Tests admin actions.
-    response = app_client.post("/users/admin", json={"email": bad_actor_email, "banned": True})
+    response = app_client.post("/users/admin/act", json={"email": bad_actor_email, "banned": True})
     assert response.status_code == 200, response.json()
 
     # Tests logging in the bad actor user again, to make sure it's banned.
