@@ -151,7 +151,9 @@ async def get_media(uuid: UUID) -> FileResponse:
     if audio is None or not audio.available:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Audio with UUID {uuid} not found")
     audio_url, is_url = await get_audio_url(audio)
-    return RedirectResponse(audio_url) if is_url else FileResponse(audio_url)
+    if is_url:
+        return RedirectResponse(audio_url)  # type: ignore[return-value]
+    return FileResponse(audio_url)
 
 
 class PublicIdsRequest(BaseModel):
