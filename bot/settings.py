@@ -17,6 +17,11 @@ OmegaConf.register_new_resolver("bot.version", lambda: bot_version, use_cache=Tr
 
 
 @dataclass
+class UserSettings:
+    admin_emails: list[str] = ml.conf_field(MISSING)
+
+
+@dataclass
 class SiteSettings:
     homepage: str = ml.conf_field(MISSING)
 
@@ -68,6 +73,7 @@ class Settings:
     app_name: str = ml.conf_field("bot")
     version: str = ml.conf_field(II("bot.version:"))
     is_prod: bool = ml.conf_field(True)
+    user: UserSettings = ml.conf_field(UserSettings())
     site: SiteSettings = ml.conf_field(SiteSettings())
     database: DatabaseSettings = ml.conf_field(DatabaseSettings())
     file: FileSettings = ml.conf_field(FileSettings())

@@ -9,11 +9,6 @@ const MakePage = () => {
         <Col md={8}>
           <Row className="mb-3">
             <Col className="text-center">
-              <h1>Make</h1>
-            </Col>
-          </Row>
-          <Row className="mb-3">
-            <Col className="text-center">
               <h2>Add</h2>
             </Col>
           </Row>

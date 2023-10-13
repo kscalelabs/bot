@@ -9,8 +9,15 @@ from bot.api.email import OneTimePassPayload
 def test_user_auth_functions(app_client: TestClient, mock_send_email: MockType) -> None:
     # Using my personal email so that if the mock function starts to fail
     # I will be inudated with emails letting me know how dumb I am.
+    # This is set as an admin email in the test settings.
     test_email = "ben@dpsh.dev"
     login_url = "/"
+    bad_actor_email = "badactor@gmail.com"
+
+    # Creates a bad actor user for testing admin actions later.
+    otp = OneTimePassPayload(email=bad_actor_email)
+    response = app_client.post("/users/otp", json={"payload": otp.encode()})
+    assert response.status_code == 200, response.json()
 
     # Sends an email to the user with their one-time pass.
     response = app_client.post(
@@ -60,6 +67,16 @@ def test_user_auth_functions(app_client: TestClient, mock_send_email: MockType) 
     # Gets another session token.
     response = app_client.post("/users/refresh")
     assert response.status_code == 200, response.json()
+
+    # Tests admin actions.
+    response = app_client.post("/users/admin", json={"email": bad_actor_email, "banned": True})
+    assert response.status_code == 200, response.json()
+
+    # Tests logging in the bad actor user again, to make sure it's banned.
+    otp = OneTimePassPayload(email=bad_actor_email)
+    response = app_client.post("/users/otp", json={"payload": otp.encode()})
+    assert response.status_code == 401, response.json()
+    assert response.json()["detail"] == "User is banned"
 
     # Delete the user.
     response = app_client.delete("/users/me")

@@ -1,5 +1,6 @@
 """Defines the API endpoint for creating, deleting and updating user information."""
 
+import asyncio
 from email.utils import parseaddr as parse_email_address
 
 import aiohttp
@@ -93,13 +94,17 @@ class UserLoginResponse(BaseModel):
 
 
 async def create_or_get(email: str) -> User:
+    # Gets or creates the user object.
     user_obj = await User.get_or_none(email=email)
     if user_obj is None:
         user_obj = await User.create(email=email)
-    if not user_obj:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid one-time passcode")
+
+    # Validates user.
     if user_obj.banned:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User is banned")
+    if user_obj.deleted:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User is deleted")
+
     return user_obj
 
 
@@ -229,3 +234,42 @@ async def refresh(response: Response, data: RefreshTokenData = Depends(get_refre
     session_token = SessionTokenData(user_id=data.user_id).encode()
     set_token_cookie(response, session_token, SESSION_TOKEN_COOKIE_KEY)
     return RefreshTokenResponse(token=session_token, token_type=TOKEN_TYPE)
+
+
+class AdminRequest(BaseModel):
+    email: str
+    banned: bool | None = None
+    deleted: bool | None = None
+
+
+async def is_admin(user_obj: User) -> bool:
+    email = user_obj.email
+    settings = load_settings().user
+    return email in settings.admin_emails
+
+
+@users_router.post("/admin")
+async def admin(data: AdminRequest, token_data: SessionTokenData = Depends(get_session_token)) -> bool:
+    admin_user_obj = await User.get_or_none(id=token_data.user_id)
+
+    # Validates that the logged in user can take admin actions.
+    if not admin_user_obj:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Admin user not found")
+    if not await is_admin(admin_user_obj):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
+
+    # Updates the user.
+    user_obj = await User.get_or_none(email=data.email)
+    if not user_obj.exists():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
+    changed = False
+    if data.banned is not None and user_obj.banned != data.banned:
+        user_obj.banned = data.banned
+        changed = True
+    if data.deleted is not None and user_obj.deleted != data.deleted:
+        user_obj.deleted = data.deleted
+        changed = True
+    if changed:
+        await user_obj.save()
+
+    return True

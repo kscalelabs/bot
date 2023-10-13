@@ -10,7 +10,8 @@ from tortoise.models import Model
 class User(Model):
     id = fields.IntField(pk=True)
     email = fields.CharField(max_length=255, unique=True, index=True)
-    banned = fields.BooleanField(default=False, index=True)
+    banned = fields.BooleanField(default=False)
+    deleted = fields.BooleanField(default=False)
 
 
 class Token(Model):
@@ -63,6 +64,7 @@ class Audio(Model):
     duration = fields.FloatField(null=True)
     url = fields.CharField(max_length=255, null=True)
     url_expires = fields.DatetimeField(auto_now_add=True)
+    public = fields.BooleanField(default=False)
 
 
 class Generation(Model):

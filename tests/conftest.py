@@ -44,6 +44,9 @@ def mock_load_settings(mocker: MockerFixture, tmpdir_factory: TempdirFactory) ->
     # Sets the default app settings.
     settings.is_prod = False
 
+    # Sets the user settings.
+    settings.user.admin_emails = ["ben@dpsh.dev"]
+
     # Sets the default site settings.
     settings.site.homepage = "http://localhost"
 
