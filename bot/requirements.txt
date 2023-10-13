@@ -1,7 +1,7 @@
 # requirements.txt
 
 # Personal access token grants access to repositories in dpsh organization.
-codec @ git+https://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@github.com/dpshai/codec.git
+# codec @ git+https://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@github.com/dpshai/codec.git
 
 # FastAPI dependencies.
 aiosmtplib
@@ -10,25 +10,22 @@ mangum
 pyjwt
 uvicorn
 
-# Google authentication dependencies.
-google-auth
-google-auth-oauthlib
-google-auth-httplib2
-google-api-python-client
-
 # Database dependencies.
-bcrypt
 tortoise-orm[asyncpg]
 
 # File storage dependencies.
 aioboto3
 
 # Processing dependencies.
-librosa
 numpy
 pydub
 resampy
 soundfile
+
+# Model inference dependencies.
+ml-starter
+torch
+torchaudio
 
 # Testing dependencies.
 pytest
