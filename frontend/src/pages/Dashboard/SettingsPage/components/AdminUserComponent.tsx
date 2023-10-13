@@ -1,15 +1,15 @@
-import { faCancel, faCheck } from "@fortawesome/free-solid-svg-icons";
+import { faCheck, faRunning } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { api, humanReadableError } from "constants/backend";
 import { useState } from "react";
-import { Button, ButtonGroup, Col, Form, Row } from "react-bootstrap";
+import { Button, ButtonGroup, Col, Form } from "react-bootstrap";
 
 interface AdminResopnse {
   banned: boolean;
   deleted: boolean;
 }
 
-const AdminComponent = () => {
+const AdminUserComponent = () => {
   const [email, setEmail] = useState("");
   const [banned, setBanned] = useState(false);
   const [deleted, setDeleted] = useState(false);
@@ -19,7 +19,7 @@ const AdminComponent = () => {
   const handleCheckEmail = async () => {
     setButtonEnabled(false);
     try {
-      const response = await api.post<AdminResopnse>("/users/admin/act/user", {
+      const response = await api.post<AdminResopnse>("/admin/act/user", {
         email,
       });
       setBanned(response.data.banned);
@@ -35,7 +35,7 @@ const AdminComponent = () => {
   const handleAdminAction = async () => {
     setButtonEnabled(false);
     try {
-      await api.post("/users/admin/act/user", {
+      await api.post("/admin/act/user", {
         email,
         banned,
         deleted,
@@ -52,12 +52,6 @@ const AdminComponent = () => {
 
   return (
     <Col>
-      <Row className="mb-3">
-        <Col className="text-center">
-          <h2>Admin</h2>
-        </Col>
-      </Row>
-
       <Form.Group className="mb-3">
         <Form.Control
           type="email"
@@ -112,11 +106,11 @@ const AdminComponent = () => {
           disabled={!buttonEnabled}
           onClick={handleAdminAction}
         >
-          <FontAwesomeIcon icon={faCancel} /> Take Action
+          <FontAwesomeIcon icon={faRunning} /> Take Action
         </Button>
       </ButtonGroup>
     </Col>
   );
 };
 
-export default AdminComponent;
+export default AdminUserComponent;

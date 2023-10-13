@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Card, Col, Row } from "react-bootstrap";
 
 interface PaymentPlanProps {
@@ -23,12 +22,6 @@ const PaymentPlanCard = (props: PaymentPlanProps) => {
 };
 
 const PaymentComponent = () => {
-  const [email, setEmail] = useState("");
-  const [banned, setBanned] = useState(false);
-  const [deleted, setDeleted] = useState(false);
-  const [buttonEnabled, setButtonEnabled] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
   return (
     <Col>
       <Row className="mb-3">

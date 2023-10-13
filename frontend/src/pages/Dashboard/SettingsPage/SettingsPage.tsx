@@ -1,7 +1,9 @@
 import { api } from "constants/backend";
 import { useEffect, useState } from "react";
 import { Col, Container, Row } from "react-bootstrap";
-import AdminComponent from "./components/AdminComponent";
+import AdminAudioComponent from "./components/AdminAudioComponent";
+import AdminGenerationComponent from "./components/AdminGenerationComponent";
+import AdminUserComponent from "./components/AdminUserComponent";
 import DeleteAccountComponent from "./components/DeleteAccountComponent";
 import PaymentComponent from "./components/PaymentComponent";
 
@@ -11,7 +13,7 @@ const SettingsPage = () => {
   useEffect(() => {
     (async () => {
       try {
-        const response = await api.get<boolean>("/users/admin/check");
+        const response = await api.get<boolean>("/admin/check");
         console.log(response);
         setIsAdmin(response.data);
       } catch (error) {}
@@ -34,9 +36,37 @@ const SettingsPage = () => {
             <DeleteAccountComponent />
           </Row>
           {isAdmin && (
-            <Row className="mb-3">
-              <AdminComponent />
-            </Row>
+            <>
+              <Row className="mb-3">
+                <Col className="text-center">
+                  <h2>Admin</h2>
+                </Col>
+              </Row>
+              <Row className="mb-3">
+                <Col className="text-center">
+                  <h3>User</h3>
+                </Col>
+              </Row>
+              <Row className="mb-3">
+                <AdminUserComponent />
+              </Row>
+              <Row className="mb-3">
+                <Col className="text-center">
+                  <h3>Audio</h3>
+                </Col>
+              </Row>
+              <Row className="mb-3">
+                <AdminAudioComponent />
+              </Row>
+              <Row className="mb-3">
+                <Col className="text-center">
+                  <h3>Generation</h3>
+                </Col>
+              </Row>
+              <Row className="mb-3">
+                <AdminGenerationComponent />
+              </Row>
+            </>
           )}
           <Row className="mt-5">
             <p>

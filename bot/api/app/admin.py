@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic.main import BaseModel
 
 from bot.api.app.users import SessionTokenData, get_session_token
-from bot.api.model import Audio, User, Generation
+from bot.api.model import Audio, Generation, User
 from bot.settings import load_settings
 
 admin_router = APIRouter()
@@ -113,6 +113,11 @@ async def admin_act_generation(
     changed = False
     if data.public is not None and generation_obj.public != data.public:
         generation_obj.public = data.public
+        if data.public:
+            # When making a generation public, we also make the source,
+            # reference and output audio files public.
+            audio_ids = [generation_obj.source_id, generation_obj.reference_id, generation_obj.output_id]
+            await Audio.filter(uuid__in=audio_ids).update(public=True)
         changed = True
     if changed:
         await generation_obj.save()
