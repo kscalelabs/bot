@@ -99,3 +99,4 @@ class Generation(Model):
     )
     model = fields.CharField(max_length=255, index=True, null=True)
     created = fields.DatetimeField(auto_now_add=True)
+    public = fields.BooleanField(default=False)

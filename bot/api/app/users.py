@@ -4,7 +4,6 @@ from email.utils import parseaddr as parse_email_address
 
 import aiohttp
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
-from fastapi.security import HTTPBearer
 from fastapi.security.utils import get_authorization_scheme_param
 from pydantic.main import BaseModel
 
@@ -14,8 +13,6 @@ from bot.api.token import create_refresh_token, create_token, load_refresh_token
 from bot.settings import load_settings
 
 users_router = APIRouter()
-
-security = HTTPBearer()
 
 REFRESH_TOKEN_COOKIE_KEY = "__DPSH_REFRESH_TOKEN"
 SESSION_TOKEN_COOKIE_KEY = "__DPSH_SESSION_TOKEN"
@@ -229,53 +226,3 @@ async def refresh(response: Response, data: RefreshTokenData = Depends(get_refre
     session_token = SessionTokenData(user_id=data.user_id).encode()
     set_token_cookie(response, session_token, SESSION_TOKEN_COOKIE_KEY)
     return RefreshTokenResponse(token=session_token, token_type=TOKEN_TYPE)
-
-
-async def is_admin(user_obj: User) -> bool:
-    email = user_obj.email
-    settings = load_settings().user
-    return email in settings.admin_emails
-
-
-@users_router.get("/admin/check")
-async def admin_check(token_data: SessionTokenData = Depends(get_session_token)) -> bool:
-    user_obj = await User.get(id=token_data.user_id)
-    return await is_admin(user_obj)
-
-
-class AdminRequest(BaseModel):
-    email: str
-    banned: bool | None = None
-    deleted: bool | None = None
-
-
-class AdminResponse(BaseModel):
-    banned: bool
-    deleted: bool
-
-
-@users_router.post("/admin/act")
-async def admin_act(data: AdminRequest, token_data: SessionTokenData = Depends(get_session_token)) -> AdminResponse:
-    admin_user_obj = await User.get(id=token_data.user_id)
-
-    # Validates that the logged in user can take admin actions.
-    if not admin_user_obj:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Admin user not found")
-    if not await is_admin(admin_user_obj):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized")
-
-    # Updates the user.
-    user_obj = await User.get_or_none(email=data.email)
-    if user_obj is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
-    changed = False
-    if data.banned is not None and user_obj.banned != data.banned:
-        user_obj.banned = data.banned
-        changed = True
-    if data.deleted is not None and user_obj.deleted != data.deleted:
-        user_obj.deleted = data.deleted
-        changed = True
-    if changed:
-        await user_obj.save()
-
-    return AdminResponse(banned=user_obj.banned, deleted=user_obj.deleted)

@@ -53,9 +53,8 @@ async def test_audio_functions(
         assert data["uuids"] == uuid_list[::-1]
 
     # Gets the URL for a sample.
-    response = app_client.get(f"/audio/media/{uuid_list[0]}")
+    response = app_client.get(f"/audio/media/{uuid_list[0]}.flac")
     assert response.status_code == 200, response.json()
-    assert "url" in response.json()
 
     # Gets information about the uploaded audio samples.
     response = app_client.post("/audio/query/ids", json={"uuids": upload_uuids})
@@ -66,6 +65,18 @@ async def test_audio_functions(
     # Updates the name for a sample.
     response = app_client.post("/audio/update", json={"uuid": upload_uuids[0], "name": "test"})
     assert response.status_code == 200, response.json()
+
+    # Makes some samples public.
+    for i in range(2):
+        response = app_client.post("/admin/act/content", json={"uuid": upload_uuids[i], "public": True})
+        assert response.status_code == 200, response.json()
+
+    # Tests getting some random public samples.
+    response = app_client.post("/audio/public", json={"count": 2})
+    assert response.status_code == 200, response.json()
+    data = response.json()
+    assert len(data["infos"]) == 2
+    assert {d["uuid"] for d in data["infos"]} == set(upload_uuids[:2])
 
     # Deletes a sample.
     response = app_client.delete("/audio/delete", params={"uuid": upload_uuids[0]})

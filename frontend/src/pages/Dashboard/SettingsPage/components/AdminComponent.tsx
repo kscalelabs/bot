@@ -19,7 +19,7 @@ const AdminComponent = () => {
   const handleCheckEmail = async () => {
     setButtonEnabled(false);
     try {
-      const response = await api.post<AdminResopnse>("/users/admin/act", {
+      const response = await api.post<AdminResopnse>("/users/admin/act/user", {
         email,
       });
       setBanned(response.data.banned);
@@ -35,7 +35,7 @@ const AdminComponent = () => {
   const handleAdminAction = async () => {
     setButtonEnabled(false);
     try {
-      await api.post("/users/admin/act", {
+      await api.post("/users/admin/act/user", {
         email,
         banned,
         deleted,

@@ -7,6 +7,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import FileResponse, RedirectResponse
 from pydantic.main import BaseModel
+from tortoise.contrib.postgres.functions import Random
 
 from bot.api.app.users import SessionTokenData, get_session_token
 from bot.api.audio import get_audio_url
@@ -52,7 +53,7 @@ async def query_me(
     user_data: SessionTokenData = Depends(get_session_token),
 ) -> QueryMeResponse:
     assert start >= 0, "Start must be non-negative"
-    assert limit <= MAX_UUIDS_PER_QUERY, "Can only return 100 samples at a time"
+    assert limit <= MAX_UUIDS_PER_QUERY, f"Can only return {MAX_UUIDS_PER_QUERY} samples at a time"
     query = Audio.filter(user_id=user_data.user_id)
     if q is not None:
         query = query.filter(name__icontains=q)
@@ -69,7 +70,7 @@ class AudioDataResponse(BaseModel):
     duration: float
 
 
-class QueryIdResponse(BaseModel):
+class SingleIdResponse(BaseModel):
     uuid: UUID
     name: str
     source: AudioSource
@@ -92,7 +93,7 @@ class QueryIdResponse(BaseModel):
         )
 
     @classmethod
-    def from_dict(cls, data: dict) -> "QueryIdResponse":
+    def from_dict(cls, data: dict) -> "SingleIdResponse":
         return cls(
             uuid=data["uuid"],
             name=data["name"],
@@ -108,7 +109,7 @@ class QueryIdsRequest(BaseModel):
 
 
 class QueryIdsResponse(BaseModel):
-    infos: list[QueryIdResponse]
+    infos: list[SingleIdResponse]
 
 
 @audio_router.post("/query/ids", response_model=QueryIdsResponse)
@@ -116,9 +117,9 @@ async def query_ids(
     data: QueryIdsRequest,
     user_data: SessionTokenData = Depends(get_session_token),
 ) -> QueryIdsResponse:
-    values = QueryIdResponse.keys()
+    values = SingleIdResponse.keys()
     query = await Audio.filter(user_id=user_data.user_id, uuid__in=data.uuids).values(*values)
-    infos = [QueryIdResponse.from_dict(info) for info in query]
+    infos = [SingleIdResponse.from_dict(info) for info in query]
     return QueryIdsResponse(infos=infos)
 
 
@@ -151,3 +152,28 @@ async def get_media(uuid: UUID) -> FileResponse:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Audio with UUID {uuid} not found")
     audio_url, is_url = await get_audio_url(audio)
     return RedirectResponse(audio_url) if is_url else FileResponse(audio_url)
+
+
+class PublicIdsRequest(BaseModel):
+    count: int
+    source: AudioSource | None = None
+
+
+class PublicIdsResponse(BaseModel):
+    infos: list[SingleIdResponse]
+
+
+@audio_router.post("/public", response_model=PublicIdsResponse)
+async def public_ids(data: PublicIdsRequest) -> PublicIdsResponse:
+    assert data.count <= MAX_UUIDS_PER_QUERY, f"Can only return {MAX_UUIDS_PER_QUERY} samples at a time"
+
+    values = SingleIdResponse.keys()
+    query = Audio.filter(public=True)
+    if data.source is not None:
+        query = query.filter(source=data.source)
+
+    # Note that RANDOM is shared between PostgreSQL and SQLite, but not MySQL.
+    query = query.annotate(order=Random()).order_by("order")
+    query = query.limit(data.count)
+    infos = [SingleIdResponse.from_dict(info) for info in await query.values(*values)]
+    return PublicIdsResponse(infos=infos)

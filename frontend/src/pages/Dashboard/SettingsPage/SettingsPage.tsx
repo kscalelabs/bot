@@ -19,7 +19,7 @@ const SettingsPage = () => {
   });
 
   return (
-    <Container>
+    <Container className="mt-5 mb-5">
       <Row className="justify-content-center">
         <Col md={8}>
           <Row className="mb-3">

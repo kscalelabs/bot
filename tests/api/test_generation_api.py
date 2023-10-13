@@ -39,10 +39,24 @@ async def test_generation_functions(
         uuids.append(data["uuid"])
 
     # Tests running the model on the two uploaded files.
+    gen_uuids: list[str] = []
     for _ in range(3):
         response = app_client.post("/make/run", json={"orig_uuid": uuids[0], "ref_uuid": uuids[1]})
         assert response.status_code == 200, response.json()
-        assert "gen_uuid" in response.json(), response.json()
+        data = response.json()
+        gen_uuids.append(data["gen_uuid"])
+
+    # Makes some generations public.
+    for i in range(2):
+        response = app_client.post("/admin/act/generation", json={"output_id": gen_uuids[i], "public": True})
+        assert response.status_code == 200, response.json()
+
+    # Tests getting some random public generations.
+    response = app_client.post("/generation/public", json={"count": 2})
+    assert response.status_code == 200, response.json()
+    data = response.json()
+    assert len(data["infos"]) == 2
+    assert {d["output_id"] for d in data["infos"]} == set(gen_uuids[:2])
 
     # Queries the number of generations.
     response = app_client.get("/generation/info/me")

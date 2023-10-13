@@ -6,6 +6,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends
 from pydantic.main import BaseModel
+from tortoise.contrib.postgres.functions import Random
 
 from bot.api.app.users import SessionTokenData, get_session_token
 from bot.api.model import Generation
@@ -61,3 +62,30 @@ async def query_me(
         ),
     )
     return QueryMeResponse(generations=generations)
+
+
+class PublicIdsRequest(BaseModel):
+    count: int
+
+
+class PublicIdsResponse(BaseModel):
+    infos: list[SingleGenerationResponse]
+
+
+@generation_router.post("/public", response_model=PublicIdsResponse)
+async def public_ids(data: PublicIdsRequest) -> PublicIdsResponse:
+    assert data.count <= MAX_GENERATIONS_PER_QUERY, "Can only return 100 samples at a time"
+    query = Generation.filter(public=True)
+    generations = cast(
+        list[SingleGenerationResponse],
+        await query.annotate(order=Random())
+        .order_by("order")
+        .limit(data.count)
+        .values(
+            "output_id",
+            "reference_id",
+            "source_id",
+            "created",
+        ),
+    )
+    return PublicIdsResponse(infos=generations)
