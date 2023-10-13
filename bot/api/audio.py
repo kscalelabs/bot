@@ -45,7 +45,7 @@ async def save_audio(audio_entry: Audio, file: BinaryIO, filename: str | None) -
 
         # Resamples the audio, if necessary.
         file_extension = _get_extension(filename, "wav")
-        audio = AudioSegment.from_file(file, file_extension)
+        audio: AudioSegment = AudioSegment.from_file(file, file_extension)
         if audio.frame_rate < min_sr:
             raise ValueError(f"Audio sample rate must be at least {min_sr} Hz")
         resampled_audio = audio.set_frame_rate(target_sr)
