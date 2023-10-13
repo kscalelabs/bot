@@ -40,7 +40,7 @@ async def verify_file_size(request: Request) -> int:
     if bytes_int > max_size:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=f"File must be less than {max_size} bytes",
+            detail=f"File must be less than {load_settings().file.audio_max_mb} megabytes",
         )
     return bytes_int
 
