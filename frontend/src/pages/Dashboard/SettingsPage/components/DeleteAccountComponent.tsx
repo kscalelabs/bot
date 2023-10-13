@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { api, humanReadableError } from "constants/backend";
 import { deleteTokens } from "hooks/auth";
 import { useCallback, useState } from "react";
-import { Button, Form, Spinner } from "react-bootstrap";
+import { Button, Col, Form, Row, Spinner } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 
 const DeleteAccountComponent = () => {
@@ -27,40 +27,45 @@ const DeleteAccountComponent = () => {
         setUseSpinner(false);
       }
     },
-    [navigate],
+    [navigate]
   );
 
   return (
-    <Form.Group>
-      <Form.Check
-        type="switch"
-        label="Confirm account deletion"
-        onChange={(e) => {
-          setButtonEnabled(e.target.checked);
-        }}
-        checked={buttonEnabled}
-        className="mb-3"
-        isInvalid={errorMessage !== null}
-      />
-      {errorMessage !== null && (
-        <Form.Control.Feedback type="invalid">
-          {errorMessage}
-        </Form.Control.Feedback>
-      )}
-
+    <Col>
+      <Row className="mb-3">
+        <Col className="text-center">
+          <h2>Delete Account</h2>
+        </Col>
+      </Row>
+      <Form.Group>
+        <Form.Check
+          type="switch"
+          label="Confirm account deletion"
+          onChange={(e) => {
+            setButtonEnabled(e.target.checked);
+          }}
+          checked={buttonEnabled}
+          className="mb-3"
+          isInvalid={errorMessage !== null}
+        />
+        {errorMessage !== null && (
+          <Form.Control.Feedback type="invalid">
+            {errorMessage}
+          </Form.Control.Feedback>
+        )}
+      </Form.Group>
       {useSpinner ? (
         <Spinner />
       ) : (
         <Button
           variant="danger"
-          id="button-addon2"
           disabled={!buttonEnabled}
           onClick={handleDeleteAccount}
         >
           <FontAwesomeIcon icon={faCancel} /> Delete Account
         </Button>
       )}
-    </Form.Group>
+    </Col>
   );
 };
 

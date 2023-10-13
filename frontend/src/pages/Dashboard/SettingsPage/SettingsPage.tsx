@@ -1,9 +1,22 @@
-import { useState } from "react";
-import { Col, Container, Modal, Row } from "react-bootstrap";
+import { api } from "constants/backend";
+import { useEffect, useState } from "react";
+import { Col, Container, Row } from "react-bootstrap";
+import AdminComponent from "./components/AdminComponent";
 import DeleteAccountComponent from "./components/DeleteAccountComponent";
+import PaymentComponent from "./components/PaymentComponent";
 
 const SettingsPage = () => {
-  const [message, setMessage] = useState<[string, string] | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const response = await api.get<boolean>("/users/admin/check");
+        console.log(response);
+        setIsAdmin(response.data);
+      } catch (error) {}
+    })();
+  });
 
   return (
     <Container>
@@ -14,25 +27,24 @@ const SettingsPage = () => {
               <h1>Settings</h1>
             </Col>
           </Row>
-          <Row>
+          <Row className="mb-3">
+            <PaymentComponent />
+          </Row>
+          <Row className="mb-3">
             <DeleteAccountComponent />
+          </Row>
+          {isAdmin && (
+            <Row className="mb-3">
+              <AdminComponent />
+            </Row>
+          )}
+          <Row className="mt-5">
+            <p>
+              <i>Seeing issues? Send an email to</i> <code>ben@dpsh.dev</code>
+            </p>
           </Row>
         </Col>
       </Row>
-      <Modal
-        show={message !== null}
-        onHide={() => {
-          setMessage(null);
-        }}
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>{message ? message[0] : ""}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>{message ? message[1] : ""}</Modal.Body>
-        <Modal.Footer>
-          Seeing issues? Send an email to <code>ben@dpsh.dev</code>
-        </Modal.Footer>
-      </Modal>
     </Container>
   );
 };

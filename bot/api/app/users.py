@@ -1,6 +1,5 @@
 """Defines the API endpoint for creating, deleting and updating user information."""
 
-import asyncio
 from email.utils import parseaddr as parse_email_address
 
 import aiohttp
@@ -232,12 +231,6 @@ async def refresh(response: Response, data: RefreshTokenData = Depends(get_refre
     return RefreshTokenResponse(token=session_token, token_type=TOKEN_TYPE)
 
 
-class AdminRequest(BaseModel):
-    email: str
-    banned: bool | None = None
-    deleted: bool | None = None
-
-
 async def is_admin(user_obj: User) -> bool:
     email = user_obj.email
     settings = load_settings().user
@@ -250,8 +243,19 @@ async def admin_check(token_data: SessionTokenData = Depends(get_session_token))
     return await is_admin(user_obj)
 
 
+class AdminRequest(BaseModel):
+    email: str
+    banned: bool | None = None
+    deleted: bool | None = None
+
+
+class AdminResponse(BaseModel):
+    banned: bool
+    deleted: bool
+
+
 @users_router.post("/admin/act")
-async def admin_act(data: AdminRequest, token_data: SessionTokenData = Depends(get_session_token)) -> bool:
+async def admin_act(data: AdminRequest, token_data: SessionTokenData = Depends(get_session_token)) -> AdminResponse:
     admin_user_obj = await User.get(id=token_data.user_id)
 
     # Validates that the logged in user can take admin actions.
@@ -262,7 +266,7 @@ async def admin_act(data: AdminRequest, token_data: SessionTokenData = Depends(g
 
     # Updates the user.
     user_obj = await User.get_or_none(email=data.email)
-    if not user_obj.exists():
+    if user_obj is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
     changed = False
     if data.banned is not None and user_obj.banned != data.banned:
@@ -274,4 +278,4 @@ async def admin_act(data: AdminRequest, token_data: SessionTokenData = Depends(g
     if changed:
         await user_obj.save()
 
-    return True
+    return AdminResponse(banned=user_obj.banned, deleted=user_obj.deleted)
