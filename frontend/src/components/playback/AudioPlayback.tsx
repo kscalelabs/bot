@@ -50,7 +50,7 @@ const AudioPlayback: React.FC<Props> = ({
   const { sourceUuid, setSourceUuid, referenceUuid, setReferenceUuid } =
     useClipboard();
   const [localResponse, setLocalResponse] = useState<QueryIdResponse | null>(
-    response
+    response,
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [editing, setEditing] = useState<boolean | null>(false);
