@@ -1,7 +1,7 @@
 import SingleGeneration from "components/playback/SingleGeneration";
 import { api, humanReadableError } from "constants/backend";
 import { useEffect, useState } from "react";
-import { Col, Container, Row, Spinner } from "react-bootstrap";
+import { Alert, Col, Container, Row, Spinner } from "react-bootstrap";
 import { Navigate, useParams } from "react-router-dom";
 
 interface SingleGenerationResponse {
@@ -15,7 +15,7 @@ const SingleGenerationPage = () => {
   const { uuid } = useParams();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [response, setResponse] = useState<SingleGenerationResponse | null>(
-    null,
+    null
   );
 
   useEffect(() => {
@@ -28,7 +28,7 @@ const SingleGenerationPage = () => {
               params: {
                 output_id: uuid,
               },
-            },
+            }
           );
           setResponse(apiResponse.data);
         } catch (error) {
@@ -36,7 +36,7 @@ const SingleGenerationPage = () => {
         }
       })();
     }
-  }, [response]);
+  }, [response, uuid]);
 
   if (uuid === undefined) {
     return <Navigate to="/generations" />;
@@ -68,6 +68,21 @@ const SingleGenerationPage = () => {
               )}
             </Col>
           </Row>
+          {errorMessage !== null && (
+            <Alert
+              variant="danger"
+              className="mt-3"
+              onClose={() => setErrorMessage(null)}
+              dismissible
+            >
+              <Alert.Heading>Oh snap!</Alert.Heading>
+              <div>
+                Encountered an error retrieving this generation:
+                <br />
+                <code>{errorMessage}</code>
+              </div>
+            </Alert>
+          )}
         </Col>
       </Row>
     </Container>
