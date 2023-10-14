@@ -69,7 +69,8 @@ async def save_audio(audio_entry: Audio, file: BinaryIO, filename: str | None) -
                 with tempfile.NamedTemporaryFile(suffix=f".{ext}") as temp_file:
                     resampled_audio.export(temp_file.name, format=ext)
                     s3_bucket = settings.s3_bucket
-                    async with aioboto3.resource("s3") as s3:
+                    session = aioboto3.Session()
+                    async with session.resource("s3") as s3:
                         bucket = await s3.Bucket(s3_bucket)
                         await bucket.upload_file(temp_file.name, fs_path)
 
@@ -117,7 +118,8 @@ async def get_audio_url(audio_entry: Audio) -> tuple[str, bool]:
                 if audio_entry.url is not None and audio_entry.url_expires > cur_time:
                     return audio_entry.url, True
                 s3_bucket = settings.s3_bucket
-                async with aioboto3.client("s3") as s3:
+                session = aioboto3.Session()
+                async with session.client("s3") as s3:
                     audio_entry.url = await s3.generate_presigned_url(
                         ClientMethod="get_object",
                         Params={"Bucket": s3_bucket, "Key": fs_path},
