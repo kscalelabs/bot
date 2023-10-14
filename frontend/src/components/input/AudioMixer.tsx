@@ -1,9 +1,9 @@
+import AudioSelection from "components/input/AudioSelection";
 import AudioPlayback from "components/playback/AudioPlayback";
 import { api, humanReadableError } from "constants/backend";
 import { useClipboard } from "hooks/clipboard";
 import { useState } from "react";
 import { Alert, Button, Card, Col, Row, Spinner } from "react-bootstrap";
-import AudioSelection from "./AudioSelection";
 
 interface RunResponse {
   gen_uuid: string;
@@ -38,7 +38,7 @@ const AudioMixer = () => {
     setShowSpinner(true);
 
     try {
-      const response = await api.post<RunResponse>("/make/run/sync", {
+      const response = await api.post<RunResponse>("/infer/run", {
         orig_uuid: sourceUuid,
         ref_uuid: referenceUuid,
       });

@@ -1,7 +1,7 @@
+# mypy: disable-error-code="no-untyped-def"
 """Defines the inference backend glue code."""
 
 import asyncio
-import functools
 import time
 from typing import Callable, ParamSpec
 
@@ -19,8 +19,7 @@ class InferenceRoute(APIRoute):
     the future.
     """
 
-    @functools.wraps(APIRoute.__init__)
-    def __init__(self, *args: P.args, **kwargs: P.kwargs) -> None:
+    def __init__(self, *args, **kwargs) -> None:  # noqa: ANN002, ANN003
         super().__init__(*args, **kwargs)
 
         self.lock = asyncio.Lock()

@@ -23,12 +23,14 @@ import {
   Spinner,
   Tooltip,
 } from "react-bootstrap";
+import { Link } from "react-router-dom";
 
 interface AudioProps {
   uuid: string;
   title?: string;
   showDeleteButton?: boolean;
   showSelectionButtons?: boolean;
+  showLink?: boolean;
   response?: QueryIdResponse;
 }
 
@@ -39,6 +41,7 @@ const AudioPlayback: React.FC<Props> = ({
   title = null,
   showDeleteButton = true,
   showSelectionButtons = true,
+  showLink = true,
   response = null,
   ...cardProps
 }) => {
@@ -47,7 +50,7 @@ const AudioPlayback: React.FC<Props> = ({
   const { sourceUuid, setSourceUuid, referenceUuid, setReferenceUuid } =
     useClipboard();
   const [localResponse, setLocalResponse] = useState<QueryIdResponse | null>(
-    response,
+    response
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [editing, setEditing] = useState<boolean | null>(false);
@@ -231,6 +234,14 @@ const AudioPlayback: React.FC<Props> = ({
                     <br />
                     <strong>Duration:</strong>{" "}
                     {localResponse.data.duration.toFixed(1)} seconds
+                  </>
+                )}
+                {showLink && (
+                  <>
+                    <br />
+                    <strong>
+                      <Link to={`/audio/${uuid}`}>Link</Link>
+                    </strong>
                   </>
                 )}
               </Card.Text>

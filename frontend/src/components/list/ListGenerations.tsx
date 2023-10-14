@@ -1,6 +1,6 @@
 import { faSync } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import AudioPlayback from "components/playback/AudioPlayback";
+import SingleGeneration from "components/playback/SingleGeneration";
 import { api, humanReadableError } from "constants/backend";
 import { useEffect, useState } from "react";
 import {
@@ -8,7 +8,6 @@ import {
   Button,
   ButtonGroup,
   ButtonToolbar,
-  Card,
   Col,
   Row,
   RowProps,
@@ -64,7 +63,7 @@ const ListGenerations = (props: Props) => {
           const response = await api.get<InfoMeResponse>("/generation/info/me");
           const newStart = Math.max(
             Math.min(start, response.data.count - paginationLimit),
-            0,
+            0
           );
           setInfo(response.data);
           setStart(newStart);
@@ -83,7 +82,7 @@ const ListGenerations = (props: Props) => {
                 start: start,
                 limit: paginationLimit,
               } as QueryMeRequest,
-            },
+            }
           );
           setGenerations(response.data.generations);
         } catch (error) {
@@ -156,34 +155,14 @@ const ListGenerations = (props: Props) => {
                   ) : (
                     <Col>
                       {generations.map((generation, id) => (
-                        <Card className="mt-3" key={id}>
-                          <Card.Header>
-                            Created{" "}
-                            {new Date(generation.created).toLocaleString()}
-                          </Card.Header>
-                          <Card.Body>
-                            <Row>
-                              <Col sm={12} md={12} lg={4} className="mt-2">
-                                <AudioPlayback
-                                  uuid={generation.source_id}
-                                  title="Source"
-                                />
-                              </Col>
-                              <Col sm={12} md={12} lg={4} className="mt-2">
-                                <AudioPlayback
-                                  uuid={generation.reference_id}
-                                  title="Reference"
-                                />
-                              </Col>
-                              <Col sm={12} md={12} lg={4} className="mt-2">
-                                <AudioPlayback
-                                  uuid={generation.output_id}
-                                  title="Generated"
-                                />
-                              </Col>
-                            </Row>
-                          </Card.Body>
-                        </Card>
+                        <SingleGeneration
+                          output_id={generation.output_id}
+                          reference_id={generation.reference_id}
+                          source_id={generation.source_id}
+                          created={generation.created}
+                          className="mt-3"
+                          key={id}
+                        />
                       ))}
                     </Col>
                   )}

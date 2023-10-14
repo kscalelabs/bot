@@ -43,7 +43,7 @@ const AudioRecorder = () => {
 
       try {
         const response = await api.post<UploadAudioResponse>(
-          "/make/upload",
+          "/audio/upload",
           formData,
           {
             headers: {

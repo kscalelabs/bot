@@ -13,6 +13,8 @@ import HomePage from "pages/Dashboard/HomePage/HomePage";
 import LibraryPage from "pages/Dashboard/LibraryPage/LibraryPage";
 import MakePage from "pages/Dashboard/MakePage/MakePage";
 import SettingsPage from "pages/Dashboard/SettingsPage/SettingsPage";
+import SingleAudioPage from "pages/Dashboard/SingleAudioPage/SingleAudioPage";
+import SingleGenerationPage from "pages/Dashboard/SingleGenerationPage/SingleGenerationPage";
 import Error404Page from "pages/Error/Error404Page";
 import { useCallback, useEffect, useState } from "react";
 import { Container, Nav, NavDropdown, Navbar } from "react-bootstrap";
@@ -161,6 +163,8 @@ const Dashboard = () => {
           <Route path="library" element={<LibraryPage />} />
           <Route path="generations" element={<GenerationsPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="audio/:uuid" element={<SingleAudioPage />} />
+          <Route path="generation/:uuid" element={<SingleGenerationPage />} />
           <Route path="*" element={<Error404Page />} />
         </Routes>
       </Container>
