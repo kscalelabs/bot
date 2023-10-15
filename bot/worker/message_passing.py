@@ -8,8 +8,8 @@ from typing import Awaitable, Callable, ParamSpec
 from uuid import UUID
 
 import aioboto3
-from aio_pika import IncomingMessage, Message, connect_robust
-from aio_pika.robust_connection import AbstractRobustConnection
+from aio_pika import Message, connect_robust, RobustConnection, RobustChannel
+from aio_pika.abc import AbstractIncomingMessage
 
 from bot.settings import load_settings
 
@@ -36,7 +36,7 @@ def handle_errors(f: Callable[P, Awaitable[None]]) -> Callable[P, Awaitable[None
 
 class BaseQueue(ABC):
     @abstractmethod
-    def initialize(self) -> None:
+    async def initialize(self) -> None:
         """Initializes the queue."""
 
     @abstractmethod
@@ -58,7 +58,8 @@ class BaseQueue(ABC):
 
 class RabbitMessageQueue(BaseQueue):
     queue_name: str
-    connection: AbstractRobustConnection
+    connection: RobustConnection
+    channel: RobustChannel
 
     async def initialize(self) -> None:
         settings = load_settings().worker.rabbit
@@ -83,7 +84,7 @@ class RabbitMessageQueue(BaseQueue):
         logger.info("Starting RabbitMQ worker...")
         callback = handle_errors(callback)
 
-        async def callback_wrapper(message: IncomingMessage) -> None:
+        async def callback_wrapper(message: AbstractIncomingMessage) -> None:
             async with message.process():
                 generation_uuid = UUID(message.body.decode("utf-8"))
                 await callback(generation_uuid)

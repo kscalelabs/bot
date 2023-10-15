@@ -15,12 +15,12 @@ logger = logging.getLogger(__name__)
 
 infer_router = APIRouter()
 
-message_queue = get_message_queue()
+mq = get_message_queue()
 
 
 @infer_router.on_event("startup")
 async def startup_event() -> None:
-    await message_queue.initialize()
+    await mq.initialize()
 
 
 async def generate(source_uuid: UUID, reference_uuid: UUID, user_id: int) -> Generation:
@@ -58,7 +58,7 @@ async def generate(source_uuid: UUID, reference_uuid: UUID, user_id: int) -> Gen
     )
 
     # Sends a new message to the message queue with the new generation.
-    await message_queue.send(generation.uuid)
+    await mq.send(generation.uuid)
 
     return generation
 

@@ -102,11 +102,6 @@ async def run_model(generation_uuid: UUID) -> None:
     output_audio_arr = output_audio.squeeze(0).float().cpu().numpy()
     output_audio_arr = (output_audio_arr * 32768).clip(-32768, 32767).astype("int16")
 
-    import numpy as np
-    np.save("source.npy", source_audio_arr)
-    np.save("reference.npy", reference_audio_arr)
-    np.save("output.npy", output_audio_arr)
-
     await asyncio.gather(save_audio_array(generation.output, output_audio_arr), generation.save())
 
 

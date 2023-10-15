@@ -76,21 +76,21 @@ class Generation(Model):
         index=True,
         null=False,
     )
-    source: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
+    source: fields.ForeignKeyRelation[Audio] = fields.ForeignKeyField(
         "models.Audio",
         related_name="generations_as_source",
         on_delete=fields.CASCADE,
         index=True,
         null=False,
     )
-    reference: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
+    reference: fields.ForeignKeyRelation[Audio] = fields.ForeignKeyField(
         "models.Audio",
         related_name="generations_as_reference",
         on_delete=fields.CASCADE,
         index=True,
         null=False,
     )
-    output: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
+    output: fields.ForeignKeyRelation[Audio] = fields.ForeignKeyField(
         "models.Audio",
         related_name="generations_as_output",
         on_delete=fields.CASCADE,
