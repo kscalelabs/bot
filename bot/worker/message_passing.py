@@ -5,7 +5,6 @@ import functools
 import logging
 from abc import ABC, abstractmethod
 from typing import Awaitable, Callable, ParamSpec
-from uuid import UUID
 
 import aioboto3
 from aio_pika import Message, connect_robust
@@ -40,20 +39,30 @@ class BaseQueue(ABC):
         """Initializes the queue."""
 
     @abstractmethod
-    async def send(self, generation_uuid: UUID) -> None:
+    async def send(self, generation_id: int) -> None:
         """Sends a message to the queue.
 
         Args:
-            generation_uuid: The UUID of the generation to run.
+            generation_id: The ID of the generation to run.
         """
 
     @abstractmethod
-    async def receive(self, callback: Callable[[UUID], Awaitable[None]]) -> None:
+    async def receive(self, callback: Callable[[int], Awaitable[None]]) -> None:
         """Receives messages from the queue.
 
         Args:
             callback: The callback function to call when a message is received.
         """
+
+
+class _Serializer:
+    @staticmethod
+    def serialize(generation_id: int) -> bytes:
+        return generation_id.to_bytes((generation_id.bit_length() + 7) // 8, "big")
+
+    @staticmethod
+    def deserialize(data: bytes) -> int:
+        return int.from_bytes(data, "big")
 
 
 class RabbitMessageQueue(BaseQueue):
@@ -74,20 +83,20 @@ class RabbitMessageQueue(BaseQueue):
         self.channel = await self.connection.channel()
         await self.channel.declare_queue(name=self.queue_name)
 
-    async def send(self, generation_uuid: UUID) -> None:
+    async def send(self, generation_id: int) -> None:
         await self.channel.default_exchange.publish(
-            Message(body=generation_uuid.hex.encode("utf-8")),
+            Message(body=_Serializer.serialize(generation_id)),
             routing_key=self.queue_name,
         )
 
-    async def receive(self, callback: Callable[[UUID], Awaitable[None]]) -> None:
+    async def receive(self, callback: Callable[[int], Awaitable[None]]) -> None:
         logger.info("Starting RabbitMQ worker...")
         callback = handle_errors(callback)
 
         async def callback_wrapper(message: AbstractIncomingMessage) -> None:
             async with message.process():
-                generation_uuid = UUID(message.body.decode("utf-8"))
-                await callback(generation_uuid)
+                generation_id = _Serializer.deserialize(message.body)
+                await callback(generation_id)
 
         await self.channel.set_qos(prefetch_count=1)
         queue = await self.channel.get_queue(self.queue_name)
@@ -116,14 +125,14 @@ class SqsMessageQueue(BaseQueue):
             response = await sqs.create_queue(QueueName=self.queue_name)
             self.queue_url = response["QueueUrl"]
 
-    async def send(self, generation_uuid: UUID) -> None:
+    async def send(self, generation_id: int) -> None:
         async with self.session.resource("sqs") as sqs:
             await sqs.send_message(
                 QueueUrl=self.queue_url,
-                MessageBody=generation_uuid.hex,
+                MessageBody=str(generation_id),
             )
 
-    async def receive(self, callback: Callable[[UUID], Awaitable[None]]) -> None:
+    async def receive(self, callback: Callable[[int], Awaitable[None]]) -> None:
         logger.info("Starting SQS worker...")
         callback = handle_errors(callback)
 
@@ -134,8 +143,8 @@ class SqsMessageQueue(BaseQueue):
                 messages = response.get("Messages", [])
                 for message in messages:
                     try:
-                        generation_uuid = UUID(message["Body"])
-                        await callback(generation_uuid)
+                        generation_id = int(message["Body"])
+                        await callback(generation_id)
                         await sqs.delete_message(QueueUrl=self.queue_url, ReceiptHandle=message["ReceiptHandle"])
                     except Exception:
                         logger.exception("An exception occurred while processing a message")
@@ -145,10 +154,10 @@ class DummyQueue(BaseQueue):
     async def initialize(self) -> None:
         pass
 
-    async def send(self, generation_uuid: UUID) -> None:
+    async def send(self, generation_id: int) -> None:
         pass
 
-    async def receive(self, callback: Callable[[UUID], Awaitable[None]]) -> None:
+    async def receive(self, callback: Callable[[int], Awaitable[None]]) -> None:
         pass
 
 

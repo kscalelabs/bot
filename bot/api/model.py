@@ -2,6 +2,7 @@
 """Defines the table models for the API."""
 
 import enum
+import uuid
 
 from tortoise import fields
 from tortoise.models import Model
@@ -46,8 +47,9 @@ def cast_audio_source(s: str) -> AudioSource:
 
 
 class Audio(Model):
-    uuid = fields.UUIDField(pk=True)
-    name = fields.CharField(max_length=255, default="Untitled", index=True)
+    id = fields.IntField(pk=True)
+    key = fields.UUIDField(unique=True, index=True)
+    name = fields.CharField(max_length=255, index=True)
     user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
         "models.User",
         related_name="audios",
@@ -57,18 +59,17 @@ class Audio(Model):
     )
     source = fields.CharEnumField(enum_type=AudioSource, index=True)
     created = fields.DatetimeField(auto_now_add=True)
-    available = fields.BooleanField(default=False)
-    num_frames = fields.IntField(null=True)
-    num_channels = fields.IntField(null=True)
-    sample_rate = fields.IntField(null=True)
-    duration = fields.FloatField(null=True)
+    num_frames = fields.IntField()
+    num_channels = fields.IntField()
+    sample_rate = fields.IntField()
+    duration = fields.FloatField()
     url = fields.CharField(max_length=255, null=True)
     url_expires = fields.DatetimeField(auto_now_add=True)
     public = fields.BooleanField(default=False)
 
 
 class Generation(Model):
-    uuid = fields.UUIDField(pk=True)
+    id = fields.IntField(pk=True)
     user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
         "models.User",
         related_name="generations",
@@ -95,7 +96,7 @@ class Generation(Model):
         related_name="generations_as_output",
         on_delete=fields.CASCADE,
         index=True,
-        null=False,
+        null=True,
     )
     model = fields.CharField(max_length=255, index=True, null=True)
     elapsed_time = fields.FloatField(null=True)
