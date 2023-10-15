@@ -11,10 +11,10 @@ from fastapi.testclient import TestClient
 
 @pytest.mark.asyncio
 async def test_generation_functions(
-    authenticated_user: tuple[TestClient, str],
+    authenticated_user: tuple[TestClient, str, str],
     tmpdir_factory: TempdirFactory,
 ) -> None:
-    app_client, _ = authenticated_user
+    app_client, _, _ = authenticated_user
 
     # Creates a new dummy audio file.
     audio_file_data = np.random.uniform(size=(8000,)) * 2 - 1

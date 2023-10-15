@@ -94,7 +94,7 @@ def app_client() -> Generator[TestClient, None, None]:
 
 
 @pytest.fixture()
-def authenticated_user(app_client: TestClient) -> tuple[TestClient, str]:
+def authenticated_user(app_client: TestClient) -> tuple[TestClient, str, str]:
     from bot.api.email import OneTimePassPayload
 
     test_email = "ben@dpsh.dev"
@@ -106,6 +106,7 @@ def authenticated_user(app_client: TestClient) -> tuple[TestClient, str]:
 
     # Gets a session token.
     response = app_client.post("/users/refresh")
-    assert response.status_code == 200, response.json()
+    data = response.json()
+    assert response.status_code == 200, data
 
-    return app_client, test_email
+    return app_client, test_email, data["token"]

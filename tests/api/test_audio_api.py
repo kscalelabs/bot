@@ -11,10 +11,10 @@ from fastapi.testclient import TestClient
 
 @pytest.mark.asyncio
 async def test_audio_functions(
-    authenticated_user: tuple[TestClient, str],
+    authenticated_user: tuple[TestClient, str, str],
     tmpdir_factory: TempdirFactory,
 ) -> None:
-    app_client, _ = authenticated_user
+    app_client, _, token = authenticated_user
 
     # Creates a new dummy audio file.
     audio_file_data = np.random.uniform(size=(8000,)) * 2 - 1
@@ -53,7 +53,7 @@ async def test_audio_functions(
         assert data["ids"] == id_list[::-1]
 
     # Gets the URL for a sample.
-    response = app_client.get(f"/audio/media/{id_list[0]}.flac")
+    response = app_client.get(f"/audio/media/{id_list[0]}.flac", params={"access_token": token})
     assert response.status_code == 200, response.json()
 
     # Gets information about the uploaded audio samples.
