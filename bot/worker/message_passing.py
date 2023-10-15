@@ -8,7 +8,7 @@ from typing import Awaitable, Callable, ParamSpec
 from uuid import UUID
 
 import aioboto3
-from aio_pika import Message, connect_robust, RobustConnection, RobustChannel
+from aio_pika import Message, RobustChannel, RobustConnection, connect_robust
 from aio_pika.abc import AbstractIncomingMessage
 
 from bot.settings import load_settings
