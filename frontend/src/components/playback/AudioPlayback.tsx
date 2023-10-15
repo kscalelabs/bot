@@ -134,9 +134,7 @@ const AudioPlayback: React.FC<Props> = ({
   }, [audioId]);
 
   useEffect(() => {
-    if (localResponse !== null) {
-      audioRef.current = new Audio(getUri());
-
+    if (audioRef.current !== null) {
       const handleAudioEnd = () => {
         setIsPlaying(false);
       };
@@ -151,9 +149,12 @@ const AudioPlayback: React.FC<Props> = ({
         }
       };
     }
-  }, [localResponse, getUri]);
+  }, [audioRef]);
 
   const toggleAudio = () => {
+    if (audioRef.current === null) {
+      audioRef.current = new Audio(getUri());
+    }
     if (audioRef.current !== null) {
       if (isPlaying) {
         audioRef.current.pause();
