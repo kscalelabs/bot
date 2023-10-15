@@ -56,17 +56,6 @@ class BaseQueue(ABC):
         """
 
 
-class DummyQueue(BaseQueue):
-    async def initialize(self) -> None:
-        pass
-
-    async def send(self, generation_uuid: UUID) -> None:
-        pass
-
-    async def receive(self, callback: Callable[[UUID], Awaitable[None]]) -> None:
-        pass
-
-
 class RabbitMessageQueue(BaseQueue):
     queue_name: str
     connection: AbstractConnection
@@ -150,6 +139,17 @@ class SqsMessageQueue(BaseQueue):
                         await sqs.delete_message(QueueUrl=self.queue_url, ReceiptHandle=message["ReceiptHandle"])
                     except Exception:
                         logger.exception("An exception occurred while processing a message")
+
+
+class DummyQueue(BaseQueue):
+    async def initialize(self) -> None:
+        pass
+
+    async def send(self, generation_uuid: UUID) -> None:
+        pass
+
+    async def receive(self, callback: Callable[[UUID], Awaitable[None]]) -> None:
+        pass
 
 
 def get_message_queue() -> BaseQueue:
