@@ -35,6 +35,9 @@ start-backend:
 start-frontend:
 	cd frontend && npm start
 
+start-worker:
+	python -m bot.worker
+
 # ------------------------ #
 #          Build           #
 # ------------------------ #

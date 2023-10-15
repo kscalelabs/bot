@@ -68,7 +68,7 @@ class Audio(Model):
 
 
 class Generation(Model):
-    id = fields.IntField(pk=True)
+    uuid = fields.UUIDField(pk=True)
     user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
         "models.User",
         related_name="generations",
@@ -98,5 +98,7 @@ class Generation(Model):
         null=False,
     )
     model = fields.CharField(max_length=255, index=True, null=True)
-    created = fields.DatetimeField(auto_now_add=True)
+    elapsed_time = fields.FloatField(null=True)
+    task_created = fields.DatetimeField(auto_now_add=True)
+    task_finished = fields.DatetimeField(null=True)
     public = fields.BooleanField(default=False)

@@ -19,6 +19,9 @@ OmegaConf.register_new_resolver("bot.version", lambda: bot_version, use_cache=Tr
 @dataclass
 class UserSettings:
     admin_emails: list[str] = ml.conf_field(MISSING)
+    # The field below is used to restrict the development server to only
+    # authorized users, to prevent random people from creating accounts.
+    authorized_users: list[str] | None = ml.conf_field(None)
 
 
 @dataclass
@@ -48,17 +51,58 @@ class DatabaseSettings:
 
 
 @dataclass
+class RabbitMessageQueueSettings:
+    host: str = ml.conf_field("localhost")
+    port: int = ml.conf_field(5672)
+    virtual_host: str = ml.conf_field("/")
+    username: str = ml.conf_field("guest")
+    password: str = ml.conf_field("guest")
+    queue_name: str = ml.conf_field("dpsh")
+
+
+@dataclass
+class SqsMessageQueueSettings:
+    access_key_id: str = ml.conf_field(MISSING)
+    secret_access_key: str = ml.conf_field(MISSING)
+    region: str = ml.conf_field(MISSING)
+    queue_name: str = ml.conf_field(MISSING)
+
+
+@dataclass
+class WorkerSettings:
+    model_key: str = ml.conf_field(MISSING)
+    queue_type: str = ml.conf_field(MISSING)
+    rabbit: RabbitMessageQueueSettings = ml.conf_field(RabbitMessageQueueSettings())
+    sqs: SqsMessageQueueSettings = ml.conf_field(SqsMessageQueueSettings())
+    sampling_timesteps: int | None = ml.conf_field(None)
+    soft_time_limit: int = ml.conf_field(30)
+    max_retries: int = ml.conf_field(3)
+
+
+@dataclass
+class AudioFileSettings:
+    file_ext: str = ml.conf_field("flac")
+    sample_rate: int = ml.conf_field(16000)
+    min_sample_rate: int = ml.conf_field(8000)
+    sample_width: int = ml.conf_field(2)
+    num_channels: int = ml.conf_field(1)
+    res_type: str = ml.conf_field("kaiser_fast")
+    max_mb: int = ml.conf_field(10)
+    max_duration: float = ml.conf_field(10.0)
+
+
+@dataclass
+class S3FileSettings:
+    bucket: str = ml.conf_field(MISSING)
+    url_expiration: int = ml.conf_field(3600)
+
+
+@dataclass
 class FileSettings:
     fs_type: str = ml.conf_field(MISSING)
     root_dir: str = ml.conf_field(MISSING)
-    audio_file_ext: str = ml.conf_field("flac")
-    audio_sample_rate: int = ml.conf_field(16000)
-    audio_min_sample_rate: int = ml.conf_field(8000)
-    audio_res_type: str = ml.conf_field("kaiser_fast")
-    audio_max_mb: int = ml.conf_field(10)
-    audio_max_duration: float = ml.conf_field(10.0)
-    s3_bucket: str = ml.conf_field(MISSING)
-    s3_url_expiration: int = ml.conf_field(3600)
+    audio: AudioFileSettings = ml.conf_field(AudioFileSettings())
+    s3: S3FileSettings = ml.conf_field(S3FileSettings())
 
 
 @dataclass
@@ -87,6 +131,7 @@ class Settings:
     user: UserSettings = ml.conf_field(UserSettings())
     site: SiteSettings = ml.conf_field(SiteSettings())
     database: DatabaseSettings = ml.conf_field(DatabaseSettings())
+    worker: WorkerSettings = ml.conf_field(WorkerSettings())
     file: FileSettings = ml.conf_field(FileSettings())
     email: EmailSettings = ml.conf_field(EmailSettings())
     crypto: CryptoSettings = ml.conf_field(CryptoSettings())

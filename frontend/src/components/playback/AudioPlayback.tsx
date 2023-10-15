@@ -36,6 +36,24 @@ interface AudioProps {
 
 type Props = AudioProps & CardProps;
 
+const ProcessingWidget = () => {
+  const [dots, setDots] = useState(".");
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDots((dots) => {
+        if (dots.length === 3) {
+          return ".";
+        }
+        return dots + ".";
+      });
+    }, 750);
+    return () => clearInterval(interval);
+  }, []);
+
+  return <i>Processing{dots}</i>;
+};
+
 const AudioPlayback: React.FC<Props> = ({
   uuid,
   title = null,
@@ -227,7 +245,7 @@ const AudioPlayback: React.FC<Props> = ({
                 {localResponse.data === null ? (
                   <>
                     <br />
-                    <strong>Processing...</strong>
+                    <ProcessingWidget />
                   </>
                 ) : (
                   <>

@@ -18,6 +18,9 @@ aerich
 # File storage dependencies.
 aioboto3
 
+# Worker dependencies.
+pika
+
 # Processing dependencies.
 numpy
 pydub

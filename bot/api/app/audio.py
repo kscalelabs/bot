@@ -19,7 +19,7 @@ from pydantic.main import BaseModel
 from tortoise.contrib.postgres.functions import Random
 
 from bot.api.app.users import SessionTokenData, get_session_token
-from bot.api.audio import get_audio_url, save_audio
+from bot.api.audio import get_audio_url, save_audio_file
 from bot.api.model import Audio, AudioSource, cast_audio_source
 from bot.settings import load_settings
 
@@ -155,7 +155,7 @@ async def update_name(data: UpdateRequest, user_data: SessionTokenData = Depends
     return True
 
 
-@audio_router.get(f"/media/{{uuid}}.{settings.file.audio_file_ext}")
+@audio_router.get(f"/media/{{uuid}}.{settings.file.audio.file_ext}")
 async def get_media(uuid: UUID) -> FileResponse:
     audio = await Audio.get_or_none(uuid=uuid)
     if audio is None or not audio.available:
@@ -178,11 +178,11 @@ async def verify_file_size(request: Request) -> int:
             detail="Content-Length header required",
         )
     bytes_int = int(content_length)
-    max_size = load_settings().file.audio_max_mb * 1024 * 1024
+    max_size = load_settings().file.audio.max_mb * 1024 * 1024
     if bytes_int > max_size:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=f"File must be less than {load_settings().file.audio_max_mb} megabytes",
+            detail=f"File must be less than {load_settings().file.audio.max_mb} megabytes",
         )
     return bytes_int
 
@@ -202,13 +202,8 @@ async def upload(
             detail=f"Source must be one of {AudioSource.uploaded}, {AudioSource.recorded}",
         )
     name = DEFAULT_NAME if file.filename is None else file.filename
-    audio_entry = await Audio.create(
-        user_id=user_data.user_id,
-        name=name,
-        source=source_enum,
-        available=False,
-    )
-    background_tasks.add_task(save_audio, audio_entry, file.file, name)
+    audio_entry = await Audio.create(user_id=user_data.user_id, name=name, source=source_enum, available=False)
+    background_tasks.add_task(save_audio_file, audio_entry, file.file, name)
     return UploadResponse(uuid=audio_entry.uuid)
 
 

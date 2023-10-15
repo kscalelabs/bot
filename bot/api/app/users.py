@@ -93,6 +93,11 @@ async def create_or_get(email: str) -> User:
     # Gets or creates the user object.
     user_obj = await User.get_or_none(email=email)
     if user_obj is None:
+        settings = load_settings().user
+        authorized_emails = settings.authorized_users
+        if authorized_emails is not None:
+            if email not in authorized_emails and email not in settings.admin_emails:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not authorized")
         user_obj = await User.create(email=email)
 
     # Validates user.
