@@ -4,18 +4,17 @@ import asyncio
 import functools
 import logging
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from typing import Any, Awaitable, Callable, ParamSpec
 from uuid import UUID
 
 import boto3
+
 # from pika.adapters.blocking_connection import BlockingChannel, BlockingConnection
 # from pika.connection import ConnectionParameters
 # from pika.credentials import PlainCredentials
 # from pika.spec import Basic, BasicProperties
-from aio_pika import connect_robust, IncomingMessage, Message
-from aio_pika import Message
-from aio_pika.robust_connection import AbstractRobustChannel, RobustConnection, RobustChannel, AbstractRobustConnection
+from aio_pika import IncomingMessage, Message, connect_robust
+from aio_pika.robust_connection import AbstractRobustConnection
 
 from bot.settings import load_settings
 
@@ -50,7 +49,7 @@ class BaseQueue(ABC):
         """Sends a message to the queue.
 
         Args:
-            message: The message to send.
+            generation_uuid: The UUID of the generation to run.
         """
 
     @abstractmethod
@@ -96,9 +95,14 @@ class RabbitMessageQueue(BaseQueue):
 
         await self.channel.set_qos(prefetch_count=1)
         queue = await self.channel.get_queue(self.queue_name)
-        await queue.consume(callback_wrapper)
-        while True:
-            await asyncio.sleep(1)
+
+        try:
+            await queue.consume(callback_wrapper)
+            while True:
+                logger.info("Waiting for messages...")
+                await asyncio.sleep(60)
+        finally:
+            await self.connection.close()
 
 
 class SqsMessageQueue(BaseQueue):

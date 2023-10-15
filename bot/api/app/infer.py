@@ -9,7 +9,7 @@ from pydantic.main import BaseModel
 
 from bot.api.app.users import SessionTokenData, get_session_token
 from bot.api.model import Audio, AudioSource, Generation
-from bot.worker.message_passing import Message, get_message_queue
+from bot.worker.message_passing import get_message_queue
 
 logger = logging.getLogger(__name__)
 
