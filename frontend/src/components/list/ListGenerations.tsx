@@ -36,7 +36,7 @@ interface SingleGenerationResponse {
   output_id: string;
   reference_id: string;
   source_id: string;
-  task_finished: Date;
+  task_finished: Date | null;
 }
 
 interface QueryMeResponse {

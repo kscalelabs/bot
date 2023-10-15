@@ -33,7 +33,7 @@ class SingleGenerationResponse(BaseModel):
     output_id: UUID
     reference_id: UUID
     source_id: UUID
-    task_finished: datetime.datetime
+    task_finished: datetime.datetime | None
 
 
 class QueryMeResponse(BaseModel):
@@ -76,7 +76,7 @@ async def query_from_id(
         output_id=generation.output_id,
         reference_id=generation.reference_id,
         source_id=generation.source_id,
-        created=generation.created,
+        task_finished=generation.task_created,
     )
 
 

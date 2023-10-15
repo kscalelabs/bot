@@ -28,6 +28,7 @@ resampy
 soundfile
 
 # Model inference dependencies.
+ml-pretrained
 ml-starter
 torch
 torchaudio
