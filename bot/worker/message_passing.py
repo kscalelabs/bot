@@ -56,6 +56,17 @@ class BaseQueue(ABC):
         """
 
 
+class DummyQueue(BaseQueue):
+    async def initialize(self) -> None:
+        pass
+
+    async def send(self, generation_uuid: UUID) -> None:
+        pass
+
+    async def receive(self, callback: Callable[[UUID], Awaitable[None]]) -> None:
+        pass
+
+
 class RabbitMessageQueue(BaseQueue):
     queue_name: str
     connection: AbstractConnection
@@ -149,5 +160,7 @@ def get_message_queue() -> BaseQueue:
             return RabbitMessageQueue()
         case "sqs":
             return SqsMessageQueue()
+        case "dummy":
+            return DummyQueue()
         case _:
             raise ValueError(f"Invalid queue type {settings.queue_type}")
