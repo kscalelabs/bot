@@ -67,6 +67,7 @@ async def query_from_id(id: int, user_data: SessionTokenData = Depends(get_sessi
     if generation is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Generation not found")
     return SingleGenerationResponse(
+        id=generation.id,
         output_id=generation.output_id,
         reference_id=generation.reference_id,
         source_id=generation.source_id,

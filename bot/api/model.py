@@ -90,7 +90,7 @@ class Generation(Model):
         index=True,
         null=False,
     )
-    output: fields.ForeignKeyRelation[Audio] = fields.ForeignKeyField(
+    output: fields.ForeignKeyNullableRelation[Audio] = fields.ForeignKeyField(
         "models.Audio",
         related_name="generations_as_output",
         on_delete=fields.CASCADE,

@@ -149,7 +149,7 @@ async def get_media(media_id: int, access_token: str | None = None) -> FileRespo
     audio_url, is_url = await get_audio_url(audio)
     headers = {"Content-Disposition": f"attachment; filename={name}"}
     if is_url:
-        return RedirectResponse(audio_url, headers=headers)
+        return RedirectResponse(audio_url, headers=headers)  # type: ignore[return-value]
     return FileResponse(audio_url, headers=headers)
 
 

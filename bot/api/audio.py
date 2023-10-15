@@ -7,6 +7,7 @@ import shutil
 import tempfile
 import uuid
 from datetime import timedelta
+from hashlib import sha1
 from typing import BinaryIO, Literal, cast, get_args
 from uuid import UUID
 
@@ -43,8 +44,9 @@ def _get_extension(filename: str | None, default: str) -> str:
     return filename.split(".")[-1].lower() if "." in filename else default
 
 
-async def _save_audio(user_id: int, source: int, name: str | None, audio: AudioSegment) -> Audio:
-    key = uuid.uuid5(uuid.NAMESPACE_OID, f"user-{user_id}-{os.urandom(16)}")
+async def _save_audio(user_id: int, source: AudioSource, name: str | None, audio: AudioSegment) -> Audio:
+    key_bytes = sha1(uuid.NAMESPACE_OID.bytes + f"user-{user_id}".encode("utf-8") + os.urandom(16))
+    key = UUID(bytes=key_bytes.digest()[:16], version=5)
     settings = load_settings().file
     fs_type = get_fs_type()
     fs_path = _get_path(key)
@@ -96,7 +98,7 @@ async def save_audio_file(
     user_id: int,
     source: AudioSource,
     file: BinaryIO,
-    filename: str | None,
+    name: str | None = None,
 ) -> Audio:
     """Saves the audio file to the file system.
 
@@ -104,14 +106,14 @@ async def save_audio_file(
         user_id: The ID of the user who uploaded the audio file.
         source: The source of the audio file.
         file: The audio file.
-        filename: The name of the audio file.
+        name: The name of the audio file.
 
     Returns:
         The row in audio table.
     """
-    file_extension = _get_extension(filename, "wav")
+    file_extension = _get_extension(name, "wav")
     audio = AudioSegment.from_file(file, file_extension)
-    return await _save_audio(user_id, source, filename, audio)
+    return await _save_audio(user_id, source, name, audio)
 
 
 async def get_audio_url(audio_entry: Audio) -> tuple[str, bool]:
