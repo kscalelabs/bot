@@ -1,22 +1,20 @@
 """Functions for configuring the worker."""
 
 import asyncio
+import functools
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any, Awaitable, Callable, ParamSpec
+from uuid import UUID
 
 import boto3
 from pika.adapters.blocking_connection import BlockingChannel, BlockingConnection
 from pika.connection import ConnectionParameters
 from pika.credentials import PlainCredentials
 from pika.spec import Basic, BasicProperties
-from typing import Awaitable
-import functools
-from uuid import UUID
 
 from bot.settings import load_settings
-from typing import ParamSpec
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +25,7 @@ def sync(f: Callable[P, Awaitable[None]]) -> Callable[P, None]:
     @functools.wraps(f)
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> None:
         return asyncio.get_event_loop().run_until_complete(f(*args, **kwargs))
+
     return wrapper
 
 
@@ -37,6 +36,7 @@ def handle_errors(f: Callable[P, Awaitable[None]]) -> Callable[P, Awaitable[None
             await f(*args, **kwargs)
         except Exception:
             logger.exception("An exception occurred.")
+
     return wrapper
 
 
@@ -59,7 +59,7 @@ class BaseQueue(ABC):
         """
 
     @abstractmethod
-    async def receive(self, callback: Callable[[Message],Awaitable[None]]) -> None:
+    async def receive(self, callback: Callable[[Message], Awaitable[None]]) -> None:
         """Receives messages from the queue.
 
         Args:

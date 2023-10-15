@@ -4,20 +4,17 @@ import asyncio
 import logging
 import time
 
-from bot.worker.message_passing import get_message_queue, Message
 import ml.api as ml
 import torch
-from bot.utils import server_time, configure_logging
 
 from bot.api.audio import load_audio_array, save_audio_array
 from bot.api.db import close_db, init_db
 from bot.api.model import Generation
-from bot.model.hubert.model import HubertModel
-from bot.settings import load_settings
-
 from bot.model.hubert.checkpoint import cast_pretrained_model, pretrained_hubert
 from bot.model.hubert.model import HubertModel
 from bot.settings import load_settings
+from bot.utils import configure_logging, server_time
+from bot.worker.message_passing import Message, get_message_queue
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +53,7 @@ class _ModelRunner:
     def model_key(self) -> str:
         assert self._model_key is not None, "Model not initialized."
         return self._model_key
+
 
 model_runner = _ModelRunner()
 

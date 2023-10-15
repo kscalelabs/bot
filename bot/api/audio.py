@@ -13,8 +13,8 @@ import numpy as np
 from pydub import AudioSegment
 
 from bot.api.model import Audio
-from bot.utils import server_time
 from bot.settings import load_settings
+from bot.utils import server_time
 
 logger = logging.getLogger(__name__)
 

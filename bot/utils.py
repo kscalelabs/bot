@@ -4,7 +4,6 @@ import datetime
 import logging
 import math
 import sys
-
 from typing import Literal
 
 RESET_SEQ = "\033[0m"
@@ -63,6 +62,7 @@ def get_colorize_parts(color: Color, bold: bool = False) -> tuple[str, str]:
 def colorize(s: str, color: Color, bold: bool = False) -> str:
     start, end = get_colorize_parts(color, bold=bold)
     return start + s + end
+
 
 # Logging level to show on all ranks.
 INFOALL: int = logging.INFO + 1
@@ -173,7 +173,7 @@ def configure_logging(
     try:
         import tqdm  # noqa: F401
     except ImportError:
-        use_tqdm = False
+        pass
 
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(ColoredFormatter(prefix=prefix, rank=rank, world_size=world_size))
