@@ -2,7 +2,6 @@
 """Defines the table models for the API."""
 
 import enum
-import uuid
 
 from tortoise import fields
 from tortoise.models import Model

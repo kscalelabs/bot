@@ -1,6 +1,5 @@
 """Defines the API endpoint for taking admin actions."""
 
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic.main import BaseModel
