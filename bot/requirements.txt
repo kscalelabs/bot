@@ -19,7 +19,6 @@ aerich
 aioboto3
 
 # Worker dependencies.
-pika
 aio-pika
 
 # Processing dependencies.

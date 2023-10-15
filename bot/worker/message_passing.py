@@ -4,15 +4,10 @@ import asyncio
 import functools
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Awaitable, Callable, ParamSpec
+from typing import Awaitable, Callable, ParamSpec
 from uuid import UUID
 
-import boto3
-
-# from pika.adapters.blocking_connection import BlockingChannel, BlockingConnection
-# from pika.connection import ConnectionParameters
-# from pika.credentials import PlainCredentials
-# from pika.spec import Basic, BasicProperties
+import aioboto3
 from aio_pika import IncomingMessage, Message, connect_robust
 from aio_pika.robust_connection import AbstractRobustConnection
 
@@ -106,24 +101,21 @@ class RabbitMessageQueue(BaseQueue):
 
 
 class SqsMessageQueue(BaseQueue):
-    connection: Any
-    queue_url: str
-
     def initialize(self) -> None:
         settings = load_settings().worker.sqs
 
-        self.connection = boto3.client(
+        self.connection = aioboto3.client(
             "sqs",
             aws_access_key_id=settings.access_key_id,
             aws_secret_access_key=settings.secret_access_key,
             region_name=settings.region,
         )
 
-        self.queue_url = self.connection.get_queue_url(QueueName=settings.queue_name)["QueueUrl"]
+        self.queue_name = settings.queue_name
 
     async def send(self, generation_uuid: UUID) -> None:
-        self.connection.send_message(
-            QueueUrl=self.queue_url,
+        await self.connection.send_message(
+            QueueUrl=self.queue_name,
             MessageBody=generation_uuid.hex,
         )
 
@@ -132,15 +124,24 @@ class SqsMessageQueue(BaseQueue):
         callback = handle_errors(callback)
 
         while True:
-            response = self.connection.receive_message(
-                QueueUrl=self.queue_url,
+            logger.info("Waiting for messages...")
+
+            # Long polling for new messages.
+            response = await self.connection.receive_message(
+                QueueUrl=self.queue_name,
                 MaxNumberOfMessages=1,
                 WaitTimeSeconds=20,
             )
+
+            if "Messages" not in response:
+                continue
+
             for message in response["Messages"]:
-                await callback(UUID(message["Body"]))
-                self.connection.delete_message(
-                    QueueUrl=self.queue_url,
+                generation_uuid = UUID(message["Body"])
+                await callback(generation_uuid)
+
+                await self.connection.delete_message(
+                    QueueUrl=self.queue_name,
                     ReceiptHandle=message["ReceiptHandle"],
                 )
 
