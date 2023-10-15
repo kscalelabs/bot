@@ -1,6 +1,7 @@
 """Defines the API endpoint for querying images."""
 
 import datetime
+import re
 from typing import Any, cast
 
 from fastapi import (
@@ -12,7 +13,6 @@ from fastapi import (
     UploadFile,
     status,
 )
-import re
 from fastapi.responses import FileResponse, RedirectResponse
 from pydantic.main import BaseModel
 from tortoise.contrib.postgres.functions import Random
