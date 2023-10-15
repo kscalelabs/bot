@@ -6,6 +6,7 @@ import time
 
 import ml.api as ml
 import torch
+from uuid import UUID
 
 from bot.api.audio import load_audio_array, save_audio_array
 from bot.api.db import close_db, init_db
@@ -58,8 +59,10 @@ class _ModelRunner:
 model_runner = _ModelRunner()
 
 
-async def run_model(message: Message) -> None:
-    generation = await Generation.get_or_none(uuid=message.generation_uuid).prefetch_related("output")
+async def run_model(generation_uuid: UUID) -> None:
+    logger.info("Processing %s", generation_uuid)
+
+    generation = await Generation.get_or_none(uuid=generation_uuid).prefetch_related("output")
     if generation is None:
         raise ValueError("Generation not found.")
 
@@ -99,11 +102,14 @@ async def run_model(message: Message) -> None:
 async def worker_fn() -> None:
     configure_logging()
 
+    # Initializes the model runner.
+    model_runner.initialize()
+
     await init_db()
 
     try:
         mq = get_message_queue()
-        mq.initialize()
+        await mq.initialize()
         await mq.receive(run_model)
 
     finally:

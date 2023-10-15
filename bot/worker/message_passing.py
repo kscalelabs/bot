@@ -9,10 +9,13 @@ from typing import Any, Awaitable, Callable, ParamSpec
 from uuid import UUID
 
 import boto3
-from pika.adapters.blocking_connection import BlockingChannel, BlockingConnection
-from pika.connection import ConnectionParameters
-from pika.credentials import PlainCredentials
-from pika.spec import Basic, BasicProperties
+# from pika.adapters.blocking_connection import BlockingChannel, BlockingConnection
+# from pika.connection import ConnectionParameters
+# from pika.credentials import PlainCredentials
+# from pika.spec import Basic, BasicProperties
+from aio_pika import connect_robust, IncomingMessage, Message
+from aio_pika import Message
+from aio_pika.robust_connection import AbstractRobustChannel, RobustConnection, RobustChannel, AbstractRobustConnection
 
 from bot.settings import load_settings
 
@@ -21,28 +24,20 @@ logger = logging.getLogger(__name__)
 P = ParamSpec("P")
 
 
-def sync(f: Callable[P, Awaitable[None]]) -> Callable[P, None]:
-    @functools.wraps(f)
-    def wrapper(*args: P.args, **kwargs: P.kwargs) -> None:
-        return asyncio.get_event_loop().run_until_complete(f(*args, **kwargs))
-
-    return wrapper
-
-
 def handle_errors(f: Callable[P, Awaitable[None]]) -> Callable[P, Awaitable[None]]:
     @functools.wraps(f)
     async def wrapper(*args: P.args, **kwargs: P.kwargs) -> None:
         try:
             await f(*args, **kwargs)
+
+        except KeyboardInterrupt:
+            logger.info("Keyboard interrupt received. Exiting...")
+            raise
+
         except Exception:
             logger.exception("An exception occurred.")
 
     return wrapper
-
-
-@dataclass(frozen=True)
-class Message:
-    generation_uuid: UUID
 
 
 class BaseQueue(ABC):
@@ -51,7 +46,7 @@ class BaseQueue(ABC):
         """Initializes the queue."""
 
     @abstractmethod
-    async def send(self, message: Message) -> None:
+    async def send(self, generation_uuid: UUID) -> None:
         """Sends a message to the queue.
 
         Args:
@@ -59,7 +54,7 @@ class BaseQueue(ABC):
         """
 
     @abstractmethod
-    async def receive(self, callback: Callable[[Message], Awaitable[None]]) -> None:
+    async def receive(self, callback: Callable[[UUID], Awaitable[None]]) -> None:
         """Receives messages from the queue.
 
         Args:
@@ -69,57 +64,41 @@ class BaseQueue(ABC):
 
 class RabbitMessageQueue(BaseQueue):
     queue_name: str
-    connection: BlockingConnection
-    channel: BlockingChannel
+    connection: AbstractRobustConnection
 
-    def initialize(self) -> None:
+    async def initialize(self) -> None:
         settings = load_settings().worker.rabbit
-
-        self.connection = BlockingConnection(
-            ConnectionParameters(
-                host=settings.host,
-                port=settings.port,
-                virtual_host=settings.virtual_host,
-                credentials=PlainCredentials(
-                    username=settings.username,
-                    password=settings.password,
-                ),
-            )
-        )
-
         self.queue_name = settings.queue_name
-        self.channel = self.connection.channel()
-        self.channel.queue_declare(queue=self.queue_name)
+        self.connection = await connect_robust(
+            host=settings.host,
+            port=settings.port,
+            virtualhost=settings.virtual_host,
+            login=settings.username,
+            password=settings.password,
+        )
+        self.channel = await self.connection.channel()
+        await self.channel.declare_queue(name=self.queue_name)
 
-    async def send(self, message: Message) -> None:
-        self.channel.basic_publish(
-            exchange="",
-            routing_key="generation",
-            body=str(message.generation_uuid),
+    async def send(self, generation_uuid: UUID) -> None:
+        await self.channel.default_exchange.publish(
+            Message(body=generation_uuid.hex.encode("utf-8")),
+            routing_key=self.queue_name,
         )
 
-    async def receive(self, callback: Callable[[Message], Awaitable[None]]) -> None:
+    async def receive(self, callback: Callable[[UUID], Awaitable[None]]) -> None:
         logger.info("Starting RabbitMQ worker...")
-
         callback = handle_errors(callback)
 
-        @sync
-        async def callback_wrapper(
-            ch: BlockingChannel,
-            method: Basic.Deliver,
-            properties: BasicProperties,
-            body: bytes,
-        ) -> None:
-            message = Message(generation_uuid=UUID(body.decode("utf-8")))
-            callback(message)
+        async def callback_wrapper(message: IncomingMessage) -> None:
+            async with message.process():
+                generation_uuid = UUID(message.body.decode("utf-8"))
+                await callback(generation_uuid)
 
-        self.channel.basic_qos(prefetch_count=1)
-        self.channel.basic_consume(
-            queue=self.queue_name,
-            on_message_callback=callback_wrapper,
-            auto_ack=True,
-        )
-        self.channel.start_consuming()
+        await self.channel.set_qos(prefetch_count=1)
+        queue = await self.channel.get_queue(self.queue_name)
+        await queue.consume(callback_wrapper)
+        while True:
+            await asyncio.sleep(1)
 
 
 class SqsMessageQueue(BaseQueue):
@@ -138,13 +117,13 @@ class SqsMessageQueue(BaseQueue):
 
         self.queue_url = self.connection.get_queue_url(QueueName=settings.queue_name)["QueueUrl"]
 
-    async def send(self, message: Message) -> None:
+    async def send(self, generation_uuid: UUID) -> None:
         self.connection.send_message(
             QueueUrl=self.queue_url,
-            MessageBody=message.generation_uuid,
+            MessageBody=generation_uuid.hex,
         )
 
-    async def receive(self, callback: Callable[[Message], Awaitable[None]]) -> None:
+    async def receive(self, callback: Callable[[UUID], Awaitable[None]]) -> None:
         logger.info("Starting SQS worker...")
         callback = handle_errors(callback)
 
@@ -155,9 +134,7 @@ class SqsMessageQueue(BaseQueue):
                 WaitTimeSeconds=20,
             )
             for message in response["Messages"]:
-                generation_uuid = message["Body"]
-                message = Message(generation_uuid=generation_uuid)
-                await callback(message)
+                await callback(UUID(message["Body"]))
                 self.connection.delete_message(
                     QueueUrl=self.queue_url,
                     ReceiptHandle=message["ReceiptHandle"],
