@@ -39,7 +39,7 @@ const AudioMixer = () => {
 
     try {
       const response = await api.post<RunResponse>("/infer/run", {
-        original_id: sourceId,
+        source_id: sourceId,
         reference_id: referenceId,
       });
       setShowSuccess(true);

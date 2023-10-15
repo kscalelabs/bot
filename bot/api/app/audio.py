@@ -12,6 +12,7 @@ from fastapi import (
     UploadFile,
     status,
 )
+import re
 from fastapi.responses import FileResponse, RedirectResponse
 from pydantic.main import BaseModel
 from tortoise.contrib.postgres.functions import Random
@@ -128,6 +129,13 @@ async def update_name(data: UpdateRequest, user_data: SessionTokenData = Depends
     return True
 
 
+def get_media_filename(name: str) -> str:
+    name = "".join(name.split(".")[:-1])  # Remove file extension.
+    name = "".join(re.findall(r"[\w\d\_]+", name))  # Remove non-alphanumeric characters.
+    name = f"{name}.{settings.file.audio.file_ext}"  # Add file extension.
+    return name
+
+
 @audio_router.get(f"/media/{{media_id}}.{settings.file.audio.file_ext}")
 async def get_media(media_id: int, access_token: str | None = None) -> FileResponse:
     if access_token is None:
@@ -137,9 +145,7 @@ async def get_media(media_id: int, access_token: str | None = None) -> FileRespo
         audio = await Audio.get_or_none(Q(id=media_id) & (Q(user_id=user_id) | Q(public=True)))
     if audio is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Audio not found")
-    name, suffix = audio.name, f".{settings.file.audio.file_ext}"
-    if not name.endswith(suffix):
-        name = f"{name}{suffix}"
+    name = get_media_filename(audio.name)
     audio_url, is_url = await get_audio_url(audio)
     headers = {"Content-Disposition": f"attachment; filename={name}"}
     if is_url:

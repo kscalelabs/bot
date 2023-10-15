@@ -200,6 +200,7 @@ async def save_audio_array(
     user_id: int,
     source: AudioSource,
     audio_array: np.ndarray,
+    name: str | None = None,
 ) -> Audio:
     """Saves the audio array to the file system.
 
@@ -207,6 +208,7 @@ async def save_audio_array(
         user_id: The ID of the user who uploaded the audio file.
         source: The source of the audio file.
         audio_array: The audio as a Numpy array.
+        name: The name of the audio file.
 
     Returns:
         The row in audio table containing the audio Id.
@@ -218,4 +220,4 @@ async def save_audio_array(
         frame_rate=settings.audio.sample_rate,
         channels=settings.audio.num_channels,
     )
-    return await _save_audio(user_id, source, None, audio)
+    return await _save_audio(user_id, source, name, audio)
