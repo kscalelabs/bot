@@ -101,7 +101,7 @@ async def public_ids(data: PublicIdsRequest) -> PublicIdsResponse:
             "output_id",
             "reference_id",
             "source_id",
-            "created",
+            "task_finished",
         ),
     )
     return PublicIdsResponse(infos=generations)

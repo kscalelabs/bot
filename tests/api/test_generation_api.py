@@ -44,7 +44,7 @@ async def test_generation_functions(
         response = app_client.post("/infer/run", json={"orig_uuid": uuids[0], "ref_uuid": uuids[1]})
         assert response.status_code == 200, response.json()
         data = response.json()
-        gen_uuids.append(data["gen_uuid"])
+        gen_uuids.append(data["uuid"])
 
     # Makes some generations public.
     for i in range(2):

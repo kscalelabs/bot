@@ -55,7 +55,7 @@ def mock_load_settings(mocker: MockerFixture, tmpdir_factory: TempdirFactory) ->
     settings.database.sqlite.host = ":memory:"
 
     # Sets the default worker settings.
-    settings.worker.queue_type = "redis"
+    settings.worker.queue_type = "rabbit"
 
     # Sets the default image settings.
     file_root_dir = tmpdir_factory.mktemp("files")
