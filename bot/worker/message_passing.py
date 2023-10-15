@@ -101,49 +101,43 @@ class RabbitMessageQueue(BaseQueue):
 
 
 class SqsMessageQueue(BaseQueue):
-    def initialize(self) -> None:
+    queue_name: str
+    session: aioboto3.Session
+    queue_url: str
+
+    async def initialize(self) -> None:
         settings = load_settings().worker.sqs
 
-        self.connection = aioboto3.client(
-            "sqs",
-            aws_access_key_id=settings.access_key_id,
-            aws_secret_access_key=settings.secret_access_key,
-            region_name=settings.region,
-        )
-
         self.queue_name = settings.queue_name
+        self.session = aioboto3.Session()
+
+        async with self.session.resource("sqs") as sqs:
+            response = await sqs.create_queue(QueueName=self.queue_name)
+            self.queue_url = response["QueueUrl"]
 
     async def send(self, generation_uuid: UUID) -> None:
-        await self.connection.send_message(
-            QueueUrl=self.queue_name,
-            MessageBody=generation_uuid.hex,
-        )
+        async with self.session.resource("sqs") as sqs:
+            await sqs.send_message(
+                QueueUrl=self.queue_url,
+                MessageBody=generation_uuid.hex,
+            )
 
     async def receive(self, callback: Callable[[UUID], Awaitable[None]]) -> None:
         logger.info("Starting SQS worker...")
         callback = handle_errors(callback)
 
-        while True:
-            logger.info("Waiting for messages...")
-
-            # Long polling for new messages.
-            response = await self.connection.receive_message(
-                QueueUrl=self.queue_name,
-                MaxNumberOfMessages=1,
-                WaitTimeSeconds=20,
-            )
-
-            if "Messages" not in response:
-                continue
-
-            for message in response["Messages"]:
-                generation_uuid = UUID(message["Body"])
-                await callback(generation_uuid)
-
-                await self.connection.delete_message(
-                    QueueUrl=self.queue_name,
-                    ReceiptHandle=message["ReceiptHandle"],
-                )
+        async with self.session.resource("sqs") as sqs:
+            while True:
+                logger.info("Waiting for messages...")
+                response = await sqs.receive_messages(QueueUrl=self.queue_url, WaitTimeSeconds=20)
+                messages = response.get("Messages", [])
+                for message in messages:
+                    try:
+                        generation_uuid = UUID(message["Body"])
+                        await callback(generation_uuid)
+                        await sqs.delete_message(QueueUrl=self.queue_url, ReceiptHandle=message["ReceiptHandle"])
+                    except Exception:
+                        logger.exception("An exception occurred while processing a message")
 
 
 def get_message_queue() -> BaseQueue:
