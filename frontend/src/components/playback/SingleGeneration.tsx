@@ -3,10 +3,12 @@ import { Card, CardProps, Col, Row } from "react-bootstrap";
 import { Link } from "react-router-dom";
 
 interface ComponentProps {
-  output_id: string;
-  reference_id: string;
-  source_id: string;
-  task_finished: Date | null;
+  generationId: number;
+  outputId: number | null;
+  referenceId: number;
+  sourceId: number;
+  taskCreated: Date;
+  taskFinished: Date | null;
   showLink?: boolean;
 }
 
@@ -14,10 +16,12 @@ type Props = ComponentProps & CardProps;
 
 const SingleGeneration = (props: Props) => {
   const {
-    output_id,
-    reference_id,
-    source_id,
-    task_finished,
+    generationId,
+    outputId,
+    referenceId,
+    sourceId,
+    taskCreated,
+    taskFinished,
     showLink = true,
     ...cardProps
   } = props;
@@ -25,14 +29,16 @@ const SingleGeneration = (props: Props) => {
   return (
     <Card {...cardProps}>
       <Card.Header>
-        {task_finished === null
-          ? "Processing..."
-          : `Created ${new Date(task_finished).toLocaleString()}`}
+        Generation {generationId} -
+        {` Created ${new Date(taskCreated).toLocaleString()} -`}
+        {taskFinished === null
+          ? " Processing..."
+          : ` Finished ${new Date(taskFinished).toLocaleString()}`}
         {showLink && (
           <span>
             {" - "}
             <strong>
-              <Link to={`/generation/${output_id}`}>Link</Link>
+              <Link to={`/generation/${outputId}`}>Link</Link>
             </strong>
           </span>
         )}
@@ -40,14 +46,16 @@ const SingleGeneration = (props: Props) => {
       <Card.Body>
         <Row>
           <Col sm={12} md={12} lg={4} className="mt-2">
-            <AudioPlayback uuid={source_id} title="Source" />
+            <AudioPlayback audioId={sourceId} title="Source" />
           </Col>
           <Col sm={12} md={12} lg={4} className="mt-2">
-            <AudioPlayback uuid={reference_id} title="Reference" />
+            <AudioPlayback audioId={referenceId} title="Reference" />
           </Col>
-          <Col sm={12} md={12} lg={4} className="mt-2">
-            <AudioPlayback uuid={output_id} title="Generated" />
-          </Col>
+          {outputId !== null && (
+            <Col sm={12} md={12} lg={4} className="mt-2">
+              <AudioPlayback audioId={outputId} title="Generated" />
+            </Col>
+          )}
         </Row>
       </Card.Body>
     </Card>

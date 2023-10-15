@@ -50,7 +50,7 @@ const AdminGenerationComponent = () => {
       <Form.Group className="mb-3">
         <Form.Control
           type="text"
-          placeholder="Generation UUID"
+          placeholder="Generation ID"
           onChange={(e) => {
             setErrorMessage(null);
             setUuid(e.target.value);
@@ -81,7 +81,7 @@ const AdminGenerationComponent = () => {
           disabled={!buttonEnabled}
           onClick={handleCheckEmail}
         >
-          <FontAwesomeIcon icon={faCheck} /> Check UUID
+          <FontAwesomeIcon icon={faCheck} /> Check ID
         </Button>
         <Button
           variant="danger"

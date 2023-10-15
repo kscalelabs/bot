@@ -5,17 +5,19 @@ import { Alert, Col, Container, Row, Spinner } from "react-bootstrap";
 import { Navigate, useParams } from "react-router-dom";
 
 interface SingleGenerationResponse {
-  output_id: string;
-  reference_id: string;
-  source_id: string;
-  task_finished: Date;
+  id: number;
+  output_id: number | null;
+  reference_id: number;
+  source_id: number;
+  task_created: Date;
+  task_finished: Date | null;
 }
 
 const SingleGenerationPage = () => {
   const { uuid } = useParams();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [response, setResponse] = useState<SingleGenerationResponse | null>(
-    null,
+    null
   );
 
   useEffect(() => {
@@ -28,7 +30,7 @@ const SingleGenerationPage = () => {
               params: {
                 output_id: uuid,
               },
-            },
+            }
           );
           setResponse(apiResponse.data);
         } catch (error) {
@@ -59,10 +61,12 @@ const SingleGenerationPage = () => {
                 </div>
               ) : (
                 <SingleGeneration
-                  output_id={response.output_id}
-                  reference_id={response.reference_id}
-                  source_id={response.source_id}
-                  task_finished={response.task_finished}
+                  generationId={response.id}
+                  outputId={response.output_id}
+                  referenceId={response.reference_id}
+                  sourceId={response.source_id}
+                  taskCreated={response.task_created}
+                  taskFinished={response.task_finished}
                   showLink={false}
                 />
               )}

@@ -5,13 +5,13 @@ import {
   faDownload,
   faPause,
   faPlay,
-  faRefresh,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { api, humanReadableError } from "constants/backend";
-import { QueryIdResponse, QueryIdsResponse } from "constants/types";
+import { QueryIdsResponse, SingleIdResponse } from "constants/types";
+import { getToken } from "hooks/auth";
 import { useClipboard } from "hooks/clipboard";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Button,
   ButtonGroup,
@@ -26,36 +26,18 @@ import {
 import { Link } from "react-router-dom";
 
 interface AudioProps {
-  uuid: string;
+  audioId: number;
   title?: string;
   showDeleteButton?: boolean;
   showSelectionButtons?: boolean;
   showLink?: boolean;
-  response?: QueryIdResponse;
+  response?: SingleIdResponse;
 }
 
 type Props = AudioProps & CardProps;
 
-const ProcessingWidget = () => {
-  const [dots, setDots] = useState(".");
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setDots((dots) => {
-        if (dots.length === 3) {
-          return ".";
-        }
-        return dots + ".";
-      });
-    }, 750);
-    return () => clearInterval(interval);
-  }, []);
-
-  return <i>Processing{dots}</i>;
-};
-
 const AudioPlayback: React.FC<Props> = ({
-  uuid,
+  audioId,
   title = null,
   showDeleteButton = true,
   showSelectionButtons = true,
@@ -65,10 +47,9 @@ const AudioPlayback: React.FC<Props> = ({
 }) => {
   const [acting, setActing] = useState(false);
   const [deleted, setDeleted] = useState(false);
-  const { sourceUuid, setSourceUuid, referenceUuid, setReferenceUuid } =
-    useClipboard();
-  const [localResponse, setLocalResponse] = useState<QueryIdResponse | null>(
-    response,
+  const { sourceId, setSourceId, referenceId, setReferenceId } = useClipboard();
+  const [localResponse, setLocalResponse] = useState<SingleIdResponse | null>(
+    response
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [editing, setEditing] = useState<boolean | null>(false);
@@ -77,7 +58,17 @@ const AudioPlayback: React.FC<Props> = ({
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const url = `/audio/media/${uuid}.flac`;
+  const url = `/audio/media/${audioId}.flac`;
+
+  const getUri = useCallback(() => {
+    return api.getUri({
+      url,
+      method: "get",
+      params: {
+        access_token: getToken("session"),
+      },
+    });
+  }, [url]);
 
   const handleDelete = async () => {
     setActing(true);
@@ -85,14 +76,14 @@ const AudioPlayback: React.FC<Props> = ({
     try {
       await api.delete<boolean>("/audio/delete", {
         params: {
-          uuid,
+          id: audioId,
         },
       });
-      if (sourceUuid === uuid) {
-        setSourceUuid(null);
+      if (sourceId === audioId) {
+        setSourceId(null);
       }
-      if (referenceUuid === uuid) {
-        setReferenceUuid(null);
+      if (referenceId === audioId) {
+        setReferenceId(null);
       }
       setDeleted(true);
     } catch (error) {
@@ -101,32 +92,12 @@ const AudioPlayback: React.FC<Props> = ({
     }
   };
 
-  const handleRefresh = async () => {
-    setLocalResponse(null);
-    try {
-      const response = await api.post<QueryIdsResponse>("/audio/query/ids", {
-        uuids: [uuid],
-      });
-      if (response.data.infos.length === 0) {
-        setDeleted(true);
-        return;
-      }
-      setLocalResponse(response.data.infos[0]);
-      const name = response.data.infos[0].name;
-      if (name !== null) {
-        setName(name);
-      }
-    } catch (error) {
-      setErrorMessage(humanReadableError(error));
-    }
-  };
-
   const handleEditButtonClick = async () => {
     if (editing) {
       try {
         setEditing(null);
         await api.post<boolean>("/audio/update", {
-          uuid,
+          id: audioId,
           name,
         });
         setName(name ?? "");
@@ -145,7 +116,7 @@ const AudioPlayback: React.FC<Props> = ({
     (async () => {
       try {
         const response = await api.post<QueryIdsResponse>("/audio/query/ids", {
-          uuids: [uuid],
+          ids: [audioId],
         });
         if (response.data.infos.length === 0) {
           setDeleted(true);
@@ -160,11 +131,11 @@ const AudioPlayback: React.FC<Props> = ({
         setErrorMessage(humanReadableError(error));
       }
     })();
-  }, [uuid]);
+  }, [audioId]);
 
   useEffect(() => {
-    if (localResponse !== null && localResponse.available) {
-      audioRef.current = new Audio(api.getUri({ url }));
+    if (localResponse !== null) {
+      audioRef.current = new Audio(getUri());
 
       const handleAudioEnd = () => {
         setIsPlaying(false);
@@ -180,7 +151,7 @@ const AudioPlayback: React.FC<Props> = ({
         }
       };
     }
-  }, [localResponse, url]);
+  }, [localResponse, getUri]);
 
   const toggleAudio = () => {
     if (audioRef.current !== null) {
@@ -242,23 +213,14 @@ const AudioPlayback: React.FC<Props> = ({
                 <br />
                 <strong>Created:</strong>{" "}
                 {new Date(localResponse.created).toLocaleString()}
-                {localResponse.data === null ? (
-                  <>
-                    <br />
-                    <ProcessingWidget />
-                  </>
-                ) : (
-                  <>
-                    <br />
-                    <strong>Duration:</strong>{" "}
-                    {localResponse.data.duration.toFixed(1)} seconds
-                  </>
-                )}
+                <br />
+                <strong>Duration:</strong> {localResponse.duration.toFixed(1)}{" "}
+                seconds
                 {showLink && (
                   <>
                     <br />
                     <strong>
-                      <Link to={`/audio/${uuid}`}>Link</Link>
+                      <Link to={`/audio/${audioId}`}>Link</Link>
                     </strong>
                   </>
                 )}
@@ -273,11 +235,11 @@ const AudioPlayback: React.FC<Props> = ({
                   overlay={<Tooltip>Use as source</Tooltip>}
                 >
                   <Button
-                    onClick={() => setSourceUuid(uuid)}
-                    disabled={sourceUuid === uuid}
-                    variant={sourceUuid === uuid ? "success" : "primary"}
+                    onClick={() => setSourceId(audioId)}
+                    disabled={sourceId === audioId}
+                    variant={sourceId === audioId ? "success" : "primary"}
                   >
-                    {sourceUuid === uuid ? (
+                    {sourceId === audioId ? (
                       <span>
                         <FontAwesomeIcon icon={faClipboardCheck} /> S
                       </span>
@@ -293,11 +255,11 @@ const AudioPlayback: React.FC<Props> = ({
                   overlay={<Tooltip>Use as reference</Tooltip>}
                 >
                   <Button
-                    onClick={() => setReferenceUuid(uuid)}
-                    disabled={referenceUuid === uuid}
-                    variant={referenceUuid === uuid ? "success" : "primary"}
+                    onClick={() => setReferenceId(audioId)}
+                    disabled={referenceId === audioId}
+                    variant={referenceId === audioId ? "success" : "primary"}
                   >
-                    {referenceUuid === uuid ? (
+                    {referenceId === audioId ? (
                       <span>
                         <FontAwesomeIcon icon={faClipboardCheck} /> R
                       </span>
@@ -310,51 +272,30 @@ const AudioPlayback: React.FC<Props> = ({
                 </OverlayTrigger>
               </ButtonGroup>
             )}
-            {localResponse !== null &&
-              (localResponse.available ? (
-                <ButtonGroup className="mt-2 me-2">
-                  <OverlayTrigger
-                    placement="top"
-                    overlay={<Tooltip>{isPlaying ? "Pause" : "Play"}</Tooltip>}
-                  >
-                    <Button onClick={toggleAudio}>
-                      {isPlaying ? (
-                        <FontAwesomeIcon icon={faPause} />
-                      ) : (
-                        <FontAwesomeIcon icon={faPlay} />
-                      )}
-                    </Button>
-                  </OverlayTrigger>
-                  <OverlayTrigger
-                    placement="top"
-                    overlay={<Tooltip>Download</Tooltip>}
-                  >
-                    <Button
-                      as="a"
-                      variant="primary"
-                      href={api.getUri({ url })}
-                      download
-                    >
-                      <FontAwesomeIcon icon={faDownload} />
-                    </Button>
-                  </OverlayTrigger>
-                </ButtonGroup>
-              ) : (
-                <ButtonGroup className="mt-2 me-2">
-                  <OverlayTrigger
-                    placement="top"
-                    overlay={<Tooltip>Refresh</Tooltip>}
-                  >
-                    <Button
-                      onClick={handleRefresh}
-                      variant="primary"
-                      disabled={acting}
-                    >
-                      <FontAwesomeIcon icon={faRefresh} />
-                    </Button>
-                  </OverlayTrigger>
-                </ButtonGroup>
-              ))}
+            {localResponse !== null && (
+              <ButtonGroup className="mt-2 me-2">
+                <OverlayTrigger
+                  placement="top"
+                  overlay={<Tooltip>{isPlaying ? "Pause" : "Play"}</Tooltip>}
+                >
+                  <Button onClick={toggleAudio}>
+                    {isPlaying ? (
+                      <FontAwesomeIcon icon={faPause} />
+                    ) : (
+                      <FontAwesomeIcon icon={faPlay} />
+                    )}
+                  </Button>
+                </OverlayTrigger>
+                <OverlayTrigger
+                  placement="top"
+                  overlay={<Tooltip>Download</Tooltip>}
+                >
+                  <Button as="a" variant="primary" href={getUri()} download>
+                    <FontAwesomeIcon icon={faDownload} />
+                  </Button>
+                </OverlayTrigger>
+              </ButtonGroup>
+            )}
             {showDeleteButton && (
               <ButtonGroup className="mt-2 me-2">
                 <OverlayTrigger

@@ -53,7 +53,7 @@ api.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  },
+  }
 );
 
 interface RefreshTokenResponse {
@@ -83,7 +83,7 @@ api.interceptors.response.use(
               Authorization: `Bearer ${refreshToken}`,
               "Access-Control-Allow-Origin": "*",
             },
-          },
+          }
         );
         sessionToken = response.data.token;
       } catch (refreshError) {
@@ -104,7 +104,7 @@ api.interceptors.response.use(
       return await api(originalRequest);
     }
     return Promise.reject(error);
-  },
+  }
 );
 
 export const RequiresLogin = ({ children }: RequiresLoginProps) => {
@@ -141,7 +141,7 @@ export const OneTimePasswordWrapper = ({
             "/users/otp",
             {
               payload,
-            },
+            }
           );
           setToken(response.data.token, "refresh");
           navigate("/");

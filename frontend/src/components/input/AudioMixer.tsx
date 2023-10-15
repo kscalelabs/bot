@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Alert, Button, Card, Col, Row, Spinner } from "react-bootstrap";
 
 interface RunResponse {
-  uuid: string;
+  id: number;
 }
 
 const AudioMixer = () => {
@@ -14,20 +14,20 @@ const AudioMixer = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showSpinner, setShowSpinner] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [lastUuid, setLastUuid] = useState<string | null>(null);
+  const [lastId, setLastId] = useState<number | null>(null);
 
-  const { sourceUuid, referenceUuid } = useClipboard();
+  const { sourceId, referenceId } = useClipboard();
 
   const handleSubmit = async () => {
-    if (sourceUuid === null && referenceUuid === null) {
+    if (sourceId === null && referenceId === null) {
       setPreErrorMessage("Please select a source and reference audio file.");
       return;
     }
-    if (sourceUuid === null) {
+    if (sourceId === null) {
       setPreErrorMessage("Please select a source audio file.");
       return;
     }
-    if (referenceUuid === null) {
+    if (referenceId === null) {
       setPreErrorMessage("Please select a reference audio file.");
       return;
     }
@@ -39,11 +39,11 @@ const AudioMixer = () => {
 
     try {
       const response = await api.post<RunResponse>("/infer/run", {
-        orig_uuid: sourceUuid,
-        ref_uuid: referenceUuid,
+        original_id: sourceId,
+        reference_id: referenceId,
       });
       setShowSuccess(true);
-      setLastUuid(response.data.uuid);
+      setLastId(response.data.id);
     } catch (error) {
       setErrorMessage(humanReadableError(error));
     } finally {
@@ -103,10 +103,10 @@ const AudioMixer = () => {
           <div>Your audio files have started mixing!</div>
         </Alert>
       )}
-      {lastUuid !== null && (
+      {lastId !== null && (
         <AudioPlayback
           className="mt-3"
-          uuid={lastUuid}
+          audioId={lastId}
           title="Last Upload"
           showDeleteButton={false}
           showSelectionButtons={false}

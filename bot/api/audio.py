@@ -1,8 +1,8 @@
 """Defines functions for managing audio files."""
 
-import os
 import functools
 import logging
+import os
 import shutil
 import tempfile
 import uuid
@@ -107,7 +107,7 @@ async def save_audio_file(
         filename: The name of the audio file.
 
     Returns:
-        The row in audio table containing the audio UUID.
+        The row in audio table.
     """
     file_extension = _get_extension(filename, "wav")
     audio = AudioSegment.from_file(file, file_extension)
@@ -118,7 +118,7 @@ async def get_audio_url(audio_entry: Audio) -> tuple[str, bool]:
     """Gets the file path or URL for serving the audio file.
 
     Args:
-        audio_entry: The row in audio table containing the audio UUID.
+        audio_entry: The row in audio table.
 
     Returns:
         The file path or URL for serving the audio file, along with a boolean
@@ -209,7 +209,7 @@ async def save_audio_array(
         audio_array: The audio as a Numpy array.
 
     Returns:
-        The row in audio table containing the audio UUID.
+        The row in audio table containing the audio Id.
     """
     settings = load_settings().file
     audio = AudioSegment(

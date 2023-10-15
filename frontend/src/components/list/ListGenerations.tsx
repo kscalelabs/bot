@@ -33,9 +33,11 @@ interface QueryMeRequest {
 }
 
 interface SingleGenerationResponse {
-  output_id: string;
-  reference_id: string;
-  source_id: string;
+  id: number;
+  output_id: number | null;
+  reference_id: number;
+  source_id: number;
+  task_created: Date;
   task_finished: Date | null;
 }
 
@@ -63,7 +65,7 @@ const ListGenerations = (props: Props) => {
           const response = await api.get<InfoMeResponse>("/generation/info/me");
           const newStart = Math.max(
             Math.min(start, response.data.count - paginationLimit),
-            0,
+            0
           );
           setInfo(response.data);
           setStart(newStart);
@@ -82,7 +84,7 @@ const ListGenerations = (props: Props) => {
                 start: start,
                 limit: paginationLimit,
               } as QueryMeRequest,
-            },
+            }
           );
           setGenerations(response.data.generations);
         } catch (error) {
@@ -156,10 +158,12 @@ const ListGenerations = (props: Props) => {
                     <Col>
                       {generations.map((generation, id) => (
                         <SingleGeneration
-                          output_id={generation.output_id}
-                          reference_id={generation.reference_id}
-                          source_id={generation.source_id}
-                          task_finished={generation.task_finished}
+                          generationId={generation.id}
+                          outputId={generation.output_id}
+                          referenceId={generation.reference_id}
+                          sourceId={generation.source_id}
+                          taskCreated={generation.task_created}
+                          taskFinished={generation.task_finished}
                           className="mt-3"
                           key={id}
                         />
