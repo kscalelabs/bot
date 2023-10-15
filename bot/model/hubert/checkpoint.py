@@ -18,7 +18,7 @@ from bot.model.hubert.model import HubertModel
 
 logger = logging.getLogger(__name__)
 
-PretrainedHubertModel = Literal["lucy"]
+PretrainedHubertModel = Literal["hubert-quantized-20231015"]
 
 REPO_ID = "codekansas/dpshai"
 
@@ -28,9 +28,9 @@ def cast_pretrained_model(key: str) -> PretrainedHubertModel:
     return cast(PretrainedHubertModel, key)
 
 
-def _load_model(key: str, ckpt_path: str | Path | None = None) -> HubertModel:
+def _load_model(key: PretrainedHubertModel, ckpt_path: str | Path | None = None) -> HubertModel:
     if ckpt_path is None:
-        ckpt_path = hf_hub_download(REPO_ID, key)
+        ckpt_path = hf_hub_download(REPO_ID, f"{key}.bin")
     ckpt = st.load_file(ckpt_path)
     with safe_open(ckpt_path, framework="pt", device="cpu") as f:
         metadata = f.metadata()
@@ -42,12 +42,7 @@ def _load_model(key: str, ckpt_path: str | Path | None = None) -> HubertModel:
 
 
 def pretrained_hubert(key: PretrainedHubertModel) -> HubertModel:
-    match key:
-        case "lucy":
-            return _load_model("lucy.bin")
-
-        case _:
-            raise NotImplementedError(f"Unknown pretrained HuBERT key: {key}")
+    return _load_model(key)
 
 
 def convert_script() -> None:
@@ -72,18 +67,15 @@ def convert_script() -> None:
     )
     ckpt: dict[str, Tensor] = full_ckpt["model"]
     model.load_state_dict(ckpt)
-    metadata = {
-        "config": json.dumps(
-            {
-                "num_timesteps": config.num_timesteps,
-                "num_layers": config.num_layers,
-                "embedding_dims": config.embedding_dims,
-                "contraction_factor": config.contraction_factor,
-                "autoencoder_type": config.autoencoder_type,
-                "speech_representation_type": config.speech_representation_type,
-            }
-        )
+    config = {
+        "num_timesteps": config.num_timesteps,
+        "num_layers": config.num_layers,
+        "embedding_dims": config.embedding_dims,
+        "contraction_factor": config.contraction_factor,
+        "autoencoder_type": config.autoencoder_type,
+        "speech_representation_type": config.speech_representation_type,
     }
+    metadata = {"config": json.dumps(config)}
     st.save_file(ckpt, args.output, metadata)
     logger.info("Done.")
 

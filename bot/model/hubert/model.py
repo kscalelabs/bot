@@ -5,9 +5,11 @@ import logging
 import ml.api as ml
 import torch
 import torch.nn.functional as F
+from pretrained.hubert import PretrainedHubertKmeansSize, PretrainedHubertSize
 from torch import Tensor, nn
 
 from bot.model.modules.autoencoder import AutoencoderType, get_autoencoder
+from bot.model.modules.hubert_soft import PretrainedHubertSoftSize
 from bot.model.modules.speech_representations import SpeechRepresentationType, get_speech_representation
 
 logger = logging.getLogger(__name__)
@@ -138,6 +140,11 @@ class HubertModel(nn.Module):
         contraction_factor: int = 2,
         autoencoder_type: AutoencoderType = "hifigan",
         speech_representation_type: SpeechRepresentationType = "hubert-quantized",
+        *,
+        hubert_size: PretrainedHubertSize = "base",
+        hubert_output_layer: int | float = 0.8,
+        hubert_quantized_size: PretrainedHubertKmeansSize = "base-l10-c100",
+        hubert_soft_size: PretrainedHubertSoftSize = "base",
     ) -> None:
         super().__init__()
 
@@ -145,7 +152,13 @@ class HubertModel(nn.Module):
         self.sample_rate = 16_000
 
         # Pre-trained HuBERT model.
-        self.hubert = get_speech_representation(speech_representation_type)
+        self.hubert = get_speech_representation(
+            speech_representation_type,
+            hubert_size=hubert_size,
+            hubert_output_layer=hubert_output_layer,
+            hubert_quantized_size=hubert_quantized_size,
+            hubert_soft_size=hubert_soft_size,
+        )
 
         # Autoencoder model.
         self.autoencoder = get_autoencoder(autoencoder_type, HUBERT_SAMPLE_RATE)
