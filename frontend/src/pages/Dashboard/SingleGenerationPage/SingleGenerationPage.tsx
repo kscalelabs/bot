@@ -14,10 +14,10 @@ interface SingleGenerationResponse {
 }
 
 const SingleGenerationPage = () => {
-  const { uuid } = useParams();
+  const { id } = useParams();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [response, setResponse] = useState<SingleGenerationResponse | null>(
-    null,
+    null
   );
 
   useEffect(() => {
@@ -28,9 +28,9 @@ const SingleGenerationPage = () => {
             "/generation/id",
             {
               params: {
-                output_id: uuid,
+                id,
               },
-            },
+            }
           );
           setResponse(apiResponse.data);
         } catch (error) {
@@ -38,9 +38,9 @@ const SingleGenerationPage = () => {
         }
       })();
     }
-  }, [response, uuid]);
+  }, [response, id]);
 
-  if (uuid === undefined) {
+  if (id === undefined) {
     return <Navigate to="/generations" />;
   }
 

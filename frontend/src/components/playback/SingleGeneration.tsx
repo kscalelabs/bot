@@ -38,7 +38,7 @@ const SingleGeneration = (props: Props) => {
           <span>
             {" - "}
             <strong>
-              <Link to={`/generation/${outputId}`}>Link</Link>
+              <Link to={`/generation/${generationId}`}>Link</Link>
             </strong>
           </span>
         )}
