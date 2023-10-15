@@ -26,13 +26,13 @@ async def test_audio_functions(
     with open(audio_file_path, "rb") as f:
         audio_file_raw = f.read()
 
-    # Tests uploading some audio files to the "/make/upload" endpoint.
+    # Tests uploading some audio files to the "/audio/upload" endpoint.
     upload_uuids: list[str] = []
     record_uuids: list[str] = []
     for source, uuid_list in (("uploaded", upload_uuids), ("recorded", record_uuids)):
         for _ in range(5):
             response = app_client.post(
-                "/make/upload",
+                "/audio/upload",
                 files={"file": ("test.wav", audio_file_raw)},
                 data={"source": source},
             )

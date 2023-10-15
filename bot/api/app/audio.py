@@ -4,17 +4,27 @@ import datetime
 from typing import Any, cast
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    Form,
+    HTTPException,
+    Request,
+    UploadFile,
+    status,
+)
 from fastapi.responses import FileResponse, RedirectResponse
 from pydantic.main import BaseModel
 from tortoise.contrib.postgres.functions import Random
 
 from bot.api.app.users import SessionTokenData, get_session_token
-from bot.api.audio import get_audio_url
-from bot.api.model import Audio, AudioSource
+from bot.api.audio import get_audio_url, save_audio_file
+from bot.api.model import Audio, AudioSource, cast_audio_source
 from bot.settings import load_settings
 
 MAX_UUIDS_PER_QUERY = 100
+DEFAULT_NAME = "Untitled"
 
 settings = load_settings()
 
@@ -52,8 +62,8 @@ async def query_me(
     source: AudioSource | None = None,
     user_data: SessionTokenData = Depends(get_session_token),
 ) -> QueryMeResponse:
-    assert start >= 0, "Start must be non-negative"
-    assert limit <= MAX_UUIDS_PER_QUERY, f"Can only return {MAX_UUIDS_PER_QUERY} samples at a time"
+    start = max(start, 0)
+    limit = min(limit, MAX_UUIDS_PER_QUERY)
     query = Audio.filter(user_id=user_data.user_id)
     if q is not None:
         query = query.filter(name__icontains=q)
@@ -145,7 +155,7 @@ async def update_name(data: UpdateRequest, user_data: SessionTokenData = Depends
     return True
 
 
-@audio_router.get(f"/media/{{uuid}}.{settings.file.audio_file_ext}")
+@audio_router.get(f"/media/{{uuid}}.{settings.file.audio.file_ext}")
 async def get_media(uuid: UUID) -> FileResponse:
     audio = await Audio.get_or_none(uuid=uuid)
     if audio is None or not audio.available:
@@ -154,6 +164,47 @@ async def get_media(uuid: UUID) -> FileResponse:
     if is_url:
         return RedirectResponse(audio_url)  # type: ignore[return-value]
     return FileResponse(audio_url)
+
+
+class UploadResponse(BaseModel):
+    uuid: UUID
+
+
+async def verify_file_size(request: Request) -> int:
+    content_length = request.headers.get("Content-Length")
+    if not content_length:
+        raise HTTPException(
+            status_code=status.HTTP_411_LENGTH_REQUIRED,
+            detail="Content-Length header required",
+        )
+    bytes_int = int(content_length)
+    max_size = load_settings().file.audio.max_mb * 1024 * 1024
+    if bytes_int > max_size:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"File must be less than {load_settings().file.audio.max_mb} megabytes",
+        )
+    return bytes_int
+
+
+@audio_router.post("/upload", response_model=UploadResponse)
+async def upload(
+    file: UploadFile,
+    background_tasks: BackgroundTasks,
+    source: str = Form(...),
+    user_data: SessionTokenData = Depends(get_session_token),
+    file_size_verified: int = Depends(verify_file_size),
+) -> UploadResponse:
+    source_enum = cast_audio_source(source)
+    if source_enum not in (AudioSource.uploaded, AudioSource.recorded):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Source must be one of {AudioSource.uploaded}, {AudioSource.recorded}",
+        )
+    name = DEFAULT_NAME if file.filename is None else file.filename
+    audio_entry = await Audio.create(user_id=user_data.user_id, name=name, source=source_enum, available=False)
+    background_tasks.add_task(save_audio_file, audio_entry, file.file, name)
+    return UploadResponse(uuid=audio_entry.uuid)
 
 
 class PublicIdsRequest(BaseModel):
@@ -167,15 +218,13 @@ class PublicIdsResponse(BaseModel):
 
 @audio_router.post("/public", response_model=PublicIdsResponse)
 async def public_ids(data: PublicIdsRequest) -> PublicIdsResponse:
-    assert data.count <= MAX_UUIDS_PER_QUERY, f"Can only return {MAX_UUIDS_PER_QUERY} samples at a time"
-
+    count = min(data.count, MAX_UUIDS_PER_QUERY)
     values = SingleIdResponse.keys()
     query = Audio.filter(public=True)
     if data.source is not None:
         query = query.filter(source=data.source)
-
     # Note that RANDOM is shared between PostgreSQL and SQLite, but not MySQL.
     query = query.annotate(order=Random()).order_by("order")
-    query = query.limit(data.count)
+    query = query.limit(count)
     infos = [SingleIdResponse.from_dict(info) for info in await query.values(*values)]
     return PublicIdsResponse(infos=infos)

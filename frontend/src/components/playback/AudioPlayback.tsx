@@ -23,22 +23,43 @@ import {
   Spinner,
   Tooltip,
 } from "react-bootstrap";
+import { Link } from "react-router-dom";
 
 interface AudioProps {
   uuid: string;
   title?: string;
   showDeleteButton?: boolean;
   showSelectionButtons?: boolean;
+  showLink?: boolean;
   response?: QueryIdResponse;
 }
 
 type Props = AudioProps & CardProps;
+
+const ProcessingWidget = () => {
+  const [dots, setDots] = useState(".");
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDots((dots) => {
+        if (dots.length === 3) {
+          return ".";
+        }
+        return dots + ".";
+      });
+    }, 750);
+    return () => clearInterval(interval);
+  }, []);
+
+  return <i>Processing{dots}</i>;
+};
 
 const AudioPlayback: React.FC<Props> = ({
   uuid,
   title = null,
   showDeleteButton = true,
   showSelectionButtons = true,
+  showLink = true,
   response = null,
   ...cardProps
 }) => {
@@ -224,13 +245,21 @@ const AudioPlayback: React.FC<Props> = ({
                 {localResponse.data === null ? (
                   <>
                     <br />
-                    <strong>Processing...</strong>
+                    <ProcessingWidget />
                   </>
                 ) : (
                   <>
                     <br />
                     <strong>Duration:</strong>{" "}
                     {localResponse.data.duration.toFixed(1)} seconds
+                  </>
+                )}
+                {showLink && (
+                  <>
+                    <br />
+                    <strong>
+                      <Link to={`/audio/${uuid}`}>Link</Link>
+                    </strong>
                   </>
                 )}
               </Card.Text>

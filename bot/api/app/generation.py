@@ -4,7 +4,7 @@ import datetime
 from typing import cast
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic.main import BaseModel
 from tortoise.contrib.postgres.functions import Random
 
@@ -33,7 +33,7 @@ class SingleGenerationResponse(BaseModel):
     output_id: UUID
     reference_id: UUID
     source_id: UUID
-    created: datetime.datetime
+    task_finished: datetime.datetime | None
 
 
 class QueryMeResponse(BaseModel):
@@ -46,22 +46,38 @@ async def query_me(
     limit: int,
     user_data: SessionTokenData = Depends(get_session_token),
 ) -> QueryMeResponse:
-    assert start >= 0, "Start must be non-negative"
-    assert limit <= MAX_GENERATIONS_PER_QUERY, "Can only return 100 samples at a time"
+    start = max(start, 0)
+    limit = min(limit, MAX_GENERATIONS_PER_QUERY)
     query = Generation.filter(user_id=user_data.user_id)
     generations = cast(
         list[SingleGenerationResponse],
-        await query.order_by("-created")
+        await query.order_by("-task_created")
         .offset(start)
         .limit(limit)
         .values(
             "output_id",
             "reference_id",
             "source_id",
-            "created",
+            "task_finished",
         ),
     )
     return QueryMeResponse(generations=generations)
+
+
+@generation_router.get("/id", response_model=SingleGenerationResponse)
+async def query_from_id(
+    output_id: UUID,
+    user_data: SessionTokenData = Depends(get_session_token),
+) -> SingleGenerationResponse:
+    generation = await Generation.filter(user_id=user_data.user_id, output_id=output_id).get_or_none()
+    if generation is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Generation not found")
+    return SingleGenerationResponse(
+        output_id=generation.output_id,
+        reference_id=generation.reference_id,
+        source_id=generation.source_id,
+        task_finished=generation.task_created,
+    )
 
 
 class PublicIdsRequest(BaseModel):
@@ -74,18 +90,18 @@ class PublicIdsResponse(BaseModel):
 
 @generation_router.post("/public", response_model=PublicIdsResponse)
 async def public_ids(data: PublicIdsRequest) -> PublicIdsResponse:
-    assert data.count <= MAX_GENERATIONS_PER_QUERY, "Can only return 100 samples at a time"
+    count = min(data.count, MAX_GENERATIONS_PER_QUERY)
     query = Generation.filter(public=True)
     generations = cast(
         list[SingleGenerationResponse],
         await query.annotate(order=Random())
         .order_by("order")
-        .limit(data.count)
+        .limit(count)
         .values(
             "output_id",
             "reference_id",
             "source_id",
-            "created",
+            "task_finished",
         ),
     )
     return PublicIdsResponse(infos=generations)

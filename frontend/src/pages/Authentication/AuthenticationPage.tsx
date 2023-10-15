@@ -1,11 +1,11 @@
 import logo from "assets/logo_nb.webp";
 import { getToken } from "hooks/auth";
 import { useTheme } from "hooks/theme";
+import GoogleAuthComponent from "pages/Authentication/components/GoogleAuthComponent";
 import LogInComponent from "pages/Authentication/components/LogInComponent";
 import { useCallback, useState } from "react";
 import { Col, Container, Image, Modal, Row } from "react-bootstrap";
 import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
-import GoogleAuthComponent from "./components/GoogleAuthComponent";
 
 const AuthenticationPage = () => {
   const [message, setMessage] = useState<[string, string] | null>(null);
@@ -37,9 +37,9 @@ const AuthenticationPage = () => {
         minHeight: "100vh",
       }}
     >
-      <Row className="text-center" style={{ width: "20em" }}>
+      <Row>
         <Col>
-          <Row className="aspect-ratio aspect-ratio-1x1">
+          <Row>
             <Col>
               <Image
                 src={logo}
@@ -51,7 +51,7 @@ const AuthenticationPage = () => {
             </Col>
           </Row>
 
-          <Row className="mb-5">
+          <Row className="mb-5 text-center">
             <Col>
               <h3>
                 don't panic
@@ -61,9 +61,13 @@ const AuthenticationPage = () => {
             </Col>
           </Row>
 
-          <LogInComponent setMessage={setMessage} />
+          <Row className="mb-3 text-center">
+            <Col>
+              <LogInComponent setMessage={setMessage} />
+            </Col>
+          </Row>
 
-          <Row className="mb-3 mt-4">
+          <Row className="text-center">
             <Col>
               <hr />
             </Col>
@@ -75,10 +79,14 @@ const AuthenticationPage = () => {
             </Col>
           </Row>
 
-          <GoogleAuthComponent
-            setMessage={setMessage}
-            redirectOnLogin={redirectOnLogin}
-          />
+          <Row className="mt-3 text-center">
+            <Col>
+              <GoogleAuthComponent
+                setMessage={setMessage}
+                redirectOnLogin={redirectOnLogin}
+              />
+            </Col>
+          </Row>
 
           <Modal
             show={message !== null}

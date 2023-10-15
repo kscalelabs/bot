@@ -9,31 +9,51 @@ from bot.settings import load_settings
 logger = logging.getLogger(__name__)
 
 
-async def init_db() -> None:
-    settings = load_settings()
-    kind = settings.database.kind
-    host = settings.database.host
-    port = settings.database.port
-    path = settings.database.path
-    username = settings.database.username
-    password = settings.database.password
+async def init_db_sqlite() -> None:
+    settings = load_settings().database.sqlite
+    logger.info("Initializing SQLite database")
+    await Tortoise.init(db_url=f"sqlite://{settings.host}", modules={"models": ["bot.api.model"]})
 
-    url = host
-    if port is not None:
-        url = f"{url}:{port}"
-    if path is not None:
-        url = f"{url}{path}"
-    if username is not None and password is not None:
-        username = f"{username}:{password}"
-    if username is not None:
-        url = f"{username}@{url}"
-    url = f"{kind}://{host}"
-    logger.info("Initializing database at %s", url)
 
+async def init_db_postgres() -> None:
+    settings = load_settings().database.postgres
+
+    logger.info("Initializing PostgreSQL database")
     await Tortoise.init(
-        db_url=url,
-        modules={"models": ["bot.api.model"]},
+        config={
+            "connections": {
+                "default": {
+                    "engine": "tortoise.backends.asyncpg",
+                    "credentials": {
+                        "host": settings.host,
+                        "port": settings.port,
+                        "user": settings.username,
+                        "password": settings.password,
+                        "database": settings.database,
+                    },
+                },
+            },
+            "apps": {
+                "models": {
+                    "models": ["bot.api.model", "aerich.models"],
+                    "default_connection": "default",
+                },
+            },
+        },
     )
+
+
+async def init_db() -> None:
+    db_kind = load_settings().database.kind
+
+    match db_kind:
+        case "sqlite":
+            await init_db_sqlite()
+        case "postgres":
+            await init_db_postgres()
+        case _:
+            raise ValueError(f"Invalid database kind in configuration: {db_kind}")
+
     await Tortoise.generate_schemas()
 
 

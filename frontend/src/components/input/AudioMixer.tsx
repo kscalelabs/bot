@@ -1,12 +1,12 @@
+import AudioSelection from "components/input/AudioSelection";
 import AudioPlayback from "components/playback/AudioPlayback";
 import { api, humanReadableError } from "constants/backend";
 import { useClipboard } from "hooks/clipboard";
 import { useState } from "react";
 import { Alert, Button, Card, Col, Row, Spinner } from "react-bootstrap";
-import AudioSelection from "./AudioSelection";
 
 interface RunResponse {
-  gen_uuid: string;
+  uuid: string;
 }
 
 const AudioMixer = () => {
@@ -38,12 +38,12 @@ const AudioMixer = () => {
     setShowSpinner(true);
 
     try {
-      const response = await api.post<RunResponse>("/make/run", {
+      const response = await api.post<RunResponse>("/infer/run", {
         orig_uuid: sourceUuid,
         ref_uuid: referenceUuid,
       });
       setShowSuccess(true);
-      setLastUuid(response.data.gen_uuid);
+      setLastUuid(response.data.uuid);
     } catch (error) {
       setErrorMessage(humanReadableError(error));
     } finally {

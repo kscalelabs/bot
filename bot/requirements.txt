@@ -8,13 +8,18 @@ aiosmtplib
 fastapi[all]
 mangum
 pyjwt
+python-multipart
 uvicorn
 
 # Database dependencies.
 tortoise-orm[asyncpg]
+aerich
 
 # File storage dependencies.
 aioboto3
+
+# Worker dependencies.
+aio-pika
 
 # Processing dependencies.
 numpy
@@ -23,6 +28,7 @@ resampy
 soundfile
 
 # Model inference dependencies.
+ml-pretrained
 ml-starter
 torch
 torchaudio

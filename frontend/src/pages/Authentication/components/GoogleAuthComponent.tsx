@@ -4,7 +4,7 @@ import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
 import { api, humanReadableError } from "constants/backend";
 import { setToken } from "hooks/auth";
 import { useEffect, useState } from "react";
-import { Button, Col, Row } from "react-bootstrap";
+import { Button } from "react-bootstrap";
 
 const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID || "";
 
@@ -56,19 +56,15 @@ const GoogleAuthComponentInner = ({ setMessage, redirectOnLogin }: Props) => {
   });
 
   return (
-    <Row className="mb-3">
-      <Col className="d-flex justify-content-center">
-        <Button
-          onClick={() => {
-            setDisableButton(true);
-            login();
-          }}
-          disabled={disableButton || credential !== null}
-        >
-          <FontAwesomeIcon icon={faGoogle} />
-        </Button>
-      </Col>
-    </Row>
+    <Button
+      onClick={() => {
+        setDisableButton(true);
+        login();
+      }}
+      disabled={disableButton || credential !== null}
+    >
+      <FontAwesomeIcon icon={faGoogle} />
+    </Button>
   );
 };
 

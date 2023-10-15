@@ -5,7 +5,7 @@ const GenerationsPage = () => {
   return (
     <Container className="mt-5 mb-5">
       <Row className="justify-content-center">
-        <Col md={8}>
+        <Col lg={12}>
           <Row className="mb-3">
             <Col className="text-center">
               <h1>Generations</h1>

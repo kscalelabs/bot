@@ -7,8 +7,8 @@ import jwt
 from fastapi import HTTPException, status
 
 from bot.api.model import Token, User
-from bot.api.utils import server_time
 from bot.settings import load_settings
+from bot.utils import server_time
 
 logger = logging.getLogger(__name__)
 

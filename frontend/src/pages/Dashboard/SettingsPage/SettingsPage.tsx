@@ -1,11 +1,11 @@
 import { api } from "constants/backend";
+import AdminAudioComponent from "pages/Dashboard/SettingsPage/components/AdminAudioComponent";
+import AdminGenerationComponent from "pages/Dashboard/SettingsPage/components/AdminGenerationComponent";
+import AdminUserComponent from "pages/Dashboard/SettingsPage/components/AdminUserComponent";
+import DeleteAccountComponent from "pages/Dashboard/SettingsPage/components/DeleteAccountComponent";
+import PaymentComponent from "pages/Dashboard/SettingsPage/components/PaymentComponent";
 import { useEffect, useState } from "react";
 import { Col, Container, Row } from "react-bootstrap";
-import AdminAudioComponent from "./components/AdminAudioComponent";
-import AdminGenerationComponent from "./components/AdminGenerationComponent";
-import AdminUserComponent from "./components/AdminUserComponent";
-import DeleteAccountComponent from "./components/DeleteAccountComponent";
-import PaymentComponent from "./components/PaymentComponent";
 
 const SettingsPage = () => {
   const [isAdmin, setIsAdmin] = useState<boolean>(false);

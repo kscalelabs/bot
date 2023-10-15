@@ -1,8 +1,8 @@
+import AudioMixer from "components/input/AudioMixer";
 import AudioRecorder from "components/input/AudioRecoder";
+import AudioUploader from "components/input/AudioUploader";
 import { useState } from "react";
 import { Card, Nav } from "react-bootstrap";
-import AudioMixer from "./AudioMixer";
-import AudioUploader from "./AudioUploader";
 
 type Tab = "record" | "upload" | "mix";
 

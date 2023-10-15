@@ -4,7 +4,7 @@ import argparse
 import json
 import logging
 from pathlib import Path
-from typing import Literal
+from typing import Literal, cast, get_args
 
 import ml.api as ml
 import safetensors.torch as st
@@ -21,6 +21,11 @@ logger = logging.getLogger(__name__)
 PretrainedHubertModel = Literal["lucy"]
 
 REPO_ID = "codekansas/dpshai"
+
+
+def cast_pretrained_model(key: str) -> PretrainedHubertModel:
+    assert key in get_args(PretrainedHubertModel), f"Invalid pretrained HuBERT model: {key}"
+    return cast(PretrainedHubertModel, key)
 
 
 def _load_model(key: str, ckpt_path: str | Path | None = None) -> HubertModel:

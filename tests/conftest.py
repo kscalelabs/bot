@@ -52,16 +52,15 @@ def mock_load_settings(mocker: MockerFixture, tmpdir_factory: TempdirFactory) ->
 
     # Sets the default database settings.
     settings.database.kind = "sqlite"
-    settings.database.host = ":memory:"
-    settings.database.port = None
-    settings.database.path = None
-    settings.database.username = None
-    settings.database.password = None
+    settings.database.sqlite.host = ":memory:"
+
+    # Sets the default worker settings.
+    settings.worker.queue_type = "dummy"
 
     # Sets the default image settings.
     file_root_dir = tmpdir_factory.mktemp("files")
     settings.file.fs_type = "file"
-    settings.file.audio_file_ext = "flac"
+    settings.file.audio.file_ext = "flac"
     settings.file.root_dir = str(file_root_dir)
 
     # Sets the default email settings.
