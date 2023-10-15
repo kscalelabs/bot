@@ -2,7 +2,6 @@
 
 import datetime
 from typing import cast
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic.main import BaseModel
@@ -30,10 +29,16 @@ async def info_me(
 
 
 class SingleGenerationResponse(BaseModel):
-    output_id: UUID
-    reference_id: UUID
-    source_id: UUID
+    id: int
+    output_id: int | None
+    reference_id: int
+    source_id: int
+    task_created: datetime.datetime
     task_finished: datetime.datetime | None
+
+    @staticmethod
+    def keys() -> tuple[str, ...]:
+        return ("id", "output_id", "reference_id", "source_id", "task_created", "task_finished")
 
 
 class QueryMeResponse(BaseModel):
@@ -51,32 +56,23 @@ async def query_me(
     query = Generation.filter(user_id=user_data.user_id)
     generations = cast(
         list[SingleGenerationResponse],
-        await query.order_by("-task_created")
-        .offset(start)
-        .limit(limit)
-        .values(
-            "output_id",
-            "reference_id",
-            "source_id",
-            "task_finished",
-        ),
+        await query.order_by("-task_created").offset(start).limit(limit).values(*SingleGenerationResponse.keys()),
     )
     return QueryMeResponse(generations=generations)
 
 
 @generation_router.get("/id", response_model=SingleGenerationResponse)
-async def query_from_id(
-    output_id: UUID,
-    user_data: SessionTokenData = Depends(get_session_token),
-) -> SingleGenerationResponse:
-    generation = await Generation.filter(user_id=user_data.user_id, output_id=output_id).get_or_none()
+async def query_from_id(id: int, user_data: SessionTokenData = Depends(get_session_token)) -> SingleGenerationResponse:
+    generation = await Generation.filter(id=id, user_id=user_data.user_id).get_or_none()
     if generation is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Generation not found")
     return SingleGenerationResponse(
+        id=generation.id,
         output_id=generation.output_id,
         reference_id=generation.reference_id,
         source_id=generation.source_id,
-        task_finished=generation.task_created,
+        task_created=generation.task_created,
+        task_finished=generation.task_finished,
     )
 
 
@@ -94,14 +90,6 @@ async def public_ids(data: PublicIdsRequest) -> PublicIdsResponse:
     query = Generation.filter(public=True)
     generations = cast(
         list[SingleGenerationResponse],
-        await query.annotate(order=Random())
-        .order_by("order")
-        .limit(count)
-        .values(
-            "output_id",
-            "reference_id",
-            "source_id",
-            "task_finished",
-        ),
+        await query.annotate(order=Random()).order_by("order").limit(count).values(*SingleGenerationResponse.keys()),
     )
     return PublicIdsResponse(infos=generations)

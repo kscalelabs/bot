@@ -37,7 +37,7 @@ interface QueryMeRequest {
 }
 
 interface QueryMeResponse {
-  uuids: string[];
+  ids: number[];
 }
 
 const ListAudios = (props: Props) => {
@@ -48,7 +48,7 @@ const ListAudios = (props: Props) => {
     ...rowProps
   } = props;
   const [info, setInfo] = useState<InfoMeResponse | null>(null);
-  const [audios, setAudios] = useState<string[] | null>(null);
+  const [audios, setAudios] = useState<number[] | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [start, setStart] = useState(0);
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -80,7 +80,7 @@ const ListAudios = (props: Props) => {
                 q: searchTerm,
               } as QueryMeRequest,
             });
-            setAudios(response.data.uuids);
+            setAudios(response.data.ids);
           } else {
             const response = await api.get<QueryMeResponse>("/audio/query/me", {
               params: {
@@ -88,7 +88,7 @@ const ListAudios = (props: Props) => {
                 limit: paginationLimit,
               } as QueryMeRequest,
             });
-            setAudios(response.data.uuids);
+            setAudios(response.data.ids);
           }
         } catch (error) {
           setErrorMessage(humanReadableError(error));
@@ -174,9 +174,9 @@ const ListAudios = (props: Props) => {
                   {audios.length === 0 ? (
                     <Col className="mt-3">No samples found</Col>
                   ) : (
-                    audios.map((uuid) => (
-                      <Col sm={12} md={6} lg={6} key={uuid} className="mt-3">
-                        <AudioPlayback uuid={uuid} />
+                    audios.map((audioId) => (
+                      <Col sm={12} md={6} lg={6} key={audioId} className="mt-3">
+                        <AudioPlayback audioId={audioId} />
                       </Col>
                     ))
                   )}

@@ -163,8 +163,8 @@ const Dashboard = () => {
           <Route path="library" element={<LibraryPage />} />
           <Route path="generations" element={<GenerationsPage />} />
           <Route path="settings" element={<SettingsPage />} />
-          <Route path="audio/:uuid" element={<SingleAudioPage />} />
-          <Route path="generation/:uuid" element={<SingleGenerationPage />} />
+          <Route path="audio/:id" element={<SingleAudioPage />} />
+          <Route path="generation/:id" element={<SingleGenerationPage />} />
           <Route path="*" element={<Error404Page />} />
         </Routes>
       </Container>

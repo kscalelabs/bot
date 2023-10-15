@@ -11,10 +11,10 @@ from fastapi.testclient import TestClient
 
 @pytest.mark.asyncio
 async def test_generation_functions(
-    authenticated_user: tuple[TestClient, str],
+    authenticated_user: tuple[TestClient, str, str],
     tmpdir_factory: TempdirFactory,
 ) -> None:
-    app_client, _ = authenticated_user
+    app_client, _, _ = authenticated_user
 
     # Creates a new dummy audio file.
     audio_file_data = np.random.uniform(size=(8000,)) * 2 - 1
@@ -27,7 +27,7 @@ async def test_generation_functions(
         audio_file_raw = f.read()
 
     # Tests uploading two audio files to the "/audio/upload" endpoint.
-    uuids: list[str] = []
+    ids: list[str] = []
     for _ in range(2):
         response = app_client.post(
             "/audio/upload",
@@ -36,19 +36,19 @@ async def test_generation_functions(
         )
         assert response.status_code == 200, (response.status_code, response.json())
         data = response.json()
-        uuids.append(data["uuid"])
+        ids.append(data["id"])
 
     # Tests running the model on the two uploaded files.
-    gen_uuids: list[str] = []
+    gen_ids: list[str] = []
     for _ in range(3):
-        response = app_client.post("/infer/run", json={"orig_uuid": uuids[0], "ref_uuid": uuids[1]})
+        response = app_client.post("/infer/run", json={"source_id": ids[0], "reference_id": ids[1]})
         assert response.status_code == 200, response.json()
         data = response.json()
-        gen_uuids.append(data["uuid"])
+        gen_ids.append(data["id"])
 
     # Makes some generations public.
     for i in range(2):
-        response = app_client.post("/admin/act/generation", json={"output_id": gen_uuids[i], "public": True})
+        response = app_client.post("/admin/act/generation", json={"id": gen_ids[i], "public": True})
         assert response.status_code == 200, response.json()
 
     # Tests getting some random public generations.
@@ -56,7 +56,7 @@ async def test_generation_functions(
     assert response.status_code == 200, response.json()
     data = response.json()
     assert len(data["infos"]) == 2
-    assert {d["output_id"] for d in data["infos"]} == set(gen_uuids[:2])
+    assert {d["id"] for d in data["infos"]} == set(gen_ids[:2])
 
     # Queries the number of generations.
     response = app_client.get("/generation/info/me")

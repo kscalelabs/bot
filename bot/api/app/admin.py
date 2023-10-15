@@ -1,6 +1,5 @@
 """Defines the API endpoint for taking admin actions."""
 
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic.main import BaseModel
@@ -68,7 +67,7 @@ async def admin_act_user(
 
 
 class AdminContentRequest(BaseModel):
-    uuid: UUID
+    id: int
     public: bool | None = None
 
 
@@ -81,7 +80,7 @@ async def admin_act_content(
     data: AdminContentRequest,
     token_data: SessionTokenData = Depends(assert_is_admin),
 ) -> AdminContentResponse:
-    audio_obj = await Audio.get_or_none(uuid=data.uuid)
+    audio_obj = await Audio.get_or_none(id=data.id)
     if audio_obj is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Audio not found")
     changed = False
@@ -94,7 +93,7 @@ async def admin_act_content(
 
 
 class AdminGenerationRequest(BaseModel):
-    output_id: UUID
+    id: int
     public: bool | None = None
 
 
@@ -107,7 +106,7 @@ async def admin_act_generation(
     data: AdminGenerationRequest,
     token_data: SessionTokenData = Depends(assert_is_admin),
 ) -> AdminGenerationResponse:
-    generation_obj = await Generation.filter(output_id=data.output_id).get_or_none()
+    generation_obj = await Generation.filter(id=data.id).get_or_none()
     if generation_obj is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Generation not found")
     changed = False
@@ -117,7 +116,7 @@ async def admin_act_generation(
             # When making a generation public, we also make the source,
             # reference and output audio files public.
             audio_ids = [generation_obj.source_id, generation_obj.reference_id, generation_obj.output_id]
-            await Audio.filter(uuid__in=audio_ids).update(public=True)
+            await Audio.filter(id__in=audio_ids).update(public=True)
         changed = True
     if changed:
         await generation_obj.save()

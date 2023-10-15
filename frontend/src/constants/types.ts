@@ -1,19 +1,14 @@
-export interface AudioDataResponse {
+export interface SingleIdResponse {
+  id: number;
+  name: string;
+  source: string;
+  created: Date;
   num_frames: number;
   num_channels: number;
   sample_rate: number;
   duration: number;
 }
 
-export interface QueryIdResponse {
-  uuid: string;
-  name: string;
-  source: string;
-  created: Date;
-  available: boolean;
-  data: AudioDataResponse | null;
-}
-
 export interface QueryIdsResponse {
-  infos: QueryIdResponse[];
+  infos: SingleIdResponse[];
 }

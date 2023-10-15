@@ -3,14 +3,13 @@
 import asyncio
 import logging
 import time
-from uuid import UUID
 
 import ml.api as ml
 import torch
 
 from bot.api.audio import load_audio_array, save_audio_array
 from bot.api.db import close_db, init_db
-from bot.api.model import Generation
+from bot.api.model import AudioSource, Generation
 from bot.model.hubert.checkpoint import cast_pretrained_model, pretrained_hubert
 from bot.model.hubert.model import HubertModel
 from bot.settings import load_settings
@@ -59,50 +58,58 @@ class _ModelRunner:
 model_runner = _ModelRunner()
 
 
-async def run_model(generation_uuid: UUID) -> None:
-    logger.info("Processing %s", generation_uuid)
+async def run_model(generation_id: int) -> None:
+    logger.info("Processing %s", generation_id)
 
-    generation = await Generation.get_or_none(uuid=generation_uuid).prefetch_related("output")
+    # generation = await Generation.get_or_none(id=generation_id)
+    generation = await Generation.filter(id=generation_id).prefetch_related("source", "reference").get_or_none()
     if generation is None:
         raise ValueError("Generation not found.")
 
-    # Gets the input UUIDs.
-    source_uuid, reference_uuid = generation.source_id, generation.reference_id
+    try:
+        source_id, reference_id, user_id = generation.source.key, generation.reference.key, generation.user_id
+        name = f"{generation.source.name} to {generation.reference.name}"
 
-    start_time = time.time()
+        start_time = time.time()
 
-    # Gets properties from the model runner.
-    device = model_runner.device
-    model = model_runner.model
-    model_key = model_runner.model_key
+        # Gets properties from the model runner.
+        device = model_runner.device
+        model = model_runner.model
+        model_key = model_runner.model_key
 
-    source_audio_arr, reference_audio_arr = await asyncio.gather(
-        load_audio_array(source_uuid),
-        load_audio_array(reference_uuid),
-    )
+        source_audio_arr, reference_audio_arr = await asyncio.gather(
+            load_audio_array(source_id),
+            load_audio_array(reference_id),
+        )
 
-    # Converts int16 to float32.
-    source_audio_arr = source_audio_arr.astype("float32") / 32768
-    reference_audio_arr = reference_audio_arr.astype("float32") / 32768
+        # Converts int16 to float32.
+        source_audio_arr = source_audio_arr.astype("float32") / 32768
+        reference_audio_arr = reference_audio_arr.astype("float32") / 32768
 
-    source_audio, reference_audio = device.tensor_to(source_audio_arr), device.tensor_to(reference_audio_arr)
-    source_audio, reference_audio = source_audio.unsqueeze(0), reference_audio.unsqueeze(0)
+        source_audio, reference_audio = device.tensor_to(source_audio_arr), device.tensor_to(reference_audio_arr)
+        source_audio, reference_audio = source_audio.unsqueeze(0), reference_audio.unsqueeze(0)
 
-    # Runs the model.
-    with device.autocast_context(), torch.inference_mode():
-        output_audio = model.run(source_audio, reference_audio, settings.sampling_timesteps)
+        # Runs the model.
+        with device.autocast_context(), torch.inference_mode():
+            output_audio = model.run(source_audio, reference_audio, settings.sampling_timesteps)
 
-    # Updates the generation information.
-    elapsed_time = time.time() - start_time
-    generation.elapsed_time = elapsed_time
-    generation.model = model_key
-    generation.task_finished = server_time()
+        # Saves the output audio.
+        output_audio_arr = output_audio.squeeze(0).float().cpu().numpy()
+        output_audio_arr = (output_audio_arr * 32768).clip(-32768, 32767).astype("int16")
+        audio_entry = await save_audio_array(user_id, AudioSource.generated, output_audio_arr, name)
 
-    # Saves the output audio.
-    output_audio_arr = output_audio.squeeze(0).float().cpu().numpy()
-    output_audio_arr = (output_audio_arr * 32768).clip(-32768, 32767).astype("int16")
+        # Updates the generation information.
+        elapsed_time = time.time() - start_time
+        generation.output_id = audio_entry.id
+        generation.elapsed_time = elapsed_time
+        generation.model = model_key
+        generation.task_finished = server_time()
 
-    await asyncio.gather(save_audio_array(generation.output, output_audio_arr), generation.save())
+        await generation.save()
+
+    except Exception:
+        logger.exception("Exception while running model on %d", generation_id)
+        await generation.delete()
 
 
 async def worker_fn() -> None:

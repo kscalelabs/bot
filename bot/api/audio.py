@@ -2,9 +2,12 @@
 
 import functools
 import logging
+import os
 import shutil
 import tempfile
+import uuid
 from datetime import timedelta
+from hashlib import sha1
 from typing import BinaryIO, Literal, cast, get_args
 from uuid import UUID
 
@@ -12,9 +15,11 @@ import aioboto3
 import numpy as np
 from pydub import AudioSegment
 
-from bot.api.model import Audio
+from bot.api.model import Audio, AudioSource
 from bot.settings import load_settings
 from bot.utils import server_time
+
+DEFAULT_NAME = "Untitled"
 
 logger = logging.getLogger(__name__)
 
@@ -28,9 +33,9 @@ def get_fs_type() -> FSType:
     return cast(FSType, fs_type_str)
 
 
-def _get_path(uuid: UUID) -> str:
+def _get_path(key: UUID) -> str:
     settings = load_settings()
-    return f"{settings.file.root_dir}/{uuid}.{settings.file.audio.file_ext}"
+    return f"{settings.file.root_dir}/{key}.{settings.file.audio.file_ext}"
 
 
 def _get_extension(filename: str | None, default: str) -> str:
@@ -39,10 +44,12 @@ def _get_extension(filename: str | None, default: str) -> str:
     return filename.split(".")[-1].lower() if "." in filename else default
 
 
-async def _save_audio(audio_entry: Audio, audio: AudioSegment) -> None:
+async def _save_audio(user_id: int, source: AudioSource, name: str | None, audio: AudioSegment) -> Audio:
+    key_bytes = sha1(uuid.NAMESPACE_OID.bytes + f"user-{user_id}".encode("utf-8") + os.urandom(16))
+    key = UUID(bytes=key_bytes.digest()[:16], version=5)
     settings = load_settings().file
     fs_type = get_fs_type()
-    fs_path = _get_path(audio_entry.uuid)
+    fs_path = _get_path(key)
 
     # Standardizes the audio format.
     if audio.frame_rate < settings.audio.min_sample_rate:
@@ -74,37 +81,46 @@ async def _save_audio(audio_entry: Audio, audio: AudioSegment) -> None:
         case _:
             raise ValueError(f"Invalid file system type: {fs_type}")
 
-    # Updates the audio entry with the audio metadata.
-    audio_entry.num_frames = audio.frame_count()
-    audio_entry.num_channels = audio.channels
-    audio_entry.sample_rate = audio.frame_rate
-    audio_entry.duration = audio.duration_seconds
-    audio_entry.available = True
-    await audio_entry.save()
+    # Creates and returns a new audio entry for the file.
+    return await Audio.create(
+        key=key,
+        name=DEFAULT_NAME if name is None else name,
+        user_id=user_id,
+        source=source,
+        num_frames=audio.frame_count(),
+        num_channels=audio.channels,
+        sample_rate=audio.frame_rate,
+        duration=audio.duration_seconds,
+    )
 
 
-async def save_audio_file(audio_entry: Audio, file: BinaryIO, filename: str | None) -> None:
+async def save_audio_file(
+    user_id: int,
+    source: AudioSource,
+    file: BinaryIO,
+    name: str | None = None,
+) -> Audio:
     """Saves the audio file to the file system.
 
     Args:
-        audio_entry: The row in audio table containing the audio UUID.
+        user_id: The ID of the user who uploaded the audio file.
+        source: The source of the audio file.
         file: The audio file.
-        filename: The name of the audio file.
+        name: The name of the audio file.
+
+    Returns:
+        The row in audio table.
     """
-    try:
-        file_extension = _get_extension(filename, "wav")
-        audio = AudioSegment.from_file(file, file_extension)
-        await _save_audio(audio_entry, audio)
-    except Exception:
-        logger.exception("Error processing %s", audio_entry.uuid)
-        await audio_entry.delete()
+    file_extension = _get_extension(name, "wav")
+    audio = AudioSegment.from_file(file, file_extension)
+    return await _save_audio(user_id, source, name, audio)
 
 
 async def get_audio_url(audio_entry: Audio) -> tuple[str, bool]:
     """Gets the file path or URL for serving the audio file.
 
     Args:
-        audio_entry: The row in audio table containing the audio UUID.
+        audio_entry: The row in audio table.
 
     Returns:
         The file path or URL for serving the audio file, along with a boolean
@@ -113,7 +129,7 @@ async def get_audio_url(audio_entry: Audio) -> tuple[str, bool]:
     settings = load_settings().file
     cur_time = server_time()
     fs_type = get_fs_type()
-    fs_path = _get_path(audio_entry.uuid)
+    fs_path = _get_path(audio_entry.key)
 
     try:
         match fs_type:
@@ -143,7 +159,7 @@ async def get_audio_url(audio_entry: Audio) -> tuple[str, bool]:
                 raise ValueError(f"Invalid file system type: {fs_type}")
 
     except Exception:
-        logger.exception("Error processing %s", audio_entry.uuid)
+        logger.exception("Error processing %s", audio_entry.key)
         raise
 
 
@@ -182,22 +198,28 @@ async def load_audio_array(audio_uuid: UUID) -> np.ndarray:
         raise
 
 
-async def save_audio_array(audio_entry: Audio, audio_array: np.ndarray) -> None:
+async def save_audio_array(
+    user_id: int,
+    source: AudioSource,
+    audio_array: np.ndarray,
+    name: str | None = None,
+) -> Audio:
     """Saves the audio array to the file system.
 
     Args:
-        audio_entry: The row in audio table containing the audio UUID.
+        user_id: The ID of the user who uploaded the audio file.
+        source: The source of the audio file.
         audio_array: The audio as a Numpy array.
+        name: The name of the audio file.
+
+    Returns:
+        The row in audio table containing the audio Id.
     """
-    try:
-        settings = load_settings().file
-        audio = AudioSegment(
-            audio_array.tobytes(),
-            sample_width=settings.audio.sample_width,
-            frame_rate=settings.audio.sample_rate,
-            channels=settings.audio.num_channels,
-        )
-        await _save_audio(audio_entry, audio)
-    except Exception:
-        logger.exception("Error processing %s", audio_entry.uuid)
-        await audio_entry.delete()
+    settings = load_settings().file
+    audio = AudioSegment(
+        audio_array.tobytes(),
+        sample_width=settings.audio.sample_width,
+        frame_rate=settings.audio.sample_rate,
+        channels=settings.audio.num_channels,
+    )
+    return await _save_audio(user_id, source, name, audio)

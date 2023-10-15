@@ -20,23 +20,22 @@ type Props = ComponentProps & CardProps;
 const AudioSelection = (props: Props) => {
   const { isSource, ...cardProps } = props;
 
-  const { sourceUuid, setSourceUuid, referenceUuid, setReferenceUuid } =
-    useClipboard();
+  const { sourceId, setSourceId, referenceId, setReferenceId } = useClipboard();
 
   const title = isSource ? "Source" : "Reference";
-  const uuid = isSource ? sourceUuid : referenceUuid;
-  const setUuid = isSource ? setSourceUuid : setReferenceUuid;
+  const audioId = isSource ? sourceId : referenceId;
+  const setId = isSource ? setSourceId : setReferenceId;
 
   return (
     <Card {...cardProps}>
       <Card.Header>{title}</Card.Header>
       <Card.Body>
-        {uuid === null ? (
+        {audioId === null ? (
           <div>Make a selection</div>
         ) : (
           <>
             <AudioPlayback
-              uuid={uuid}
+              audioId={audioId}
               showDeleteButton={false}
               showSelectionButtons={false}
             />
@@ -45,7 +44,7 @@ const AudioSelection = (props: Props) => {
                 placement="top"
                 overlay={<Tooltip id="tooltip-top">Clear</Tooltip>}
               >
-                <Button onClick={() => setUuid(null)} variant="warning">
+                <Button onClick={() => setId(null)} variant="warning">
                   <FontAwesomeIcon icon={faClose} />
                 </Button>
               </OverlayTrigger>

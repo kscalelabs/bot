@@ -7,14 +7,14 @@ import { useReactMediaRecorder } from "react-media-recorder";
 const TIMEOUT_MS = 10000;
 
 interface UploadAudioResponse {
-  uuid: string;
+  id: number;
 }
 
 const AudioRecorder = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [audioBlob, setAudioBlob] = useState<[string, Blob] | null>(null);
   const [showSpinner, setShowSpinner] = useState(false);
-  const [lastUuid, setLastUuid] = useState<string | null>(null);
+  const [lastId, setLastId] = useState<number | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [percentComplete, setPercentComplete] = useState<number | null>(null);
@@ -52,7 +52,7 @@ const AudioRecorder = () => {
           },
         );
         setShowSuccess(true);
-        setLastUuid(response.data.uuid);
+        setLastId(response.data.id);
       } catch (error) {
         setErrorMessage(humanReadableError(error));
       } finally {
@@ -144,8 +144,8 @@ const AudioRecorder = () => {
           <div>Your audio file was successfully uploaded!</div>
         </Alert>
       )}
-      {lastUuid !== null && (
-        <AudioPlayback className="mt-3" uuid={lastUuid} title="Last Upload" />
+      {lastId !== null && (
+        <AudioPlayback className="mt-3" audioId={lastId} title="Last Upload" />
       )}
     </Card.Body>
   );

@@ -4,14 +4,14 @@ import React, { useState } from "react";
 import { Alert, Card, Form, Spinner } from "react-bootstrap";
 
 interface UploadAudioResponse {
-  uuid: string;
+  id: number;
 }
 
 const AudioUploader = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showSpinner, setShowSpinner] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [lastUuid, setLastUuid] = useState<string | null>(null);
+  const [lastId, setLastId] = useState<number | null>(null);
 
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -39,7 +39,7 @@ const AudioUploader = () => {
         },
       );
       setShowSuccess(true);
-      setLastUuid(response.data.uuid);
+      setLastId(response.data.id);
     } catch (error) {
       setErrorMessage(humanReadableError(error));
     } finally {
@@ -80,8 +80,8 @@ const AudioUploader = () => {
           <div>Your audio file was successfully uploaded!</div>
         </Alert>
       )}
-      {lastUuid !== null && (
-        <AudioPlayback className="mt-3" uuid={lastUuid} title="Last Upload" />
+      {lastId !== null && (
+        <AudioPlayback className="mt-3" audioId={lastId} title="Last Upload" />
       )}
     </Card.Body>
   );

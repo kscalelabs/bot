@@ -6,7 +6,7 @@ don't load any pretrained weights here.
 """
 
 from abc import ABC, abstractmethod
-from typing import Literal, cast, get_args
+from typing import Literal, cast, get_args, overload
 
 from pretrained.hubert import (
     PretrainedHubertKmeansSize,
@@ -105,13 +105,60 @@ class HubertSoftSpeechRepresentation(BaseSpeechRepresentation):
         return self.proj(self.hubert(audio, sample_rate, True))
 
 
-def get_speech_representation(speech_representation_type: SpeechRepresentationType) -> BaseSpeechRepresentation:
+@overload
+def get_speech_representation(
+    speech_representation_type: Literal["hubert"],
+    *,
+    hubert_size: PretrainedHubertSize = "base",
+    hubert_output_layer: int | float = 0.8,
+) -> HubertSpeechRepresentation:
+    ...
+
+
+@overload
+def get_speech_representation(
+    speech_representation_type: Literal["hubert-quantized"],
+    *,
+    hubert_quantized_size: PretrainedHubertKmeansSize = "base-l10-c100",
+) -> HubertQuantizedSpeechRepresentation:
+    ...
+
+
+@overload
+def get_speech_representation(
+    speech_representation_type: Literal["hubert-soft"],
+    *,
+    hubert_soft_size: PretrainedHubertSoftSize = "base",
+) -> HubertSoftSpeechRepresentation:
+    ...
+
+
+@overload
+def get_speech_representation(
+    speech_representation_type: SpeechRepresentationType,
+    *,
+    hubert_size: PretrainedHubertSize = "base",
+    hubert_output_layer: int | float = 0.8,
+    hubert_quantized_size: PretrainedHubertKmeansSize = "base-l10-c100",
+    hubert_soft_size: PretrainedHubertSoftSize = "base",
+) -> BaseSpeechRepresentation:
+    ...
+
+
+def get_speech_representation(
+    speech_representation_type: SpeechRepresentationType,
+    *,
+    hubert_size: PretrainedHubertSize = "base",
+    hubert_output_layer: int | float = 0.8,
+    hubert_quantized_size: PretrainedHubertKmeansSize = "base-l10-c100",
+    hubert_soft_size: PretrainedHubertSoftSize = "base",
+) -> BaseSpeechRepresentation:
     match speech_representation_type:
         case "hubert":
-            return HubertSpeechRepresentation()
+            return HubertSpeechRepresentation(hubert_size, hubert_output_layer)
         case "hubert-quantized":
-            return HubertQuantizedSpeechRepresentation()
+            return HubertQuantizedSpeechRepresentation(hubert_quantized_size)
         case "hubert-soft":
-            return HubertSoftSpeechRepresentation("base")
+            return HubertSoftSpeechRepresentation(hubert_soft_size)
         case _:
             raise ValueError(f"Invalid speech representation type: {speech_representation_type}")

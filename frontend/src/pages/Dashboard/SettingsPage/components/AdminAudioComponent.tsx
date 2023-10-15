@@ -50,7 +50,7 @@ const AdminAudioComponent = () => {
       <Form.Group className="mb-3">
         <Form.Control
           type="text"
-          placeholder="Audio UUID"
+          placeholder="Audio ID"
           onChange={(e) => {
             setErrorMessage(null);
             setUuid(e.target.value);
@@ -81,7 +81,7 @@ const AdminAudioComponent = () => {
           disabled={!buttonEnabled}
           onClick={handleCheckEmail}
         >
-          <FontAwesomeIcon icon={faCheck} /> Check UUID
+          <FontAwesomeIcon icon={faCheck} /> Check ID
         </Button>
         <Button
           variant="danger"
