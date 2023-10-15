@@ -33,7 +33,7 @@ class SingleGenerationResponse(BaseModel):
     output_id: UUID
     reference_id: UUID
     source_id: UUID
-    created: datetime.datetime
+    task_finished: datetime.datetime
 
 
 class QueryMeResponse(BaseModel):
@@ -51,14 +51,14 @@ async def query_me(
     query = Generation.filter(user_id=user_data.user_id)
     generations = cast(
         list[SingleGenerationResponse],
-        await query.order_by("-created")
+        await query.order_by("-task_created")
         .offset(start)
         .limit(limit)
         .values(
             "output_id",
             "reference_id",
             "source_id",
-            "created",
+            "task_finished",
         ),
     )
     return QueryMeResponse(generations=generations)

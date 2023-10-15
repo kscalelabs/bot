@@ -36,7 +36,7 @@ start-frontend:
 	cd frontend && npm start
 
 start-worker:
-	python -m bot.worker
+	PYTORCH_ENABLE_MPS_FALLBACK=1 python -m bot.worker
 
 # ------------------------ #
 #          Build           #

@@ -6,7 +6,7 @@ interface ComponentProps {
   output_id: string;
   reference_id: string;
   source_id: string;
-  created: Date;
+  task_finished: Date;
   showLink?: boolean;
 }
 
@@ -17,7 +17,7 @@ const SingleGeneration = (props: Props) => {
     output_id,
     reference_id,
     source_id,
-    created,
+    task_finished,
     showLink = true,
     ...cardProps
   } = props;
@@ -25,7 +25,7 @@ const SingleGeneration = (props: Props) => {
   return (
     <Card {...cardProps}>
       <Card.Header>
-        Created {new Date(created).toLocaleString()}
+        Created {new Date(task_finished).toLocaleString()}
         {showLink && (
           <span>
             {" - "}

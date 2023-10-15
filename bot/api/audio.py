@@ -192,7 +192,7 @@ async def save_audio_array(audio_entry: Audio, audio_array: np.ndarray) -> None:
     try:
         settings = load_settings().file
         audio = AudioSegment(
-            audio_array,
+            audio_array.tobytes(),
             sample_width=settings.audio.sample_width,
             frame_rate=settings.audio.sample_rate,
             channels=settings.audio.num_channels,

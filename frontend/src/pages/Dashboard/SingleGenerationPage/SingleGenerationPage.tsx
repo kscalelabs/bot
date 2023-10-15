@@ -8,7 +8,7 @@ interface SingleGenerationResponse {
   output_id: string;
   reference_id: string;
   source_id: string;
-  created: Date;
+  task_finished: Date;
 }
 
 const SingleGenerationPage = () => {
@@ -62,7 +62,7 @@ const SingleGenerationPage = () => {
                   output_id={response.output_id}
                   reference_id={response.reference_id}
                   source_id={response.source_id}
-                  created={response.created}
+                  task_finished={response.task_finished}
                   showLink={false}
                 />
               )}

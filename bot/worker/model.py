@@ -81,6 +81,10 @@ async def run_model(generation_uuid: UUID) -> None:
         load_audio_array(reference_uuid),
     )
 
+    # Converts int16 to float32.
+    source_audio_arr = source_audio_arr.astype("float32") / 32768
+    reference_audio_arr = reference_audio_arr.astype("float32") / 32768
+
     source_audio, reference_audio = device.tensor_to(source_audio_arr), device.tensor_to(reference_audio_arr)
     source_audio, reference_audio = source_audio.unsqueeze(0), reference_audio.unsqueeze(0)
 
@@ -96,6 +100,13 @@ async def run_model(generation_uuid: UUID) -> None:
 
     # Saves the output audio.
     output_audio_arr = output_audio.squeeze(0).float().cpu().numpy()
+    output_audio_arr = (output_audio_arr * 32768).clip(-32768, 32767).astype("int16")
+
+    import numpy as np
+    np.save("source.npy", source_audio_arr)
+    np.save("reference.npy", reference_audio_arr)
+    np.save("output.npy", output_audio_arr)
+
     await asyncio.gather(save_audio_array(generation.output, output_audio_arr), generation.save())
 
 
