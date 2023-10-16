@@ -24,6 +24,9 @@ fi
 dist_dir=${home_dir}/dist/deployment/
 mkdir -p $dist_dir
 
+# Gets a unique JWT secret.
+export JWT_SECRET=$(python -c "import secrets; print(secrets.token_urlsafe(32))")
+
 # Installs build dependencies.
 python -m pip install --upgrade pip
 python -m pip install --upgrade build wheel setuptools
@@ -33,9 +36,6 @@ python configs/build.py aws -o ${dist_dir}/config.yaml
 
 # Builds the project.
 python -m build --wheel --outdir ${dist_dir} .
-
-# Gets a unique JWT secret.
-export JWT_SECRET=$(python -c "import secrets; print(secrets.token_urlsafe(32))")
 
 # Builds the API Docker image.
 docker build -t dpsh-api -f scripts/docker/Dockerfile.api ${dist_dir}
