@@ -179,10 +179,11 @@ async def load_audio_array(audio_uuid: UUID) -> np.ndarray:
     fs_path = _get_path(audio_uuid)
 
     try:
+        audio: AudioSegment
+
         match fs_type:
             case "file":
-                audio_file_seg: AudioSegment = AudioSegment.from_file(fs_path, settings.audio.file_ext)
-                return np.array(audio_file_seg.get_array_of_samples())
+                audio = AudioSegment.from_file(fs_path, settings.audio.file_ext)
 
             case "s3":
                 s3_bucket = settings.s3.bucket
@@ -191,11 +192,12 @@ async def load_audio_array(audio_uuid: UUID) -> np.ndarray:
                     obj = await s3.get_object(Bucket=s3_bucket, Key=fs_path)
                     data = await obj["Body"].read()
                     audio_file_io = BytesIO(data)
-                    audio_s3_seg: AudioSegment = AudioSegment.from_file(audio_file_io, settings.audio.file_ext)
-                    return np.array(audio_s3_seg.get_array_of_samples())
+                    audio = AudioSegment.from_file(audio_file_io, settings.audio.file_ext)
 
             case _:
                 raise ValueError(f"Invalid file system type: {fs_type}")
+
+        return np.array(audio.get_array_of_samples())
 
     except Exception:
         logger.exception("Error processing %s", audio_uuid)
