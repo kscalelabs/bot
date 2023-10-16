@@ -19,7 +19,7 @@ jobs:
   build-backend:
     environment:
       name: dev
-      url: $SITE_BACKEND
+      url: ${{ vars.SITE_BACKEND }}
     runs-on: ubuntu-latest
 
     defaults:
@@ -46,12 +46,22 @@ jobs:
         uses: ./.github/actions/dpsh_build
 
       - name: Build and publish
+        # The build script requires access to the secrets and vars in the
+        # dev environment, as environment variables.
         env:
           DB_USERNAME: ${{ secrets.DB_USERNAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_READ_HOST: ${{ vars.DB_READ_HOST }}
+          DB_WRITE_HOST: ${{ vars.DB_WRITE_HOST }}
+          ECR_URI: ${{ vars.ECR_URI }}
+          S3_BUCKET: ${{ vars.S3_BUCKET }}
+          SITE_HOMEPAGE: ${{ vars.SITE_HOMEPAGE }}
+          SQS_QUEUE: ${{ vars.SQS_QUEUE}}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           HF_HUB_TOKEN: ${{ secrets.HF_HUB_TOKEN }}
+          SMTP_EMAIL: ${{ vars.SMTP_EMAIL }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_HOST: ${{ vars.SMTP_HOST }}
         run: |
           ./scripts/build_docker_image.sh
 
@@ -76,11 +86,9 @@ jobs:
         run: npm install
 
       - name: Write .env.production
-        env:
-          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
         run: |
-          echo "REACT_APP_BACKEND_URL=${SITE_BACKEND}" > .env.production
-          echo "REACT_APP_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}" >> .env.production
+          echo "REACT_APP_BACKEND_URL=${{ vars.SITE_BACKEND }}" > .env.production
+          echo "REACT_APP_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env.production
 
       - name: Build
         run: npm run build
