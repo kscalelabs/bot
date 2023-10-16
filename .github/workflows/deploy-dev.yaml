@@ -27,20 +27,15 @@ jobs:
         working-directory: .
 
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v3
+      - name: Build package
+        uses: ./.github/actions/dpsh_build
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
+          aws-region: ${{ vars.AWS_REGION }}
 
       - name: Build and publish
         # The build script requires access to the secrets and vars in the
@@ -71,20 +66,15 @@ jobs:
         working-directory: .
 
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v3
+      - name: Build package
+        uses: ./.github/actions/dpsh_build
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
+          aws-region: ${{ vars.AWS_REGION }}
 
       - name: Build and publish
         # The build script requires access to the secrets and vars in the
