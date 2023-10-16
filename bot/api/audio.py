@@ -8,6 +8,7 @@ import tempfile
 import uuid
 from datetime import timedelta
 from hashlib import sha1
+from io import BytesIO
 from typing import BinaryIO, Literal, cast, get_args
 from uuid import UUID
 
@@ -134,11 +135,12 @@ async def get_audio_url(audio_entry: Audio) -> tuple[str, bool]:
     try:
         match fs_type:
             case "file":
-                if audio_entry.url is not None:
-                    return audio_entry.url, False
+                updated = audio_entry.url != fs_path
                 audio_entry.url = fs_path
-                await audio_entry.save()
-                return audio_entry.url, False
+                if updated:
+                    audio_entry.url_expires = cur_time
+                    await audio_entry.save()
+                return fs_path, False
 
             case "s3":
                 if audio_entry.url is not None and audio_entry.url_expires > cur_time:
@@ -177,21 +179,25 @@ async def load_audio_array(audio_uuid: UUID) -> np.ndarray:
     fs_path = _get_path(audio_uuid)
 
     try:
+        audio: AudioSegment
+
         match fs_type:
             case "file":
-                audio: AudioSegment = AudioSegment.from_file(fs_path, settings.audio.file_ext)
-                return np.array(audio.get_array_of_samples())
+                audio = AudioSegment.from_file(fs_path, settings.audio.file_ext)
 
             case "s3":
                 s3_bucket = settings.s3.bucket
                 session = aioboto3.Session()
                 async with session.client("s3") as s3:
                     obj = await s3.get_object(Bucket=s3_bucket, Key=fs_path)
-                    audio = AudioSegment.from_file(obj["Body"], settings.audio.file_ext)
-                    return np.array(audio.get_array_of_samples())
+                    data = await obj["Body"].read()
+                    audio_file_io = BytesIO(data)
+                    audio = AudioSegment.from_file(audio_file_io, settings.audio.file_ext)
 
             case _:
                 raise ValueError(f"Invalid file system type: {fs_type}")
+
+        return np.array(audio.get_array_of_samples())
 
     except Exception:
         logger.exception("Error processing %s", audio_uuid)

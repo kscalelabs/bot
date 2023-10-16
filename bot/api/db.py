@@ -2,9 +2,9 @@
 
 import logging
 
-from tortoise import Tortoise
+from tortoise import Model, Tortoise
 
-from bot.settings import load_settings
+from bot.settings import PostgreSQLEndpointSettings, load_settings
 
 logger = logging.getLogger(__name__)
 
@@ -15,8 +15,25 @@ async def init_db_sqlite() -> None:
     await Tortoise.init(db_url=f"sqlite://{settings.host}", modules={"models": ["bot.api.model"]})
 
 
+class DatabaseRouter:
+    async def db_for_read(self, model: type["Model"]) -> str:
+        return "default"
+
+    async def db_for_write(self, model: type["Model"]) -> str:
+        return "read_replica"
+
+
 async def init_db_postgres() -> None:
     settings = load_settings().database.postgres
+
+    def get_credential(endpoint_settings: "PostgreSQLEndpointSettings") -> dict:
+        return {
+            "host": endpoint_settings.host,
+            "port": endpoint_settings.port,
+            "user": endpoint_settings.username,
+            "password": endpoint_settings.password,
+            "database": endpoint_settings.database,
+        }
 
     logger.info("Initializing PostgreSQL database")
     await Tortoise.init(
@@ -24,13 +41,11 @@ async def init_db_postgres() -> None:
             "connections": {
                 "default": {
                     "engine": "tortoise.backends.asyncpg",
-                    "credentials": {
-                        "host": settings.host,
-                        "port": settings.port,
-                        "user": settings.username,
-                        "password": settings.password,
-                        "database": settings.database,
-                    },
+                    "credentials": get_credential(settings.write_endpoint),
+                },
+                "read_replica": {
+                    "engine": "tortoise.backends.asyncpg",
+                    "credentials": get_credential(settings.read_endpoint),
                 },
             },
             "apps": {

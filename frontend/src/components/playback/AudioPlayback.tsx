@@ -133,27 +133,15 @@ const AudioPlayback: React.FC<Props> = ({
     })();
   }, [audioId]);
 
-  useEffect(() => {
-    if (audioRef.current !== null) {
+  const toggleAudio = () => {
+    if (audioRef.current === null) {
+      audioRef.current = new Audio(getUri());
+
       const handleAudioEnd = () => {
         setIsPlaying(false);
       };
 
       audioRef.current.addEventListener("ended", handleAudioEnd);
-
-      return () => {
-        if (audioRef.current !== null) {
-          audioRef.current.removeEventListener("ended", handleAudioEnd);
-          audioRef.current.pause();
-          audioRef.current.src = "";
-        }
-      };
-    }
-  }, [audioRef]);
-
-  const toggleAudio = () => {
-    if (audioRef.current === null) {
-      audioRef.current = new Audio(getUri());
     }
     if (audioRef.current !== null) {
       if (isPlaying) {

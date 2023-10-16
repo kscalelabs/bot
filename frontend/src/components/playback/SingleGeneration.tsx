@@ -28,22 +28,23 @@ const SingleGeneration = (props: Props) => {
 
   return (
     <Card {...cardProps}>
-      <Card.Header>
-        Generation {generationId} -
-        {` Created ${new Date(taskCreated).toLocaleString()} -`}
-        {taskFinished === null
-          ? " Processing..."
-          : ` Finished ${new Date(taskFinished).toLocaleString()}`}
-        {showLink && (
-          <span>
-            {" - "}
-            <strong>
-              <Link to={`/generation/${generationId}`}>Link</Link>
-            </strong>
-          </span>
-        )}
-      </Card.Header>
+      <Card.Header>Generation {generationId}</Card.Header>
       <Card.Body>
+        <Card.Text>
+          Created {new Date(taskCreated).toLocaleString()}
+          <br />
+          {taskFinished === null
+            ? " Processing..."
+            : ` Finished ${new Date(taskFinished).toLocaleString()}`}
+          {showLink && (
+            <>
+              <br />
+              <strong>
+                <Link to={`/generation/${generationId}`}>Link</Link>
+              </strong>
+            </>
+          )}
+        </Card.Text>
         <Row>
           <Col sm={12} md={12} lg={4} className="mt-2">
             <AudioPlayback audioId={sourceId} title="Source" />

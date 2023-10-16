@@ -2,8 +2,10 @@
 
 import asyncio
 import functools
+import json
 import logging
 from abc import ABC, abstractmethod
+from types import TracebackType
 from typing import Awaitable, Callable, ParamSpec
 
 import aioboto3
@@ -11,6 +13,7 @@ from aio_pika import Message, connect_robust
 from aio_pika.abc import AbstractChannel, AbstractConnection, AbstractIncomingMessage
 
 from bot.settings import load_settings
+from bot.utils import configure_logging
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +42,10 @@ class BaseQueue(ABC):
         """Initializes the queue."""
 
     @abstractmethod
+    async def close(self) -> None:
+        """Closes the queue."""
+
+    @abstractmethod
     async def send(self, generation_id: int) -> None:
         """Sends a message to the queue.
 
@@ -53,6 +60,13 @@ class BaseQueue(ABC):
         Args:
             callback: The callback function to call when a message is received.
         """
+
+    async def __aenter__(self) -> "BaseQueue":
+        await self.initialize()
+        return self
+
+    async def __aexit__(self, exc_type: type[BaseException], exc: BaseException, tb: TracebackType) -> None:
+        await self.close()
 
 
 class _Serializer:
@@ -83,6 +97,10 @@ class RabbitMessageQueue(BaseQueue):
         self.channel = await self.connection.channel()
         await self.channel.declare_queue(name=self.queue_name)
 
+    async def close(self) -> None:
+        await self.channel.close()
+        await self.connection.close()
+
     async def send(self, generation_id: int) -> None:
         await self.channel.default_exchange.publish(
             Message(body=_Serializer.serialize(generation_id)),
@@ -111,47 +129,52 @@ class RabbitMessageQueue(BaseQueue):
 
 
 class SqsMessageQueue(BaseQueue):
-    queue_name: str
     session: aioboto3.Session
-    queue_url: str
 
     async def initialize(self) -> None:
-        settings = load_settings().worker.sqs
-
-        self.queue_name = settings.queue_name
         self.session = aioboto3.Session()
 
-        async with self.session.resource("sqs") as sqs:
-            response = await sqs.create_queue(QueueName=self.queue_name)
-            self.queue_url = response["QueueUrl"]
+    async def close(self) -> None:
+        pass
 
     async def send(self, generation_id: int) -> None:
+        settings = load_settings().worker.sqs
         async with self.session.resource("sqs") as sqs:
-            await sqs.send_message(
-                QueueUrl=self.queue_url,
-                MessageBody=str(generation_id),
-            )
+            queue = await sqs.get_queue_by_name(QueueName=settings.queue_name)
+            await queue.send_message(MessageBody=json.dumps({"generation_id": generation_id}))
 
     async def receive(self, callback: Callable[[int], Awaitable[None]]) -> None:
         logger.info("Starting SQS worker...")
+        settings = load_settings().worker.sqs
         callback = handle_errors(callback)
 
         async with self.session.resource("sqs") as sqs:
+            queue = await sqs.get_queue_by_name(QueueName=settings.queue_name)
+
             while True:
                 logger.info("Waiting for messages...")
-                response = await sqs.receive_messages(QueueUrl=self.queue_url, WaitTimeSeconds=20)
-                messages = response.get("Messages", [])
+                messages = await queue.receive_messages(
+                    MaxNumberOfMessages=1,
+                    WaitTimeSeconds=20,
+                )
+
                 for message in messages:
                     try:
-                        generation_id = int(message["Body"])
+                        body_str = await message.body
+                        body = json.loads(body_str)
+                        generation_id = body["generation_id"]
                         await callback(generation_id)
-                        await sqs.delete_message(QueueUrl=self.queue_url, ReceiptHandle=message["ReceiptHandle"])
                     except Exception:
                         logger.exception("An exception occurred while processing a message")
+                    else:
+                        await message.delete()
 
 
 class DummyQueue(BaseQueue):
     async def initialize(self) -> None:
+        pass
+
+    async def close(self) -> None:
         pass
 
     async def send(self, generation_id: int) -> None:
@@ -173,3 +196,18 @@ def get_message_queue() -> BaseQueue:
             return DummyQueue()
         case _:
             raise ValueError(f"Invalid queue type {settings.queue_type}")
+
+
+async def test_queue_adhoc() -> None:
+    configure_logging()
+    mq = SqsMessageQueue()
+    async with mq:
+        for i in range(5):
+            logger.info("Sending message %d", i)
+            await mq.send(i)
+            await asyncio.sleep(1)
+
+
+if __name__ == "__main__":
+    # python -m bot.worker.message_passing
+    asyncio.run(test_queue_adhoc())

@@ -35,12 +35,18 @@ class SQLiteDatabaseSettings:
 
 
 @dataclass
-class PostgreSQLDatabaseSettings:
+class PostgreSQLEndpointSettings:
     host: str = ml.conf_field(MISSING)
     port: int = ml.conf_field(MISSING)
     username: str = ml.conf_field(MISSING)
     password: str = ml.conf_field(MISSING)
-    database: str = ml.conf_field(MISSING)
+    database: str = ml.conf_field("postgres")
+
+
+@dataclass
+class PostgreSQLDatabaseSettings:
+    write_endpoint: PostgreSQLEndpointSettings = ml.conf_field(PostgreSQLEndpointSettings())
+    read_endpoint: PostgreSQLEndpointSettings = ml.conf_field(II("database.postgres.write_endpoint"))
 
 
 @dataclass
@@ -62,9 +68,6 @@ class RabbitMessageQueueSettings:
 
 @dataclass
 class SqsMessageQueueSettings:
-    access_key_id: str = ml.conf_field(MISSING)
-    secret_access_key: str = ml.conf_field(MISSING)
-    region: str = ml.conf_field(MISSING)
     queue_name: str = ml.conf_field(MISSING)
 
 
