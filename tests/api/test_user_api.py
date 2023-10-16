@@ -81,7 +81,7 @@ def test_user_auth_functions(app_client: TestClient, mock_send_email: MockType) 
     otp = OneTimePassPayload(email=bad_actor_email)
     response = app_client.post("/users/otp", json={"payload": otp.encode()})
     assert response.status_code == 401, response.json()
-    assert response.json()["detail"] == "User is banned"
+    assert response.json()["detail"] == "User is not allowed to log in"
 
     # Delete the user.
     response = app_client.delete("/users/me")
