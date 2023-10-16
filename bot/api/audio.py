@@ -135,11 +135,12 @@ async def get_audio_url(audio_entry: Audio) -> tuple[str, bool]:
     try:
         match fs_type:
             case "file":
-                if audio_entry.url is not None:
-                    return audio_entry.url, False
+                updated = audio_entry.url != fs_path
                 audio_entry.url = fs_path
-                await audio_entry.save()
-                return audio_entry.url, False
+                if updated:
+                    audio_entry.url_expires = cur_time
+                    await audio_entry.save()
+                return fs_path, False
 
             case "s3":
                 if audio_entry.url is not None and audio_entry.url_expires > cur_time:

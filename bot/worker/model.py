@@ -64,7 +64,8 @@ async def run_model(generation_id: int) -> None:
     # generation = await Generation.get_or_none(id=generation_id)
     generation = await Generation.filter(id=generation_id).prefetch_related("source", "reference").get_or_none()
     if generation is None:
-        raise ValueError("Generation not found.")
+        logger.warning("Generation not found")
+        return
 
     try:
         source_id, reference_id, user_id = generation.source.key, generation.reference.key, generation.user_id
@@ -120,8 +121,8 @@ async def worker_fn() -> None:
 
     try:
         mq = get_message_queue()
-        await mq.initialize()
-        await mq.receive(run_model)
+        async with mq:
+            await mq.receive(run_model)
 
     finally:
         logger.info("Cleaning up...")

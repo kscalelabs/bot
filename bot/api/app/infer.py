@@ -21,6 +21,11 @@ async def startup_event() -> None:
     await mq.initialize()
 
 
+@infer_router.on_event("shutdown")
+async def shutdown_event() -> None:
+    await mq.close()
+
+
 async def generate(source_id: int, reference_id: int, user_id: int) -> Generation:
     """Generates a new audio file from a source and a reference.
 
@@ -37,7 +42,15 @@ async def generate(source_id: int, reference_id: int, user_id: int) -> Generatio
         source_id=source_id,
         reference_id=reference_id,
     )
-    await mq.send(generation.id)
+
+    # Sends the generation ID to the queue, deleting it if the send fails.
+    try:
+        await mq.send(generation.id)
+    except Exception:
+        logger.exception("Error sending generation to queue")
+        await generation.delete()
+        raise
+
     return generation
 
 
