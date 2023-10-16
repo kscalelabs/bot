@@ -49,7 +49,7 @@ const AudioPlayback: React.FC<Props> = ({
   const [deleted, setDeleted] = useState(false);
   const { sourceId, setSourceId, referenceId, setReferenceId } = useClipboard();
   const [localResponse, setLocalResponse] = useState<SingleIdResponse | null>(
-    response
+    response,
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [editing, setEditing] = useState<boolean | null>(false);

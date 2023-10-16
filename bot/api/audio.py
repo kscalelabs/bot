@@ -8,9 +8,9 @@ import tempfile
 import uuid
 from datetime import timedelta
 from hashlib import sha1
+from io import BytesIO
 from typing import BinaryIO, Literal, cast, get_args
 from uuid import UUID
-from io import BytesIO
 
 import aioboto3
 import numpy as np
