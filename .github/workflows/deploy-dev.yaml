@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-api:
+  build-worker:
     environment:
       name: dev
       url: ${{ vars.SITE_BACKEND }}
@@ -60,7 +60,7 @@ jobs:
         run: |
           ./scripts/build_worker_docker_image.sh
 
-  build-worker:
+  build-api:
     environment: dev
     runs-on: ubuntu-latest
 
@@ -105,6 +105,9 @@ jobs:
   build-frontend:
     environment: dev
     runs-on: ubuntu-latest
+    needs:
+      - build-api
+      - build-worker
 
     defaults:
       run:
