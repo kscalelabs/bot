@@ -10,6 +10,7 @@ from datetime import timedelta
 from hashlib import sha1
 from typing import BinaryIO, Literal, cast, get_args
 from uuid import UUID
+from io import BytesIO
 
 import aioboto3
 import numpy as np
@@ -187,7 +188,9 @@ async def load_audio_array(audio_uuid: UUID) -> np.ndarray:
                 session = aioboto3.Session()
                 async with session.client("s3") as s3:
                     obj = await s3.get_object(Bucket=s3_bucket, Key=fs_path)
-                    audio = AudioSegment.from_file(obj["Body"], settings.audio.file_ext)
+                    data = await obj["Body"].read()
+                    audio_file_io = BytesIO(data)
+                    audio: AudioSegment = AudioSegment.from_file(audio_file_io, settings.audio.file_ext)
                     return np.array(audio.get_array_of_samples())
 
             case _:

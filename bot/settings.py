@@ -40,7 +40,7 @@ class PostgreSQLEndpointSettings:
     port: int = ml.conf_field(MISSING)
     username: str = ml.conf_field(MISSING)
     password: str = ml.conf_field(MISSING)
-    database: str = ml.conf_field(MISSING)
+    database: str = ml.conf_field("postgres")
 
 
 @dataclass
@@ -68,9 +68,6 @@ class RabbitMessageQueueSettings:
 
 @dataclass
 class SqsMessageQueueSettings:
-    access_key_id: str = ml.conf_field(MISSING)
-    secret_access_key: str = ml.conf_field(MISSING)
-    region: str = ml.conf_field(MISSING)
     queue_name: str = ml.conf_field(MISSING)
 
 
