@@ -35,12 +35,18 @@ class SQLiteDatabaseSettings:
 
 
 @dataclass
-class PostgreSQLDatabaseSettings:
+class PostgreSQLEndpointSettings:
     host: str = ml.conf_field(MISSING)
     port: int = ml.conf_field(MISSING)
     username: str = ml.conf_field(MISSING)
     password: str = ml.conf_field(MISSING)
     database: str = ml.conf_field(MISSING)
+
+
+@dataclass
+class PostgreSQLDatabaseSettings:
+    endpoint: PostgreSQLEndpointSettings = ml.conf_field(PostgreSQLEndpointSettings())
+    read_endpoint: PostgreSQLEndpointSettings | None = ml.conf_field(None)
 
 
 @dataclass
