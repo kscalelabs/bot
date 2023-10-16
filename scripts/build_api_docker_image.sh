@@ -1,7 +1,7 @@
 #!/bin/bash
 # Builds the Docker image for the AWS Lambda deployment.
 # Usage:
-#   ./scripts/build_docker_image.sh
+#   ./scripts/build_api_docker_image.sh
 
 set -e
 
@@ -16,7 +16,7 @@ fi
 # Checks CLI arguments.
 if [[ $# -ne 0 ]]; then
   echo "Error: Invalid number of arguments."
-  echo "Usage: ./scripts/build_docker_image.sh"
+  echo "Usage: ./scripts/build_api_docker_image.sh"
   exit 1
 fi
 
@@ -29,7 +29,7 @@ export JWT_SECRET=$(python -c "import secrets; print(secrets.token_urlsafe(32))"
 
 # Installs build dependencies.
 python -m pip install --upgrade pip
-python -m pip install --upgrade build wheel setuptools
+python -m pip install --upgrade build wheel setuptools omegaconf
 
 # Builds the configuration file.
 python configs/build.py aws -o ${dist_dir}/config.yaml
@@ -44,11 +44,3 @@ docker build -t dpsh-api -f scripts/docker/Dockerfile.api ${dist_dir}
 aws ecr get-login-password | docker login --username AWS --password-stdin ${ECR_URI}
 docker tag dpsh-api:latest ${ECR_URI}:latest-api
 docker push ${ECR_URI}:latest-api
-
-# Builds the worker Docker image.
-docker build -t dpsh-worker -f scripts/docker/Dockerfile.worker ${dist_dir}
-
-# Pushes the worker Docker image to ECR.
-aws ecr get-login-password | docker login --username AWS --password-stdin ${ECR_URI}
-docker tag dpsh-worker:latest ${ECR_URI}:latest-worker
-docker push ${ECR_URI}:latest-worker

@@ -9,12 +9,6 @@ from typing import cast
 import ml.api as ml
 from omegaconf import II, MISSING, OmegaConf
 
-from bot import __version__ as bot_version
-
-# Register the bot version as a resolver so that it can be referenced
-# in the configuration files.
-OmegaConf.register_new_resolver("bot.version", lambda: bot_version, use_cache=True)
-
 
 @dataclass
 class UserSettings:
@@ -135,7 +129,6 @@ class ModelSettings:
 @dataclass
 class Settings:
     app_name: str = ml.conf_field("bot")
-    version: str = ml.conf_field(II("bot.version:"))
     is_prod: bool = ml.conf_field(True)
     user: UserSettings = ml.conf_field(UserSettings())
     site: SiteSettings = ml.conf_field(SiteSettings())
