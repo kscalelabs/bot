@@ -1,5 +1,6 @@
 """Defines the API endpoint for creating, deleting and updating user information."""
 
+import asyncio
 from email.utils import parseaddr as parse_email_address
 
 import aiohttp
@@ -7,7 +8,7 @@ from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response
 from fastapi.security.utils import get_authorization_scheme_param
 from pydantic.main import BaseModel
 
-from bot.api.email import OneTimePassPayload, send_delete_email, send_otp_email
+from bot.api.email import OneTimePassPayload, send_delete_email, send_otp_email, send_waitlist_email
 from bot.api.model import Token, User
 from bot.api.token import create_refresh_token, create_token, load_refresh_token, load_token
 from bot.settings import load_settings
@@ -89,20 +90,32 @@ class UserLoginResponse(BaseModel):
     token_type: str
 
 
+async def add_to_waitlist(email: str) -> None:
+    await asyncio.gather(
+        send_waitlist_email(email),
+        User.create(email=email, banned=True),
+    )
+
+
 async def create_or_get(email: str) -> User:
     # Gets or creates the user object.
     user_obj = await User.get_or_none(email=email)
     if user_obj is None:
         settings = load_settings().user
+
+        # For initial rollout, set a few authorized emails through the config,
+        # other users will be added to the database but will be banned (meaning,
+        # they are waitlisted).
         authorized_emails = settings.authorized_users
         if authorized_emails is not None:
             if email not in authorized_emails and email not in settings.admin_emails:
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not authorized")
+                await add_to_waitlist(email)
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You're on the waitlist!")
         user_obj = await User.create(email=email)
 
     # Validates user.
     if user_obj.banned:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User is banned")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User is not allowed to log in")
     if user_obj.deleted:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User is deleted")
 

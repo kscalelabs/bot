@@ -73,6 +73,18 @@ async def send_delete_email(email: str) -> None:
     await send_email(subject="Account Deleted", body=body, to=email)
 
 
+async def send_waitlist_email(email: str) -> None:
+    body = textwrap.dedent(
+        """
+            <h1><code>don't panic</code><br/><code>stay human</code></h1>
+            <h2><code>you're on the waitlist!</code></h2>
+            <p>Thanks for signing up! We'll let you know when you can log in.</p>
+        """
+    )
+
+    await send_email(subject="Waitlist", body=body, to=email)
+
+
 def test_email_adhoc() -> None:
     parser = argparse.ArgumentParser(description="Test sending an email.")
     parser.add_argument("subject", help="The subject of the email.")
