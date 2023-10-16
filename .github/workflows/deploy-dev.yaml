@@ -19,7 +19,7 @@ jobs:
   build-backend:
     environment:
       name: dev
-      url: $SITE_HOMEPAGE
+      url: $SITE_BACKEND
     runs-on: ubuntu-latest
 
     defaults:
@@ -42,6 +42,9 @@ jobs:
         with:
           python-version: "3.10"
 
+      - name: Build package
+        uses: ./.github/actions/dpsh_build
+
       - name: Build and publish
         env:
           DB_USERNAME: ${{ secrets.DB_USERNAME }}
@@ -53,6 +56,7 @@ jobs:
           ./scripts/build_docker_image.sh
 
   build-frontend:
+    environment: dev
     runs-on: ubuntu-latest
 
     defaults:
