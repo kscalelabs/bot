@@ -45,8 +45,8 @@ class PostgreSQLEndpointSettings:
 
 @dataclass
 class PostgreSQLDatabaseSettings:
-    endpoint: PostgreSQLEndpointSettings = ml.conf_field(PostgreSQLEndpointSettings())
-    read_endpoint: PostgreSQLEndpointSettings | None = ml.conf_field(None)
+    write_endpoint: PostgreSQLEndpointSettings = ml.conf_field(PostgreSQLEndpointSettings())
+    read_endpoint: PostgreSQLEndpointSettings = ml.conf_field(II("database.postgres.write_endpoint"))
 
 
 @dataclass

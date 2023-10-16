@@ -25,8 +25,6 @@ class DatabaseRouter:
 
 async def init_db_postgres() -> None:
     settings = load_settings().database.postgres
-    endpoint_settings = settings.endpoint
-    read_endpoint_settings = endpoint_settings if settings.read_endpoint is None else settings.read_endpoint
 
     def get_credential(endpoint_settings: "PostgreSQLEndpointSettings") -> dict:
         return {
@@ -43,11 +41,11 @@ async def init_db_postgres() -> None:
             "connections": {
                 "default": {
                     "engine": "tortoise.backends.asyncpg",
-                    "credentials": get_credential(endpoint_settings),
+                    "credentials": get_credential(settings.write_endpoint),
                 },
                 "read_replica": {
                     "engine": "tortoise.backends.asyncpg",
-                    "credentials": get_credential(read_endpoint_settings),
+                    "credentials": get_credential(settings.read_endpoint),
                 },
             },
             "apps": {
