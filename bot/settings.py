@@ -157,12 +157,12 @@ def load_settings() -> Settings:
     Returns:
         The bot settings dataclass.
     """
+    config = OmegaConf.structured(Settings)
     raw_config_path = Path(os.environ.get("DPSH_CONFIG", "~/.config/dpsh.yaml")).expanduser().resolve()
-    if not raw_config_path.exists():
-        raise FileNotFoundError(f"Could not find bot config directory: {raw_config_path}")
-    if raw_config_path.stat().st_mode & 0o777 != 0o600:
-        raise PermissionError(f"Bot config directory must be 600 permissioned: {raw_config_path}")
-    raw_config = OmegaConf.load(raw_config_path)
-    config = OmegaConf.merge(OmegaConf.structured(Settings), raw_config)
+    if raw_config_path.exists():
+        if raw_config_path.stat().st_mode & 0o777 != 0o600:
+            raise PermissionError(f"Bot config directory must be 600 permissioned: {raw_config_path}")
+        raw_config = OmegaConf.load(raw_config_path)
+        config = OmegaConf.merge(config, raw_config)
     OmegaConf.resolve(config)
     return cast(Settings, config)
