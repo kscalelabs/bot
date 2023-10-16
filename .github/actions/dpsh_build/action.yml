@@ -1,48 +1,38 @@
 name: Build DPSH bot.
 
-description: 'Builds the DPSH bot files.'
+description: "Builds the DPSH bot files."
 
 runs:
   using: "composite"
   steps:
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
 
-  - uses: actions/setup-python@v2
-    with:
-      python-version: 3.8
+    - name: Restore cache
+      id: restore-cache
+      uses: actions/cache/restore@v3
+      with:
+        path: |
+          ${{ env.pythonLocation }}
+        key: dpsh-requirements-${{ env.pythonLocation }}-${{ github.event.pull_request.base.sha || github.sha }}
+        restore-keys: |
+          dpsh-requirements-${{ env.pythonLocation }}
+          dpsh-requirements-
 
-  - name: Restore cache
-    id: restore-cache
-    uses: actions/cache/restore@v3
-    with:
-      path: |
-        ${{ env.pythonLocation }}
-      key: dpsh-requirements-${{ env.pythonLocation }}-${{ github.event.pull_request.base.sha || github.sha }}
-      restore-keys: |
-        dpsh-requirements-${{ env.pythonLocation }}
-        dpsh-requirements-
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg
 
-  - if: ${{ steps.cache.outputs.cache-hit != 'true' }}
-    name: Install dependencies
-    shell: bash
-    run: |
-      # Installs system dependencies.
-      sudo apt-get update
-      sudo apt-get install ffmpeg
+    - name: Install Python package
+      run: |
+        pip install --upgrade --upgrade-strategy eager --extra-index-url https://download.pytorch.org/whl/cpu -e '.[dev]'
 
-      # Installs Python dependencies.
-      python -m pip install --upgrade pip
-      pip install --upgrade --upgrade-strategy eager --extra-index-url https://download.pytorch.org/whl/cpu -e '.[dev]'
-
-  - name: System Dependencies
-    shell: bash
-    run: |
-      sudo apt-get update
-      sudo apt-get install ffmpeg
-
-  - name: Save cache
-    uses: actions/cache/save@v3
-    if: github.ref == 'refs/heads/master'
-    with:
-      path: |
-        ${{ env.pythonLocation }}
-      key: ${{ steps.restore-cache.outputs.cache-primary-key }}
+    - name: Save cache
+      uses: actions/cache/save@v3
+      if: github.ref == 'refs/heads/master'
+      with:
+        path: |
+          ${{ env.pythonLocation }}
+        key: ${{ steps.restore-cache.outputs.cache-primary-key }}
