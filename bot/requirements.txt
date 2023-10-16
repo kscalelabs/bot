@@ -20,6 +20,7 @@ aioboto3
 
 # Worker dependencies.
 aio-pika
+huggingface_hub
 
 # Processing dependencies.
 numpy

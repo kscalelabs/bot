@@ -127,6 +127,12 @@ class CryptoSettings:
 
 
 @dataclass
+class ModelSettings:
+    hf_hub_token: str | None = ml.conf_field(None)
+    cache_dir: str | None = ml.conf_field(None)
+
+
+@dataclass
 class Settings:
     app_name: str = ml.conf_field("bot")
     version: str = ml.conf_field(II("bot.version:"))
@@ -138,26 +144,25 @@ class Settings:
     file: FileSettings = ml.conf_field(FileSettings())
     email: EmailSettings = ml.conf_field(EmailSettings())
     crypto: CryptoSettings = ml.conf_field(CryptoSettings())
+    model: ModelSettings = ml.conf_field(ModelSettings())
 
 
 @functools.lru_cache()
 def load_settings() -> Settings:
     """Loads the bot settings.
 
-    This function looks in ``~/.config/dpsh-bot/*.yaml`` and
-    ``$DPSH_BOT_CONFIG_ROOT/*.yaml`` for configuration files. The configuration
-    files are merged together, with the latter taking precedence.
+    This function first looks for the config at ``$DPSH_CONFIG``, and if not,
+    defaults to using whatever config is at ``~/.config/dpsh.yaml``.
 
     Returns:
         The bot settings dataclass.
     """
-    if "DPSH_BOT_CONFIG" in os.environ:
-        raw_config = OmegaConf.create(os.environ["DPSH_BOT_CONFIG"])
-        config = OmegaConf.merge(OmegaConf.structured(Settings), raw_config)
-    else:
-        root = Path.home() / ".config" / "dpsh-bot"
-        config_paths = root.glob("*.yaml")
-        raw_configs = (OmegaConf.load(config) for config in config_paths)
-        config = OmegaConf.merge(OmegaConf.structured(Settings), *raw_configs)
+    config = OmegaConf.structured(Settings)
+    raw_config_path = Path(os.environ.get("DPSH_CONFIG", "~/.config/dpsh.yaml")).expanduser().resolve()
+    if raw_config_path.exists():
+        if raw_config_path.stat().st_mode & 0o777 != 0o600:
+            raise PermissionError(f"Bot config directory must be 600 permissioned: {raw_config_path}")
+        raw_config = OmegaConf.load(raw_config_path)
+        config = OmegaConf.merge(config, raw_config)
     OmegaConf.resolve(config)
     return cast(Settings, config)

@@ -1,0 +1,41 @@
+name: Build DPSH bot.
+
+description: "Builds the DPSH bot files."
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Restore cache
+      id: restore-cache
+      uses: actions/cache/restore@v3
+      with:
+        path: |
+          ${{ env.pythonLocation }}
+        key: dpsh-requirements-${{ env.pythonLocation }}-${{ github.event.pull_request.base.sha || github.sha }}
+        restore-keys: |
+          dpsh-requirements-${{ env.pythonLocation }}
+          dpsh-requirements-
+
+    - name: Install system dependencies
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg
+
+    - name: Install Python package
+      shell: bash
+      run: |
+        pip install --upgrade --upgrade-strategy eager --extra-index-url https://download.pytorch.org/whl/cpu -e '.[dev]'
+
+    - name: Save cache
+      uses: actions/cache/save@v3
+      if: github.ref == 'refs/heads/master'
+      with:
+        path: |
+          ${{ env.pythonLocation }}
+        key: ${{ steps.restore-cache.outputs.cache-primary-key }}
