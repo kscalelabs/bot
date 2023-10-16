@@ -75,7 +75,7 @@ jobs:
         env:
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
         run: |
-          echo "REACT_APP_BACKEND_URL=${SITE_HOMEPAGE}" > .env.production
+          echo "REACT_APP_BACKEND_URL=${SITE_BACKEND}" > .env.production
           echo "REACT_APP_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}" >> .env.production
 
       - name: Build

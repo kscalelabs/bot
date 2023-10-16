@@ -25,7 +25,8 @@ Additionally, the following environment variables are required when building the
 
 ```bash
 HF_HUB_TOKEN="your huggingface hub token"
-SITE_HOMEPAGE="path to site homepage"
+SITE_HOMEPAGE="site homepage url"
+SITE_BACKEND="site backend url"
 <DEV/PROD>_DB_WRITE_HOST="your db write host"
 <DEV/PROD>_DB_READ_HOST="your db read host"
 <DEV/PROD>_DB_USERNAME="your db username"
