@@ -2,19 +2,25 @@
 FROM public.ecr.aws/lambda/python:3.10
 
 # Installs system packages.
-RUN yum update && yum install -y wget git ffmpeg gcc make
+RUN yum update && yum install -y wget git gcc make tar xz libsndfile
+
+# Copies static FFMPEG binaries.
+COPY ./dist/ffmpeg/bin/ffmpeg /usr/local/bin/ffmpeg
+COPY ./dist/ffmpeg/bin/ffprobe /usr/local/bin/ffprobe
 
 # Copies the config file and points to it.
-COPY ./config.yaml ${LAMBDA_TASK_ROOT}/config.yaml
-RUN chmod 600 ${LAMBDA_TASK_ROOT}/config.yaml
-ENV DPSH_CONFIG=${LAMBDA_TASK_ROOT}/config.yaml
+COPY ./dist/config.yaml ./config.yaml
+RUN chmod 600 ./config.yaml
+ENV DPSH_CONFIG=./config.yaml
 
-# Copies the wheel and installs it.
-COPY ./dpsh_bot-*.whl /tmp/
-RUN pip install --upgrade pip
-RUN pip install /tmp/dpsh_bot-*.whl
+# Copies the code and installs it.
+COPY ./bot ./bot
+COPY ./setup.py ./setup.py
+COPY ./setup.cfg ./setup.cfg
+COPY ./README.md ./README.md
+RUN pip install .
 
 # Verifies that we can import the package.
-RUN python -c "import bot.api.app.main"
+RUN python -c "from bot.api.app.main import handler"
 
 CMD ["bot.api.app.main.handler"]

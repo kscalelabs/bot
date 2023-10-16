@@ -1,6 +1,6 @@
 # Use the latest CUDA image as base. This was taken from here:
 # https://github.com/aws-samples/amazon-scalable-discord-diffusion
-FROM nvidia/cuda:12.0.0-runtime-ubuntu22.04
+FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04
 WORKDIR /app
 
 # Installs system packages.
@@ -14,14 +14,16 @@ RUN apt-get update && apt-get install -y \
     python3-pip
 
 # Copies the config file and points to it.
-COPY ./config.yaml ${LAMBDA_TASK_ROOT}/config.yaml
-RUN chmod 600 ${LAMBDA_TASK_ROOT}/config.yaml
-ENV DPSH_CONFIG=${LAMBDA_TASK_ROOT}/config.yaml
+COPY ./dist/config.yaml ./config.yaml
+RUN chmod 600 ./config.yaml
+ENV DPSH_CONFIG=./config.yaml
 
-# Copies the wheel and installs it.
-COPY ./dpsh_bot-*.whl /tmp/
-RUN python3 -m pip install --upgrade pip
-RUN python3 -m pip install /tmp/dpsh_bot-*.whl
+# Copies the code and installs it.
+COPY ./bot ./bot
+COPY ./setup.py ./setup.py
+COPY ./setup.cfg ./setup.cfg
+COPY ./README.md ./README.md
+RUN pip install .
 
 # Downloads the model weights.
 RUN python3 -m bot.worker.download
