@@ -1,0 +1,3 @@
+worker:
+  model_key: "hubert-quantized-20231015"
+  queue_type: rabbit

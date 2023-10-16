@@ -1,0 +1,5 @@
+file:
+  fs_type: s3
+  root_dir: audio_uploads
+  s3:
+    bucket: ${oc.env:S3_BUCKET}

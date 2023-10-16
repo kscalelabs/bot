@@ -1,0 +1,20 @@
+# Dockerfile for the FastAPI application.
+FROM public.ecr.aws/lambda/python:3.10
+
+# Installs system packages.
+RUN yum update && yum install -y wget git ffmpeg gcc make
+
+# Copies the config file and points to it.
+COPY ./config.yaml ${LAMBDA_TASK_ROOT}/config.yaml
+RUN chmod 600 ${LAMBDA_TASK_ROOT}/config.yaml
+ENV DPSH_CONFIG=${LAMBDA_TASK_ROOT}/config.yaml
+
+# Copies the wheel and installs it.
+COPY ./dpsh_bot-*.whl /tmp/
+RUN pip install --upgrade pip
+RUN pip install /tmp/dpsh_bot-*.whl
+
+# Verifies that we can import the package.
+RUN python -c "import bot.api.app.main"
+
+CMD ["bot.api.app.main.handler"]

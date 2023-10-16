@@ -1,0 +1,4 @@
+model:
+  # Where the model weights are cached inside the Docker image.
+  hf_hub_token: ${oc.env:HF_HUB_TOKEN}
+  cache_dir: /tmp/model_cache

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Setup script for the Discord bot code."""
+"""Setup script for the bot code."""
 
 import re
 
@@ -23,11 +23,11 @@ version: str = version_re.group(1)
 
 
 setup(
-    name="dpsh-discord-bot",
+    name="dpsh-bot",
     version=version,
-    description="DPSH Discord Bot",
+    description="DPSH Bot",
     author="Benjamin Bolte",
-    url="https://github.com/dpshai/discord-bot",
+    url="https://github.com/dpshai/bot",
     long_description=long_description,
     long_description_content_type="text/markdown",
     classifiers=[

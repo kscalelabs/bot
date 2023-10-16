@@ -1,0 +1,2 @@
+site:
+  homepage: ${oc.env:SITE_HOMEPAGE}

@@ -10,8 +10,8 @@ import torch
 from bot.api.audio import load_audio_array, save_audio_array
 from bot.api.db import close_db, init_db
 from bot.api.model import AudioSource, Generation
-from bot.model.hubert.checkpoint import cast_pretrained_model, pretrained_hubert
 from bot.model.hubert.model import HubertModel
+from bot.model.hubert.pretrained import cast_pretrained_model, pretrained_hubert
 from bot.settings import load_settings
 from bot.utils import configure_logging, server_time
 from bot.worker.message_passing import get_message_queue
