@@ -27,6 +27,9 @@ jobs:
         working-directory: .
 
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
       - name: Build package
         uses: ./.github/actions/dpsh_build
 
@@ -66,6 +69,9 @@ jobs:
         working-directory: .
 
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
       - name: Build package
         uses: ./.github/actions/dpsh_build
 
