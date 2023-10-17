@@ -1,7 +1,7 @@
 #!/bin/bash
 # Builds the Docker image for the AWS Lambda deployment.
 # Usage:
-#   ./scripts/build_docker_images.sh
+#   ./scripts/build_docker_images.sh <prune?>
 
 set -e
 
@@ -14,10 +14,22 @@ if [[ ! -f "bot/requirements.txt" ]]; then
 fi
 
 # Checks CLI arguments.
-if [[ $# -ne 0 ]]; then
+if [[ $# -ne 0 ]] && [[ $# -ne 1 ]]; then
   echo "Error: Invalid number of arguments."
   echo "Usage: ./scripts/build_docker_images.sh"
   exit 1
+fi
+
+# Get the prune flag.
+prune=false
+if [[ $# -eq 1 ]]; then
+  if [[ $1 == "prune" ]]; then
+    prune=true
+  else
+    echo "Error: Invalid argument."
+    echo "Usage: ./scripts/build_docker_images.sh"
+    exit 1
+  fi
 fi
 
 # Creates the dist directory if it doesn't exist.
@@ -49,9 +61,15 @@ docker build -t dpsh-api -f scripts/docker/Dockerfile.api .
 docker tag dpsh-api:latest ${ECR_URI}:latest-api
 docker push ${ECR_URI}:latest-api
 docker rmi dpsh-api:latest
+if [[ $prune == true ]]; then
+  docker system prune -f
+fi
 
 # Builds the worker Docker image.
 docker build -t dpsh-worker -f scripts/docker/Dockerfile.worker .
 docker tag dpsh-worker:latest ${ECR_URI}:latest-worker
 docker push ${ECR_URI}:latest-worker
 docker rmi dpsh-worker:latest
+if [[ $prune == true ]]; then
+  docker system prune -f
+fi

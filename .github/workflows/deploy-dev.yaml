@@ -57,8 +57,9 @@ jobs:
           SMTP_EMAIL: ${{ vars.SMTP_EMAIL }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           SMTP_HOST: ${{ vars.SMTP_HOST }}
+        # Need to prune docker between builds to avoid running out of space.
         run: |
-          ./scripts/build_docker_images.sh
+          ./scripts/build_docker_images.sh prune
 
   build-frontend:
     environment: dev
