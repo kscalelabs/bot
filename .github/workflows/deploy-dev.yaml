@@ -40,7 +40,8 @@ jobs:
         shell: bash
         run: |
           pip install omegaconf
-    
+          pip install --no-deps -e .
+
       - name: Build and publish
         # The build script requires access to the secrets and vars in the
         # dev environment, as environment variables.
