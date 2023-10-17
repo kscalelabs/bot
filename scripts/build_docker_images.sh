@@ -8,7 +8,7 @@ set -e
 home_dir=$(pwd)
 
 # Checks that the home directory is the root of the project.
-if [[ ! -f "bot/requirements.txt" ]]; then
+if [[ ! -f "bot/__init__.py" ]]; then
   echo "Error: Please run this script from the root of the project."
   exit 1
 fi
