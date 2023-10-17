@@ -1,6 +1,7 @@
 """Pytest configuration file."""
 
 import functools
+import os
 from typing import Generator
 
 import pytest
@@ -8,6 +9,7 @@ import torch
 from _pytest.legacypath import TempdirFactory
 from _pytest.python import Function, Metafunc
 from fastapi.testclient import TestClient
+from omegaconf import OmegaConf
 from pytest_mock.plugin import MockerFixture, MockType
 
 from bot.settings import Settings
@@ -73,6 +75,11 @@ def mock_load_settings(mocker: MockerFixture, tmpdir_factory: TempdirFactory) ->
     # Sets the default crypto settings.
     settings.crypto.jwt_secret = "jwt_secret"
     settings.crypto.google_client_id = "testclientid"
+
+    # Saves the settings to a temporary file.
+    settings_file = str(tmpdir_factory.mktemp("settings").join("settings.yaml"))
+    OmegaConf.save(settings, settings_file)
+    os.environ["DPSH_CONFIG"] = settings_file
 
     mock.return_value = settings
     return mock
