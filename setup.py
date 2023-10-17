@@ -21,8 +21,12 @@ with open("README.md", "r", encoding="utf-8") as f:
     long_description: str = f.read()
 
 
-with open("bot/requirements.txt", "r", encoding="utf-8") as f:
-    requirements: list[str] = f.read().splitlines()
+with open("bot/requirements/api.txt", "r", encoding="utf-8") as f:
+    requirements_api: list[str] = f.read().splitlines()
+
+
+with open("bot/requirements/worker.txt", "r", encoding="utf-8") as f:
+    requirements_worker: list[str] = f.read().splitlines()
 
 
 with open("bot/__init__.py", "r", encoding="utf-8") as fh:
@@ -47,8 +51,12 @@ setup(
         "Programming Language :: Python :: 3",
     ],
     python_requires=">=3.10",
-    install_requires=requirements,
+    install_requires=[],
     tests_require=REQUIREMENTS_DEV,
-    extras_require={"dev": REQUIREMENTS_DEV},
+    extras_require={
+        "dev": requirements_api + requirements_worker + REQUIREMENTS_DEV,
+        "api": requirements_api,
+        "worker": requirements_worker,
+    },
     package_data={"bot": ["py.typed", "requirements.txt"]},
 )

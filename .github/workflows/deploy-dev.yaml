@@ -58,9 +58,10 @@ jobs:
           SMTP_HOST: ${{ vars.SMTP_HOST }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           SQS_QUEUE: ${{ vars.SQS_QUEUE}}
+          CLEANUP_DOCKER: true
         # Need to prune docker between builds to avoid running out of space.
         run: |
-          ./scripts/build_docker_images.sh prune
+          ./scripts/build_docker_images.sh
 
   build-frontend:
     environment: dev

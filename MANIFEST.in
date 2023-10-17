@@ -1,2 +1,2 @@
-include requirements*.txt
-recursive-include bot/ *.txt *.cpp *.h *.cu *.cuh *.pyi py.typed requirements.txt MANIFEST.in
+include requirements/*.txt
+recursive-include bot/ *.txt *.cpp *.h *.cu *.cuh *.pyi py.typed requirements/*.txt MANIFEST.in

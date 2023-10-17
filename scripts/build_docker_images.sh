@@ -21,16 +21,7 @@ if [[ $# -ne 0 ]] && [[ $# -ne 1 ]]; then
 fi
 
 # Get the prune flag.
-prune=false
-if [[ $# -eq 1 ]]; then
-  if [[ $1 == "prune" ]]; then
-    prune=true
-  else
-    echo "Error: Invalid argument."
-    echo "Usage: ./scripts/build_docker_images.sh"
-    exit 1
-  fi
-fi
+prune=${CLEANUP_DOCKER:-false}
 
 # Creates the dist directory if it doesn't exist.
 dist_dir=dist/
@@ -60,8 +51,10 @@ aws ecr get-login-password | docker login --username AWS --password-stdin ${ECR_
 docker build -t dpsh-api -f scripts/docker/Dockerfile.api .
 docker tag dpsh-api:latest ${ECR_URI}:latest-api
 docker push ${ECR_URI}:latest-api
-if [[ $prune == true ]]; then
+if [[ $prune != false ]]; then
+  echo "Pruning Docker images..."
   docker rmi dpsh-api:latest
+  docker rmi ${ECR_URI}:latest-api
   docker system prune -f
 fi
 
@@ -75,8 +68,10 @@ aws lambda update-function-code \
 docker build -t dpsh-worker -f scripts/docker/Dockerfile.worker .
 docker tag dpsh-worker:latest ${ECR_URI}:latest-worker
 docker push ${ECR_URI}:latest-worker
-if [[ $prune == true ]]; then
+if [[ $prune != false ]]; then
+  echo "Pruning Docker images..."
   docker rmi dpsh-worker:latest
+  docker rmi ${ECR_URI}:latest-worker
   docker system prune -f
 fi
 

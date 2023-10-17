@@ -47,7 +47,7 @@ install-torch-nightly:
 .PHONY: install-torch-nightly
 
 install:
-	@pip install --verbose -e .
+	@pip install --verbose -e '.[api,worker]'
 .PHONY: install
 
 install-dev:

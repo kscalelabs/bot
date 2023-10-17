@@ -1,0 +1,28 @@
+# requirements/api.txt
+
+# FastAPI dependencies.
+aiosmtplib
+fastapi[all]
+mangum
+pyjwt
+python-multipart
+uvicorn
+
+# Database dependencies.
+tortoise-orm[asyncpg]
+aerich
+
+# File storage dependencies.
+aioboto3
+
+# Worker dependencies.
+aio-pika
+
+# Processing dependencies.
+numpy
+pydub
+resampy
+soundfile
+
+# Model inference dependencies.
+ml-starter

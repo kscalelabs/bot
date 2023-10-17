@@ -20,7 +20,7 @@ COPY README.md .
 ENV DPSH_CONFIG=./config.yaml
 
 # Installs the package.
-RUN pip install .
+RUN pip install --upgrade --upgrade-strategy eager --force-reinstall '.[worker]'
 
 # Cleans up.
 RUN apt-get clean && \
