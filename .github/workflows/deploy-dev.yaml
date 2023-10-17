@@ -30,9 +30,6 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v3
 
-      - name: Build package
-        uses: ./.github/actions/dpsh_build
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@master
         with:

@@ -15,9 +15,13 @@ ADD ./dist/ffmpeg/bin/ffprobe /usr/local/bin/
 # Copies over code.
 ADD bot/ bot/
 COPY dist/config.yaml .
+COPY dist/.env .
 COPY setup.py .
 COPY setup.cfg .
 COPY README.md .
+
+# Loads environment variables from the .env file.
+RUN set -a && source .env && set +a
 
 # Points to the config file.
 ENV DPSH_CONFIG=./config.yaml

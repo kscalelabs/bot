@@ -12,9 +12,13 @@ RUN apt-get update -y && \
 # Copies over code.
 ADD bot/ bot/
 COPY dist/config.yaml .
+COPY dist/.env .
 COPY setup.py .
 COPY setup.cfg .
 COPY README.md .
+
+# Loads environment variables from the .env file.
+RUN set -a && source .env && set +a
 
 # Copies the config file and points to it.
 ENV DPSH_CONFIG=./config.yaml
