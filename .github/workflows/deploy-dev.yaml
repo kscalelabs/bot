@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
   pages: write
   id-token: write
+  contents: write
 
 concurrency:
   group: "deploy"
@@ -21,9 +21,6 @@ jobs:
       name: dev
       url: ${{ vars.SITE_BACKEND }}
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
 
     defaults:
       run:
@@ -37,7 +34,7 @@ jobs:
         uses: ./.github/actions/dpsh_build
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@master
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ vars.AWS_REGION }}
