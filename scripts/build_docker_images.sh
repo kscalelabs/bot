@@ -48,7 +48,7 @@ fi
 aws ecr get-login-password | docker login --username AWS --password-stdin ${ECR_URI}
 
 # Builds the API Docker image.
-docker build -t dpsh-api -f scripts/docker/Dockerfile.api --
+docker build -t dpsh-api -f scripts/docker/Dockerfile.api .
 docker tag dpsh-api:latest ${ECR_URI}:latest-api
 docker push ${ECR_URI}:latest-api
 if [[ $prune != false ]]; then
