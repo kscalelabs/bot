@@ -4,7 +4,7 @@ import functools
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 from omegaconf import II, MISSING, OmegaConf
 
@@ -38,7 +38,7 @@ class PostgreSQLEndpointSettings:
 
 @dataclass
 class PostgreSQLDatabaseSettings:
-    write_endpoint: PostgreSQLEndpointSettings = PostgreSQLEndpointSettings
+    write_endpoint: PostgreSQLEndpointSettings = field(default_factory=PostgreSQLEndpointSettings)
     read_endpoint: PostgreSQLEndpointSettings = II("database.postgres.write_endpoint")
 
 
@@ -139,6 +139,14 @@ class Settings:
     model: ModelSettings = field(default_factory=ModelSettings)
 
 
+def _load_settings(raw_config: Any | None) -> Settings:  # noqa: ANN401
+    config = OmegaConf.structured(Settings)
+    if raw_config is not None:
+        config = OmegaConf.merge(config, raw_config)
+    OmegaConf.resolve(config)
+    return cast(Settings, config)
+
+
 @functools.lru_cache()
 def load_settings() -> Settings:
     """Loads the bot settings.
@@ -149,10 +157,5 @@ def load_settings() -> Settings:
     Returns:
         The bot settings dataclass.
     """
-    config = OmegaConf.structured(Settings)
     raw_config_path = Path(os.environ.get("DPSH_CONFIG", "~/.config/dpsh.yaml")).expanduser().resolve()
-    if raw_config_path.exists():
-        raw_config = OmegaConf.load(raw_config_path)
-        config = OmegaConf.merge(config, raw_config)
-    OmegaConf.resolve(config)
-    return cast(Settings, config)
+    return _load_settings(OmegaConf.load(raw_config_path) if raw_config_path.exists() else None)

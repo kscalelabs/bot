@@ -5,7 +5,7 @@ from pathlib import Path
 
 from omegaconf import OmegaConf
 
-from bot.settings import Settings
+from bot.settings import Settings, _load_settings
 
 
 def main() -> None:
@@ -26,12 +26,15 @@ def main() -> None:
     OmegaConf.resolve(config)
 
     if args.output_file is None:
-        print(OmegaConf.to_yaml(config))
+        config_string = OmegaConf.to_yaml(config)
+        _load_settings(OmegaConf.create(config_string))
+        print(config_string)
     else:
         output_file = Path(args.output_file).expanduser().resolve()
         output_file.parent.mkdir(exist_ok=True, parents=True)
         with open(output_file, "w") as f:
             OmegaConf.save(config, f)
+        _load_settings(OmegaConf.load(output_file))
 
 
 if __name__ == "__main__":
