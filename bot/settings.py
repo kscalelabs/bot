@@ -45,8 +45,8 @@ class PostgreSQLDatabaseSettings:
 @dataclass
 class DatabaseSettings:
     kind: str = field(default=MISSING)
-    sqlite: SQLiteDatabaseSettings = SQLiteDatabaseSettings()
-    postgres: PostgreSQLDatabaseSettings = PostgreSQLDatabaseSettings()
+    sqlite: SQLiteDatabaseSettings = field(default_factory=SQLiteDatabaseSettings)
+    postgres: PostgreSQLDatabaseSettings = field(default_factory=PostgreSQLDatabaseSettings)
 
 
 @dataclass
@@ -68,8 +68,8 @@ class SqsMessageQueueSettings:
 class WorkerSettings:
     model_key: str = field(default=MISSING)
     queue_type: str = field(default=MISSING)
-    rabbit: RabbitMessageQueueSettings = RabbitMessageQueueSettings()
-    sqs: SqsMessageQueueSettings = SqsMessageQueueSettings()
+    rabbit: RabbitMessageQueueSettings = field(default_factory=RabbitMessageQueueSettings)
+    sqs: SqsMessageQueueSettings = field(default_factory=SqsMessageQueueSettings)
     sampling_timesteps: int | None = field(default=None)
     soft_time_limit: int = field(default=30)
     max_retries: int = field(default=3)
@@ -97,8 +97,8 @@ class S3FileSettings:
 class FileSettings:
     fs_type: str = field(default=MISSING)
     root_dir: str = field(default=MISSING)
-    audio: AudioFileSettings = AudioFileSettings()
-    s3: S3FileSettings = S3FileSettings()
+    audio: AudioFileSettings = field(default_factory=AudioFileSettings)
+    s3: S3FileSettings = field(default_factory=S3FileSettings)
 
 
 @dataclass
@@ -129,14 +129,14 @@ class ModelSettings:
 class Settings:
     app_name: str = field(default="bot")
     is_prod: bool = field(default=True)
-    user: UserSettings = UserSettings()
-    site: SiteSettings = SiteSettings()
-    database: DatabaseSettings = DatabaseSettings()
-    worker: WorkerSettings = WorkerSettings()
-    file: FileSettings = FileSettings()
-    email: EmailSettings = EmailSettings()
-    crypto: CryptoSettings = CryptoSettings()
-    model: ModelSettings = ModelSettings()
+    user: UserSettings = field(default_factory=UserSettings)
+    site: SiteSettings = field(default_factory=SiteSettings)
+    database: DatabaseSettings = field(default_factory=DatabaseSettings)
+    worker: WorkerSettings = field(default_factory=WorkerSettings)
+    file: FileSettings = field(default_factory=FileSettings)
+    email: EmailSettings = field(default_factory=EmailSettings)
+    crypto: CryptoSettings = field(default_factory=CryptoSettings)
+    model: ModelSettings = field(default_factory=ModelSettings)
 
 
 @functools.lru_cache()
