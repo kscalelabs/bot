@@ -20,17 +20,15 @@ COPY setup.cfg .
 COPY README.md .
 
 # Points to the config file.
-RUN chmod 600 ./config.yaml
 ENV DPSH_CONFIG=./config.yaml
 
 # Installs the package.
-RUN pip install .
+RUN pip install --upgrade --upgrade-strategy eager --force-reinstall .
 
 # Cleans up
 RUN yum clean all && \
     rm -rf /var/cache/yum
 
-# Verifies that we can import the package.
 RUN python -c "from bot.api.app.main import handler"
 
 CMD ["bot.api.app.main.handler"]

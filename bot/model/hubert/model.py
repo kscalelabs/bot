@@ -2,9 +2,10 @@
 
 import logging
 
-import ml.api as ml
 import torch
 import torch.nn.functional as F
+from ml.models.architectures.attention import TransformerEncoder, TransformerEncoderLayer
+from ml.tasks.diffusion import GaussianDiffusion, get_diffusion_beta_schedule
 from pretrained.hubert import PretrainedHubertKmeansSize, PretrainedHubertSize
 from torch import Tensor, nn
 
@@ -45,8 +46,8 @@ class SpeakerEncoderModel(nn.Module):
         self.cls_tok = nn.Parameter(torch.randn(1, 1, embedding_dims))
 
         # Transformer model.
-        self.transformer = ml.TransformerEncoder(
-            ml.TransformerEncoderLayer(
+        self.transformer = TransformerEncoder(
+            TransformerEncoderLayer(
                 d_model=embedding_dims,
                 nhead=embedding_dims // 64,
                 dim_feedforward=embedding_dims * 4,
@@ -97,8 +98,8 @@ class DiffusionTransformer(nn.Module):
         self.time_emb = nn.Embedding(num_timesteps, embedding_dims)
 
         # Transformer model.
-        self.transformer = ml.TransformerEncoder(
-            ml.TransformerEncoderLayer(
+        self.transformer = TransformerEncoder(
+            TransformerEncoderLayer(
                 d_model=embedding_dims,
                 nhead=embedding_dims // 64,
                 dim_feedforward=embedding_dims * 4,
@@ -174,8 +175,8 @@ class HubertModel(nn.Module):
         )
 
         # Diffusion model.
-        self.diff = ml.GaussianDiffusion(
-            betas=ml.get_diffusion_beta_schedule("cosine", num_timesteps),
+        self.diff = GaussianDiffusion(
+            betas=get_diffusion_beta_schedule("cosine", num_timesteps),
             pred_mode="pred_x_0",
             loss_type="mse",
             sigma_type="upper_bound",

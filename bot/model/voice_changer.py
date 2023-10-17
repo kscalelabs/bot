@@ -3,11 +3,13 @@
 import argparse
 import logging
 
-import ml.api as ml
 import numpy as np
 import sounddevice as sd
 import torch
 from codec.pretrained.hubert import pretrained_hubert
+from ml.utils.device.auto import detect_device
+from ml.utils.logging import configure_logging
+from ml.utils.numpy import as_numpy_array
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +19,7 @@ class VoiceChanger:
         super().__init__()
 
         self.model = pretrained_hubert("no-quantization")
-        self.device = ml.detect_device()
+        self.device = detect_device()
         self.device.module_to(self.model)
         self.sampling_rate = 16000
 
@@ -27,11 +29,11 @@ class VoiceChanger:
         audio_tensor = self.device.tensor_to(audio)
         with self.device.autocast_context():
             converted_audio = self.model.run(audio_tensor, speaker_id_tensor, sampling_timesteps=50)
-        return ml.as_numpy_array(converted_audio)
+        return as_numpy_array(converted_audio)
 
 
 def run_adhoc() -> None:
-    ml.configure_logging()
+    configure_logging()
 
     parser = argparse.ArgumentParser(description="Runs the voice changer offline.")
     parser.add_argument("-s", "--num-seconds", type=int, default=10)

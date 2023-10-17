@@ -4,8 +4,10 @@ import asyncio
 import logging
 import time
 
-import ml.api as ml
 import torch
+from ml.utils.device.auto import detect_device
+from ml.utils.device.base import base_device
+from ml.utils.logging import configure_logging
 
 from bot.api.audio import load_audio_array, save_audio_array
 from bot.api.db import close_db, init_db
@@ -13,7 +15,7 @@ from bot.api.model import AudioSource, Generation
 from bot.model.hubert.model import HubertModel
 from bot.model.hubert.pretrained import cast_pretrained_model, pretrained_hubert
 from bot.settings import load_settings
-from bot.utils import configure_logging, server_time
+from bot.utils import server_time
 from bot.worker.message_passing import get_message_queue
 
 logger = logging.getLogger(__name__)
@@ -26,11 +28,11 @@ class _ModelRunner:
         super().__init__()
 
         self._model: HubertModel | None = None
-        self._device: ml.base_device | None = None
+        self._device: base_device | None = None
         self._model_key: str | None = None
 
     async def initialize(self) -> None:
-        device = ml.detect_device()
+        device = detect_device()
         settings = load_settings().worker
         model = pretrained_hubert(cast_pretrained_model(settings.model_key))
         model.eval()
@@ -45,7 +47,7 @@ class _ModelRunner:
         return self._model
 
     @property
-    def device(self) -> ml.base_device:
+    def device(self) -> base_device:
         assert self._device is not None, "Model not initialized."
         return self._device
 

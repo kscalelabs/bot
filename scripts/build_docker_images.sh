@@ -60,16 +60,31 @@ aws ecr get-login-password | docker login --username AWS --password-stdin ${ECR_
 docker build -t dpsh-api -f scripts/docker/Dockerfile.api .
 docker tag dpsh-api:latest ${ECR_URI}:latest-api
 docker push ${ECR_URI}:latest-api
-docker rmi dpsh-api:latest
 if [[ $prune == true ]]; then
+  docker rmi dpsh-api:latest
   docker system prune -f
 fi
+
+# Updates the Lambda function.
+aws lambda update-function-code \
+    --function-name ${LAMBDA_FUNCTION_NAME} \
+    --image-uri ${ECR_URI}:latest-api \
+    --no-cli-pager
 
 # Builds the worker Docker image.
 docker build -t dpsh-worker -f scripts/docker/Dockerfile.worker .
 docker tag dpsh-worker:latest ${ECR_URI}:latest-worker
 docker push ${ECR_URI}:latest-worker
-docker rmi dpsh-worker:latest
 if [[ $prune == true ]]; then
+  docker rmi dpsh-worker:latest
   docker system prune -f
 fi
+
+# Updates the ECS cluster.
+# aws ecs update-service \
+#     --cluster ${ECS_CLUSTER_NAME} \
+#     --service dpsh-worker-service \
+#     --task-definition dpsh-worker-task-definition \
+#     --desired-count 1 \
+#     --force-new-deployment \
+#     --no-cli-pager

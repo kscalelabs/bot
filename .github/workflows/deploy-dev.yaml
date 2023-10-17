@@ -21,6 +21,9 @@ jobs:
       name: dev
       url: ${{ vars.SITE_BACKEND }}
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
 
     defaults:
       run:
@@ -36,27 +39,28 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: Build and publish
         # The build script requires access to the secrets and vars in the
         # dev environment, as environment variables.
         env:
-          DB_USERNAME: ${{ secrets.DB_USERNAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DB_READ_HOST: ${{ vars.DB_READ_HOST }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
           DB_WRITE_HOST: ${{ vars.DB_WRITE_HOST }}
           ECR_URI: ${{ secrets.ECR_URI }}
-          S3_BUCKET: ${{ vars.S3_BUCKET }}
-          SITE_HOMEPAGE: ${{ vars.SITE_HOMEPAGE }}
-          SQS_QUEUE: ${{ vars.SQS_QUEUE}}
+          ECS_CLUSTER_NAME: ${{ vars.ECS_CLUSTER_NAME }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           HF_HUB_TOKEN: ${{ secrets.HF_HUB_TOKEN }}
+          LAMBDA_FUNCTION_NAME: ${{ vars.LAMBDA_FUNCTION_NAME }}
+          S3_BUCKET: ${{ vars.S3_BUCKET }}
+          SITE_HOMEPAGE: ${{ vars.SITE_HOMEPAGE }}
           SMTP_EMAIL: ${{ vars.SMTP_EMAIL }}
-          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           SMTP_HOST: ${{ vars.SMTP_HOST }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SQS_QUEUE: ${{ vars.SQS_QUEUE}}
         # Need to prune docker between builds to avoid running out of space.
         run: |
           ./scripts/build_docker_images.sh prune

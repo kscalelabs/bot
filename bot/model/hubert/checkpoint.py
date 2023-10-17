@@ -4,9 +4,9 @@ import argparse
 import json
 import logging
 
-import ml.api as ml
 import safetensors.torch as st
 import torch
+from ml.utils.logging import configure_logging
 from omegaconf import OmegaConf
 from torch import Tensor
 
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 def convert_script() -> None:
-    ml.configure_logging()
+    configure_logging()
 
     parser = argparse.ArgumentParser(description="Converts a HuBERT checkpoint to a safetensors file")
     parser.add_argument("ckpt_path", type=str, help="Path to the checkpoint file")

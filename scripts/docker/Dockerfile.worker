@@ -17,7 +17,6 @@ COPY setup.cfg .
 COPY README.md .
 
 # Copies the config file and points to it.
-RUN chmod 600 ./config.yaml
 ENV DPSH_CONFIG=./config.yaml
 
 # Installs the package.

@@ -3,10 +3,10 @@
 import argparse
 from typing import get_args
 
-import ml.api as ml
 import soundfile as sf
 import torch
 import torchaudio.functional as A
+from ml.utils.device.auto import detect_device
 
 from bot.model.hubert.checkpoint import PretrainedHubertModel, pretrained_hubert
 
@@ -19,7 +19,7 @@ def main() -> None:
     parser.add_argument("-o", "--output-file", type=str, default="output.flac", help="Path to the output audio file")
     args = parser.parse_args()
 
-    device = ml.detect_device()
+    device = detect_device()
 
     # Loads the pretrained model.
     model = pretrained_hubert(args.key)

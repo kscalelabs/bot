@@ -5,7 +5,16 @@ import re
 
 from setuptools import setup
 
-REQUIREMENTS_DEV = ["black", "darglint", "mypy", "pytest", "pytest-timeout", "ruff"]
+REQUIREMENTS_DEV = [
+    "black",
+    "darglint",
+    "mypy",
+    "pytest-asyncio",
+    "pytest-mock",
+    "pytest-timeout",
+    "pytest",
+    "ruff",
+]
 
 
 with open("README.md", "r", encoding="utf-8") as f:

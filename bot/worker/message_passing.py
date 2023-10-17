@@ -11,9 +11,9 @@ from typing import Awaitable, Callable, ParamSpec
 import aioboto3
 from aio_pika import Message, connect_robust
 from aio_pika.abc import AbstractChannel, AbstractConnection, AbstractIncomingMessage
+from ml.utils.logging import configure_logging
 
 from bot.settings import load_settings
-from bot.utils import configure_logging
 
 logger = logging.getLogger(__name__)
 
