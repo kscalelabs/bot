@@ -45,12 +45,12 @@ python configs/build.py aws -o ${dist_dir}/config.yaml
 # Downloads a static copy of FFMPEG.
 if [[ ! -f "${dist_dir}/ffmpeg/bin/ffmpeg" ]]; then
   echo "Downloading static FFMPEG files..."
-  wget https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz
-  wget https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz.md5
-  md5sum -c ffmpeg-release-amd64-static.tar.xz.md5
+  wget --no-check-certificate -O ffmpeg.tar.xz https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz
+  wget --no-check-certificate -O ffmpeg.tar.xz.md5 https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz.md5
+  md5sum -c ffmpeg.tar.xz.md5
   mkdir -p ${dist_dir}/ffmpeg/bin/
-  tar -xf ffmpeg-release-amd64-static.tar.xz -C ${dist_dir}/ffmpeg/bin/ --strip-components=1
-  rm ffmpeg-release-amd64-static.tar.xz ffmpeg-release-amd64-static.tar.xz.md5
+  tar -xf ffmpeg.tar.xz -C ${dist_dir}/ffmpeg/bin/ --strip-components=1
+  rm ffmpeg.tar.xz ffmpeg.tar.xz.md5
 fi
 
 # Log in to ECR.
