@@ -30,27 +30,6 @@ mkdir -p $dist_dir
 # Gets a unique JWT secret.
 export JWT_SECRET=$(python -c "import secrets; print(secrets.token_urlsafe(32))")
 
-# Writes an environment file.
-echo "Writing environment file..."
-cat > ${dist_dir}/.env <<EOF
-DB_PASSWORD=${DB_PASSWORD}
-DB_READ_HOST=${DB_READ_HOST}
-DB_USERNAME=${DB_USERNAME}
-DB_WRITE_HOST=${DB_WRITE_HOST}
-ECR_URI=${ECR_URI}
-ECS_CLUSTER_NAME=${ECS_CLUSTER_NAME}
-GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-HF_HUB_TOKEN=${HF_HUB_TOKEN}
-JWT_SECRET=${JWT_SECRET}
-LAMBDA_FUNCTION_NAME=${LAMBDA_FUNCTION_NAME}
-S3_BUCKET=${S3_BUCKET}
-SITE_HOMEPAGE=${SITE_HOMEPAGE}
-SMTP_EMAIL=${SMTP_EMAIL}
-SMTP_HOST=${SMTP_HOST}
-SMTP_PASSWORD=${SMTP_PASSWORD}
-SQS_QUEUE=${SQS_QUEUE}
-EOF
-
 # Builds the configuration file.
 python configs/build.py aws -o ${dist_dir}/config.yaml
 

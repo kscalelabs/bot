@@ -12,7 +12,6 @@ RUN apt-get update -y && \
 # Copies over code.
 ADD bot/ bot/
 COPY dist/config.yaml .
-COPY dist/.env .
 COPY setup.py .
 COPY setup.cfg .
 COPY README.md .

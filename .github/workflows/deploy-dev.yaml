@@ -36,6 +36,11 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ vars.AWS_REGION }}
 
+      - name: Install Python package
+        shell: bash
+        run: |
+          pip install omegaconf
+    
       - name: Build and publish
         # The build script requires access to the secrets and vars in the
         # dev environment, as environment variables.
