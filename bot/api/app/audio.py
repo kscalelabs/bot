@@ -157,29 +157,11 @@ class UploadResponse(BaseModel):
     id: int
 
 
-async def verify_file_size(request: Request) -> int:
-    content_length = request.headers.get("Content-Length")
-    if not content_length:
-        raise HTTPException(
-            status_code=status.HTTP_411_LENGTH_REQUIRED,
-            detail="Content-Length header required",
-        )
-    bytes_int = int(content_length)
-    max_size = load_settings().file.audio.max_mb * 1024 * 1024
-    if bytes_int > max_size:
-        raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=f"File must be less than {load_settings().file.audio.max_mb} megabytes",
-        )
-    return bytes_int
-
-
 @audio_router.post("/upload", response_model=UploadResponse)
 async def upload(
     file: UploadFile,
     source: str = Form(...),
     user_data: SessionTokenData = Depends(get_session_token),
-    file_size_verified: int = Depends(verify_file_size),
 ) -> UploadResponse:
     source_enum = cast_audio_source(source)
     if source_enum not in (AudioSource.uploaded, AudioSource.recorded):

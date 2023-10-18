@@ -46,11 +46,7 @@ def _get_extension(filename: str | None, default: str) -> str:
 
 
 async def _save_audio(user_id: int, source: AudioSource, name: str | None, audio: AudioSegment) -> Audio:
-    key_bytes = sha1(uuid.NAMESPACE_OID.bytes + f"user-{user_id}".encode("utf-8") + os.urandom(16))
-    key = UUID(bytes=key_bytes.digest()[:16], version=5)
     settings = load_settings().file
-    fs_type = get_fs_type()
-    fs_path = _get_path(key)
 
     # Standardizes the audio format.
     if audio.frame_rate < settings.audio.min_sample_rate:
@@ -64,15 +60,25 @@ async def _save_audio(user_id: int, source: AudioSource, name: str | None, audio
     if audio.duration_seconds > settings.audio.max_duration:
         raise ValueError(f"Audio duration must be less than {settings.audio.max_duration} seconds")
 
+    key_bytes = sha1(uuid.NAMESPACE_OID.bytes + f"user-{user_id}".encode("utf-8") + os.urandom(16))
+    key = UUID(bytes=key_bytes.digest()[:16], version=5)
+    fs_type = get_fs_type()
+    fs_path = _get_path(key)
+    max_bytes = settings.audio.max_mb * 1024 * 1024
+
     match fs_type:
         case "file":
             with tempfile.NamedTemporaryFile(suffix=f".{settings.audio.file_ext}", delete=False) as temp_file:
                 audio.export(temp_file.name, format=settings.audio.file_ext)
+            if os.path.getsize(temp_file.name) > max_bytes:
+                raise ValueError("Audio file is too large")
             shutil.move(temp_file.name, fs_path)
 
         case "s3":
             with tempfile.NamedTemporaryFile(suffix=f".{settings.audio.file_ext}") as temp_file:
                 audio.export(temp_file.name, format=settings.audio.file_ext)
+                if os.path.getsize(temp_file.name) > max_bytes:
+                    raise ValueError("Audio file is too large")
                 s3_bucket = settings.s3.bucket
                 session = aioboto3.Session()
                 async with session.resource("s3") as s3:
