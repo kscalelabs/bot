@@ -99,7 +99,7 @@ const AudioPopover = forwardRef(
     return (
       <Popover ref={ref} {...popoverProps}>
         {localResponse === null ? (
-          <Spinner />
+          <Spinner style={{ margin: 10 }} />
         ) : (
           <>
             <Popover.Header as="h3">
