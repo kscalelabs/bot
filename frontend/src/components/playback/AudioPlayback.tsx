@@ -46,7 +46,7 @@ interface AudioPopoverProps {
 const AudioPopover = forwardRef(
   (
     props: AudioPopoverProps,
-    ref: ForwardedRef<HTMLDivElement>
+    ref: ForwardedRef<HTMLDivElement>,
   ): React.ReactElement => {
     const {
       audioId,
@@ -169,7 +169,7 @@ const AudioPopover = forwardRef(
         )}
       </Popover>
     );
-  }
+  },
 );
 
 interface AudioPlayButtonProps {
@@ -258,7 +258,7 @@ const AudioPlayback: React.FC<Props> = ({
   const [deleted, setDeleted] = useState(false);
   const { sourceId, setSourceId, referenceId, setReferenceId } = useClipboard();
   const [localResponse, setLocalResponse] = useState<SingleIdResponse | null>(
-    response
+    response,
   );
   const [name, setName] = useState<string>("");
   const { api } = useAuthentication();

@@ -4,9 +4,9 @@ import Dashboard from "pages/Dashboard/Dashboard";
 
 const App = () => {
   return (
-      <ThemeProvider>
-        <Dashboard />
-      </ThemeProvider>
+    <ThemeProvider>
+      <Dashboard />
+    </ThemeProvider>
   );
 };
 
