@@ -23,7 +23,7 @@ const COLORS: { [key in Theme]: ThemeColors } = {
 const getThemeFromLocalStorage = (): Theme => {
   const theme = localStorage.getItem(THEME_KEY);
   if (theme === null) {
-    return "light";
+    return "dark";
   }
   return theme as Theme;
 };

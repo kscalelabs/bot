@@ -5,11 +5,12 @@ import { humanReadableError } from "constants/backend";
 import { useAuthentication } from "hooks/auth";
 import { useEffect, useState } from "react";
 import { Button } from "react-bootstrap";
+import { Variant } from "react-bootstrap/esm/types";
 
 const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID || "";
 
 interface Props {
-  setMessage: (message: [string, string] | null) => void;
+  setMessage: (message: [string, string, Variant] | null) => void;
 }
 
 interface UserLoginResponse {
@@ -32,7 +33,7 @@ const GoogleAuthComponentInner = ({ setMessage }: Props) => {
           });
           setRefreshToken(response.data.token);
         } catch (error) {
-          setMessage(["Error", humanReadableError(error)]);
+          setMessage(["Error", humanReadableError(error), "error"]);
         } finally {
           setCredential(null);
         }
@@ -44,13 +45,13 @@ const GoogleAuthComponentInner = ({ setMessage }: Props) => {
     onSuccess: (tokenResponse) => {
       const returnedCredential = tokenResponse.access_token;
       if (returnedCredential === undefined) {
-        setMessage(["Error", "Failed to login using Google OAuth."]);
+        setMessage(["Error", "Failed to login using Google OAuth.", "error"]);
       } else {
         setCredential(returnedCredential);
       }
     },
     onError: () => {
-      setMessage(["Error", "Failed to login using Google OAuth."]);
+      setMessage(["Error", "Failed to login using Google OAuth.", "error"]);
       setDisableButton(false);
     },
   });

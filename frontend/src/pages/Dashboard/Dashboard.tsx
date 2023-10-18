@@ -1,5 +1,5 @@
 import NavigationBar from "components/navigation/NavigationBar";
-import { OneTimePasswordWrapper } from "hooks/auth";
+import { AuthenticationProvider, OneTimePasswordWrapper } from "hooks/auth";
 import HomePage from "pages/Dashboard/HomePage/HomePage";
 import MakePage from "pages/Dashboard/MakePage/MakePage";
 import SettingsPage from "pages/Dashboard/SettingsPage/SettingsPage";
@@ -12,7 +12,7 @@ import { Route, HashRouter as Router, Routes } from "react-router-dom";
 const Dashboard = () => {
   return (
     <Router>
-      <Container fluid>
+      <AuthenticationProvider>
         <NavigationBar />
         <Container>
           <OneTimePasswordWrapper>
@@ -26,7 +26,7 @@ const Dashboard = () => {
             </Routes>
           </OneTimePasswordWrapper>
         </Container>
-      </Container>
+      </AuthenticationProvider>
     </Router>
   );
 };

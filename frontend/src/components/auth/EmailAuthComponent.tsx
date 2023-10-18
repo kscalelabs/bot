@@ -4,9 +4,10 @@ import { humanReadableError } from "constants/backend";
 import { useAuthentication } from "hooks/auth";
 import { useState } from "react";
 import { Button, ButtonGroup, FloatingLabel, Form } from "react-bootstrap";
+import { Variant } from "react-bootstrap/esm/types";
 
 interface Props {
-  setMessage: (message: [string, string] | null) => void;
+  setMessage: (message: [string, string, Variant] | null) => void;
 }
 
 const EmailAuthComponent = ({ setMessage }: Props) => {
@@ -25,9 +26,9 @@ const EmailAuthComponent = ({ setMessage }: Props) => {
         email,
         login_url,
       });
-      setMessage(["Success!", "Check your email for a login link."]);
+      setMessage(["Success!", "Check your email for a login link.", "success"]);
     } catch (error) {
-      setMessage(["Error", humanReadableError(error)]);
+      setMessage(["Error", humanReadableError(error), "error"]);
     } finally {
       setIsDisabled(false);
     }
