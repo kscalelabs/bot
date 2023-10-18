@@ -54,38 +54,26 @@ interface AuthenticationProviderProps {
   children: React.ReactNode;
 }
 
-export const refreshSessionToken = async (
-  api: AxiosInstance,
-  refreshToken: string
-) => {
-  const response = await api.post<RefreshTokenResponse>(
-    "/users/refresh",
-    {},
-    {
-      headers: {
-        Authorization: `Bearer ${refreshToken}`,
-        "Access-Control-Allow-Origin": "*",
-      },
-    }
-  );
-  return response.data.token;
-};
-
 export const AuthenticationProvider = (props: AuthenticationProviderProps) => {
   const { children } = props;
 
   const [sessionToken, setSessionToken] = useState<string | null>(
-    getLocalStorageToken("session")
+    getLocalStorageToken("session"),
   );
   const [refreshToken, setRefreshToken] = useState<string | null>(
-    getLocalStorageToken("refresh")
+    getLocalStorageToken("refresh"),
   );
 
   const navigate = useNavigate();
 
-  const isAuthenticated = sessionToken !== null;
+  const isAuthenticated = refreshToken !== null;
 
   const api = axios.create({
+    withCredentials: true,
+    baseURL: BACKEND_URL,
+  });
+
+  const baseApi = axios.create({
     withCredentials: true,
     baseURL: BACKEND_URL,
   });
@@ -106,15 +94,6 @@ export const AuthenticationProvider = (props: AuthenticationProviderProps) => {
     }
   }, [refreshToken]);
 
-  useEffect(() => {
-    if (refreshToken !== null && sessionToken === null) {
-      (async () => {
-        const localSessionToken = await refreshSessionToken(api, refreshToken);
-        setSessionToken(localSessionToken);
-      })();
-    }
-  }, [refreshToken, sessionToken, api]);
-
   const logout = useCallback(() => {
     setSessionToken(null);
     setRefreshToken(null);
@@ -131,7 +110,7 @@ export const AuthenticationProvider = (props: AuthenticationProviderProps) => {
     },
     (error) => {
       return Promise.reject(error);
-    }
+    },
   );
 
   api.interceptors.response.use(
@@ -146,10 +125,17 @@ export const AuthenticationProvider = (props: AuthenticationProviderProps) => {
 
         try {
           // Gets a new session token and try the request again.
-          const localSessionToken = await refreshSessionToken(
-            api,
-            refreshToken
+          const response = await baseApi.post<RefreshTokenResponse>(
+            "/users/refresh",
+            {},
+            {
+              headers: {
+                Authorization: `Bearer ${refreshToken}`,
+                "Access-Control-Allow-Origin": "*",
+              },
+            },
           );
+          const localSessionToken = response.data.token;
           setSessionToken(localSessionToken);
           originalRequest.headers.Authorization = `Bearer ${localSessionToken}`;
           return await api(originalRequest);
@@ -165,7 +151,7 @@ export const AuthenticationProvider = (props: AuthenticationProviderProps) => {
       }
 
       return Promise.reject(error);
-    }
+    },
   );
 
   return (
@@ -189,7 +175,7 @@ export const useAuthentication = (): AuthenticationContextProps => {
   const context = React.useContext(AuthenticationContext);
   if (!context) {
     throw new Error(
-      "useAuthentication must be used within a AuthenticationProvider"
+      "useAuthentication must be used within a AuthenticationProvider",
     );
   }
   return context;
