@@ -15,6 +15,7 @@ interface Props {
   name: string;
   setName: (name: string) => void;
   showLink: boolean;
+  showDeleteButton: boolean;
   setDeleted: (deleted: boolean) => void;
 }
 
@@ -26,6 +27,7 @@ const AudioPopover = forwardRef(
       name,
       setName,
       showLink,
+      showDeleteButton,
       setDeleted,
       ...popoverProps
     } = props;
@@ -128,22 +130,26 @@ const AudioPopover = forwardRef(
                   </strong>
                 </>
               )}
-              <br />
-              <Button
-                variant="danger"
-                onClick={handleDelete}
-                className="mt-2"
-                disabled={acting}
-              >
-                <FontAwesomeIcon icon={faCancel} className="me-2" />
-                Permanently Delete
-              </Button>
+              {showDeleteButton && (
+                <>
+                  <br />
+                  <Button
+                    variant="danger"
+                    onClick={handleDelete}
+                    className="mt-2"
+                    disabled={acting}
+                  >
+                    <FontAwesomeIcon icon={faCancel} className="me-2" />
+                    Permanently Delete
+                  </Button>
+                </>
+              )}
             </Popover.Body>
           </>
         )}
       </Popover>
     );
-  },
+  }
 );
 
 export default AudioPopover;

@@ -18,7 +18,7 @@ interface SingleGenerationResponse {
 const SingleGenerationPage = () => {
   const { id } = useParams();
   const [response, setResponse] = useState<SingleGenerationResponse | null>(
-    null,
+    null
   );
 
   const { api } = useAuthentication();
@@ -34,7 +34,7 @@ const SingleGenerationPage = () => {
               params: {
                 id,
               },
-            },
+            }
           );
           setResponse(apiResponse.data);
         } catch (error) {
@@ -42,7 +42,7 @@ const SingleGenerationPage = () => {
         }
       })();
     }
-  }, [response, id, api]);
+  }, [response, id, api, addAlert]);
 
   if (id === undefined) {
     return <Navigate to="/generations" />;

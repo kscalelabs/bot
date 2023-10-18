@@ -17,7 +17,7 @@ import {
   Spinner,
 } from "react-bootstrap";
 
-const DEFAULT_PAGINATE_LIMIT = 10;
+const DEFAULT_PAGINATE_LIMIT = 50;
 
 interface ListProps {
   paginationLimit?: number;
@@ -63,7 +63,7 @@ const ListAudios = (props: Props) => {
           const response = await api.get<InfoMeResponse>("/audio/info/me");
           const newStart = Math.max(
             Math.min(start, response.data.count - paginationLimit),
-            0,
+            0
           );
           setInfo(response.data);
           setStart(newStart);
@@ -98,7 +98,7 @@ const ListAudios = (props: Props) => {
         }
       })();
     }
-  }, [info, audios, start, paginationLimit, searchTerm, api]);
+  }, [info, audios, start, paginationLimit, searchTerm, api, addAlert]);
 
   const handleRefresh = () => {
     setAudios(null);

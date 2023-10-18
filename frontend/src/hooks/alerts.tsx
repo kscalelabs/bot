@@ -1,9 +1,11 @@
-import { createContext, useCallback, useContext, useState } from "react";
+import AudioPlayback from "components/playback/AudioPlayback";
+import React, { createContext, useCallback, useContext, useState } from "react";
 import { Toast, ToastContainer } from "react-bootstrap";
+import { useClipboard } from "./clipboard";
 
 const MAX_ERRORS = 10;
 
-type AlertType = "error" | "success";
+type AlertType = "error" | "success" | "primary" | "info";
 
 const alertTypeToBg = (kind: AlertType) => {
   switch (kind) {
@@ -11,15 +13,21 @@ const alertTypeToBg = (kind: AlertType) => {
       return "danger";
     case "success":
       return "success";
+    case "primary":
+      return "primary";
+    case "info":
+      return "secondary";
   }
 };
 
 interface AlertQueueContextProps {
-  addAlert: (alert: string, kind: AlertType) => void;
+  alerts: Map<string, [string | React.ReactNode, AlertType]>;
+  removeAlert: (alertId: string) => void;
+  addAlert: (alert: string | React.ReactNode, kind: AlertType) => void;
 }
 
 const AlertQueueContext = createContext<AlertQueueContextProps | undefined>(
-  undefined,
+  undefined
 );
 
 interface AlertQueueProviderProps {
@@ -29,15 +37,15 @@ interface AlertQueueProviderProps {
 export const AlertQueueProvider = (props: AlertQueueProviderProps) => {
   const { children } = props;
 
-  const [alerts, setAlerts] = useState<Map<string, [string, AlertType]>>(
-    new Map(),
-  );
+  const [alerts, setAlerts] = useState<
+    Map<string, [string | React.ReactNode, AlertType]>
+  >(new Map());
 
   const generateAlertId = useCallback(() => {
     return Math.random().toString(36).substring(2);
   }, []);
 
-  const addAlert = (alert: string, kind: AlertType) => {
+  const addAlert = (alert: string | React.ReactNode, kind: AlertType) => {
     setAlerts((prev) => {
       const newAlerts = new Map(prev);
       const alertId = generateAlertId();
@@ -66,29 +74,12 @@ export const AlertQueueProvider = (props: AlertQueueProviderProps) => {
   return (
     <AlertQueueContext.Provider
       value={{
+        alerts,
+        removeAlert,
         addAlert,
       }}
     >
       {children}
-      <ToastContainer className="p-3" position="bottom-center">
-        {Array.from(alerts).map(([alertId, [alert, kind]]) => {
-          return (
-            <Toast
-              key={alertId}
-              bg={alertTypeToBg(kind)}
-              autohide
-              delay={3000}
-              onClose={() => removeAlert(alertId)}
-              animation={true}
-            >
-              <Toast.Header>
-                <strong className="me-auto">Error</strong>
-              </Toast.Header>
-              <Toast.Body>{alert}</Toast.Body>
-            </Toast>
-          );
-        })}
-      </ToastContainer>
     </AlertQueueContext.Provider>
   );
 };
@@ -99,4 +90,72 @@ export const useAlertQueue = () => {
     throw new Error("useAlertQueue must be used within a ErrorQueueProvider");
   }
   return context;
+};
+
+interface AlertQueueProps {
+  children: React.ReactNode;
+}
+
+export const AlertQueue = (props: AlertQueueProps) => {
+  const { children } = props;
+  const { alerts, removeAlert } = useAlertQueue();
+  const { sourceId, setSourceId, referenceId, setReferenceId } = useClipboard();
+
+  return (
+    <>
+      {children}
+      <ToastContainer
+        className="p-3"
+        position="bottom-center"
+        style={{ zIndex: 10 }}
+      >
+        {Array.from(alerts).map(([alertId, [alert, kind]]) => {
+          return (
+            <Toast
+              key={alertId}
+              bg={alertTypeToBg(kind)}
+              autohide
+              delay={5000}
+              onClose={() => removeAlert(alertId)}
+              animation={true}
+            >
+              <Toast.Body>{alert}</Toast.Body>
+            </Toast>
+          );
+        })}
+        {sourceId !== null && (
+          <Toast
+            bg="secondary"
+            onClose={() => setSourceId(null)}
+            animation={true}
+          >
+            <Toast.Header>
+              <strong className="me-auto">Source</strong>
+            </Toast.Header>
+            <Toast.Body className="d-flex justify-content-center">
+              <div className="d-flex justify-content-center">
+                <AudioPlayback audioId={sourceId} settingsPlacement="top" />
+              </div>
+            </Toast.Body>
+          </Toast>
+        )}
+        {referenceId !== null && (
+          <Toast
+            bg="secondary"
+            onClose={() => setReferenceId(null)}
+            animation={true}
+          >
+            <Toast.Header>
+              <strong className="me-auto">Reference</strong>
+            </Toast.Header>
+            <Toast.Body className="d-flex justify-content-center">
+              <div className="d-flex justify-content-center">
+                <AudioPlayback audioId={referenceId} settingsPlacement="top" />
+              </div>
+            </Toast.Body>
+          </Toast>
+        )}
+      </ToastContainer>
+    </>
+  );
 };

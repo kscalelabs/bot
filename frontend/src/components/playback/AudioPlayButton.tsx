@@ -1,7 +1,7 @@
 import { faPause, faPlay } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAuthentication } from "hooks/auth";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { Placement } from "react-bootstrap/esm/types";
 
@@ -30,6 +30,14 @@ const AudioPlayButton = (props: Props) => {
       },
     });
   }, [url, sessionToken, api]);
+
+  useEffect(() => {
+    if (audioRef.current !== null) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    setIsPlaying(false);
+  }, [audioId]);
 
   const toggleAudio = () => {
     if (audioRef.current === null) {

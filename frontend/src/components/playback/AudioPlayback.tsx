@@ -2,7 +2,6 @@ import { faCog } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { QueryIdsResponse, SingleIdResponse } from "constants/types";
 import { useAuthentication } from "hooks/auth";
-import { useClipboard } from "hooks/clipboard";
 import React, { useEffect, useState } from "react";
 import {
   Button,
@@ -19,7 +18,6 @@ import AudioPopover from "./AudioPopover";
 
 interface AudioProps {
   audioId: number;
-  title?: string;
   showDeleteButton?: boolean;
   showMixerButtons?: boolean;
   response?: SingleIdResponse;
@@ -32,7 +30,6 @@ type Props = AudioProps & ContainerProps;
 
 const AudioPlayback: React.FC<Props> = ({
   audioId,
-  title = null,
   showDeleteButton = true,
   showMixerButtons = true,
   response = null,
@@ -42,9 +39,8 @@ const AudioPlayback: React.FC<Props> = ({
   ...containerProps
 }) => {
   const [deleted, setDeleted] = useState(false);
-  const { sourceId, setSourceId, referenceId, setReferenceId } = useClipboard();
   const [localResponse, setLocalResponse] = useState<SingleIdResponse | null>(
-    response,
+    response
   );
   const [name, setName] = useState<string>("");
   const { api } = useAuthentication();
@@ -101,6 +97,7 @@ const AudioPlayback: React.FC<Props> = ({
                   name={name}
                   setName={setName}
                   showLink={showLink}
+                  showDeleteButton={showDeleteButton}
                   setDeleted={setDeleted}
                 />
               }

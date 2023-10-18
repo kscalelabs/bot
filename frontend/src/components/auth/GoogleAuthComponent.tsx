@@ -36,7 +36,7 @@ const GoogleAuthComponentInner = () => {
         }
       }
     })();
-  }, [credential, setRefreshToken, api]);
+  }, [credential, setRefreshToken, api, addAlert]);
 
   const login = useGoogleLogin({
     onSuccess: (tokenResponse) => {

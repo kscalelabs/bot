@@ -53,7 +53,7 @@ const SidebarComponent = (props: Props) => {
   }, [email, isAuthenticated, api]);
 
   return (
-    <Offcanvas show={show} onHide={() => setShow(false)}>
+    <Offcanvas show={show} onHide={() => setShow(false)} placement="end">
       <Offcanvas.Header closeButton>
         <Offcanvas.Title>Options</Offcanvas.Title>
       </Offcanvas.Header>
@@ -72,17 +72,6 @@ const SidebarComponent = (props: Props) => {
           </ListGroup.Item>
           {isAuthenticated ? (
             <>
-              <ListGroup.Item onClick={logout} action>
-                <FontAwesomeIcon
-                  icon={faSignOut}
-                  className="me-2"
-                  style={{
-                    width: "1.25em",
-                  }}
-                />{" "}
-                Log Out
-              </ListGroup.Item>
-
               <ListGroup.Item
                 onClick={() => {
                   navigate("/settings");
@@ -98,6 +87,17 @@ const SidebarComponent = (props: Props) => {
                   }}
                 />{" "}
                 Settings
+              </ListGroup.Item>
+
+              <ListGroup.Item onClick={logout} action>
+                <FontAwesomeIcon
+                  icon={faSignOut}
+                  className="me-2"
+                  style={{
+                    width: "1.25em",
+                  }}
+                />{" "}
+                Log Out
               </ListGroup.Item>
             </>
           ) : (

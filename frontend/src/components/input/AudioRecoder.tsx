@@ -54,7 +54,7 @@ const AudioRecorder = () => {
             headers: {
               "Content-Type": "multipart/form-data",
             },
-          },
+          }
         );
         setShowSuccess(true);
         setLastId(response.data.id);
@@ -64,7 +64,7 @@ const AudioRecorder = () => {
         setShowSpinner(false);
       }
     })();
-  }, [audioBlob, api]);
+  }, [audioBlob, api, addAlert]);
 
   return (
     <Card.Body>

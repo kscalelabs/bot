@@ -1,5 +1,5 @@
 import NavigationBar from "components/navigation/NavigationBar";
-import { AlertQueueProvider } from "hooks/alerts";
+import { AlertQueue, AlertQueueProvider } from "hooks/alerts";
 import { AuthenticationProvider, OneTimePasswordWrapper } from "hooks/auth";
 import { ClipboardProvider } from "hooks/clipboard";
 import { ThemeProvider } from "hooks/theme";
@@ -20,23 +20,25 @@ const Dashboard = () => {
         <AuthenticationProvider>
           <AlertQueueProvider>
             <ClipboardProvider>
-              <NavigationBar />
-              <Container>
-                <OneTimePasswordWrapper>
-                  <Routes>
-                    <Route index element={<HomePage />} />
-                    <Route path="upload" element={<UploadPage />} />
-                    <Route path="mix" element={<MixPage />} />
-                    <Route path="settings" element={<SettingsPage />} />
-                    <Route path="audio/:id" element={<SingleAudioPage />} />
-                    <Route
-                      path="generation/:id"
-                      element={<SingleGenerationPage />}
-                    />
-                    <Route path="*" element={<Error404Page />} />
-                  </Routes>
-                </OneTimePasswordWrapper>
-              </Container>
+              <AlertQueue>
+                <NavigationBar />
+                <Container>
+                  <OneTimePasswordWrapper>
+                    <Routes>
+                      <Route index element={<HomePage />} />
+                      <Route path="upload" element={<UploadPage />} />
+                      <Route path="mix" element={<MixPage />} />
+                      <Route path="settings" element={<SettingsPage />} />
+                      <Route path="audio/:id" element={<SingleAudioPage />} />
+                      <Route
+                        path="generation/:id"
+                        element={<SingleGenerationPage />}
+                      />
+                      <Route path="*" element={<Error404Page />} />
+                    </Routes>
+                  </OneTimePasswordWrapper>
+                </Container>
+              </AlertQueue>
             </ClipboardProvider>
           </AlertQueueProvider>
         </AuthenticationProvider>
