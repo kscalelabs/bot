@@ -1,7 +1,8 @@
 import { faSync } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import SingleGeneration from "components/playback/SingleGeneration";
-import { api, humanReadableError } from "constants/backend";
+import { humanReadableError } from "constants/backend";
+import { useAuthentication } from "hooks/auth";
 import { useEffect, useState } from "react";
 import {
   Alert,
@@ -57,6 +58,8 @@ const ListGenerations = (props: Props) => {
   >(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [start, setStart] = useState(0);
+
+  const { api } = useAuthentication();
 
   useEffect(() => {
     if (info === null) {

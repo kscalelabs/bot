@@ -1,6 +1,6 @@
 # Dockerfile for the FastAPI application.
 
-FROM public.ecr.aws/lambda/python:3.10
+FROM public.ecr.aws/lambda/python:3.11
 
 WORKDIR ${LAMBDA_TASK_ROOT}
 

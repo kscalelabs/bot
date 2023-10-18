@@ -1,7 +1,8 @@
 import { faSync } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import AudioPlayback from "components/playback/AudioPlayback";
-import { api, humanReadableError } from "constants/backend";
+import { humanReadableError } from "constants/backend";
+import { useAuthentication } from "hooks/auth";
 import { useEffect, useState } from "react";
 import {
   Alert,
@@ -53,6 +54,8 @@ const ListAudios = (props: Props) => {
   const [start, setStart] = useState(0);
   const [searchTerm, setSearchTerm] = useState<string>("");
 
+  const { api } = useAuthentication();
+
   useEffect(() => {
     if (info === null) {
       (async () => {
@@ -95,7 +98,7 @@ const ListAudios = (props: Props) => {
         }
       })();
     }
-  }, [info, audios, start, paginationLimit, searchTerm]);
+  }, [info, audios, start, paginationLimit, searchTerm, api]);
 
   const handleRefresh = () => {
     setAudios(null);

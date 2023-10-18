@@ -1,6 +1,7 @@
 import { faCheck, faRunning } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { api, humanReadableError } from "constants/backend";
+import { humanReadableError } from "constants/backend";
+import { useAuthentication } from "hooks/auth";
 import { useState } from "react";
 import { Button, ButtonGroup, Col, Form } from "react-bootstrap";
 
@@ -13,6 +14,8 @@ const AdminGenerationComponent = () => {
   const [isPublic, setIsPublic] = useState(false);
   const [buttonEnabled, setButtonEnabled] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const { api } = useAuthentication();
 
   const handleCheckEmail = async () => {
     setButtonEnabled(false);

@@ -1,5 +1,6 @@
 import SingleGeneration from "components/playback/SingleGeneration";
-import { api, humanReadableError } from "constants/backend";
+import { humanReadableError } from "constants/backend";
+import { useAuthentication } from "hooks/auth";
 import { useEffect, useState } from "react";
 import { Alert, Col, Container, Row, Spinner } from "react-bootstrap";
 import { Navigate, useParams } from "react-router-dom";
@@ -19,6 +20,7 @@ const SingleGenerationPage = () => {
   const [response, setResponse] = useState<SingleGenerationResponse | null>(
     null,
   );
+  const { api } = useAuthentication();
 
   useEffect(() => {
     if (response === null) {
@@ -38,7 +40,7 @@ const SingleGenerationPage = () => {
         }
       })();
     }
-  }, [response, id]);
+  }, [response, id, api]);
 
   if (id === undefined) {
     return <Navigate to="/generations" />;

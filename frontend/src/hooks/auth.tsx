@@ -1,7 +1,7 @@
-import axios, { AxiosError } from "axios";
-import { api, apiNoRetry } from "constants/backend";
-import React, { useEffect } from "react";
-import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
+import axios, { AxiosError, AxiosInstance } from "axios";
+import { BACKEND_URL } from "constants/backend";
+import React, { createContext, useCallback, useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 const REFRESH_TOKEN_KEY = "__DPSH_REFRESH_TOKEN";
 const SESSION_TOKEN_KEY = "__DPSH_SESSION_TOKEN";
@@ -19,102 +19,180 @@ const getLocalStorageValueKey = (tokenType: TokenType) => {
   }
 };
 
-interface RequiresLoginProps {
-  children: React.ReactNode;
-}
-
-export const getToken = (tokenType: TokenType): string | null => {
+const getLocalStorageToken = (tokenType: TokenType): string | null => {
   return localStorage.getItem(getLocalStorageValueKey(tokenType));
 };
 
-export const setToken = (token: string, tokenType: TokenType) => {
+const setLocalStorageToken = (token: string, tokenType: TokenType) => {
   localStorage.setItem(getLocalStorageValueKey(tokenType), token);
 };
 
-export const deleteToken = (tokenType: TokenType) => {
+const deleteLocalStorageToken = (tokenType: TokenType) => {
   localStorage.removeItem(getLocalStorageValueKey(tokenType));
 };
 
-export const deleteTokens = () => {
-  deleteToken("refresh");
-  deleteToken("session");
-};
-
-// Add the token to the Authorization header for every request, and invalidate
-// the token if the server returns a 401.
-api.interceptors.request.use(
-  (config) => {
-    const token = getToken("session");
-    if (token !== null) {
-      config.headers.Authorization = `Bearer ${token}`;
-      config.headers["Access-Control-Allow-Origin"] = "*";
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  },
-);
+interface AuthenticationContextProps {
+  sessionToken: string | null;
+  setSessionToken: (token: string) => void;
+  refreshToken: string | null;
+  setRefreshToken: (token: string) => void;
+  logout: () => void;
+  isAuthenticated: boolean;
+  api: AxiosInstance;
+}
 
 interface RefreshTokenResponse {
   token: string;
   token_type: string;
 }
 
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-    if (error.response.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      const refreshToken = getToken("refresh");
-      if (refreshToken === null) {
-        return Promise.reject(error);
-      }
+const AuthenticationContext = createContext<
+  AuthenticationContextProps | undefined
+>(undefined);
 
-      let sessionToken;
-      try {
-        // Gets a new token using the refresh token.
-        const response = await apiNoRetry.post<RefreshTokenResponse>(
-          "/users/refresh",
-          {},
-          {
-            headers: {
-              Authorization: `Bearer ${refreshToken}`,
-              "Access-Control-Allow-Origin": "*",
-            },
-          },
-        );
-        sessionToken = response.data.token;
-      } catch (refreshError) {
-        if (axios.isAxiosError(refreshError)) {
-          const axiosRefreshError = refreshError as AxiosError;
-          if (axiosRefreshError.response?.status === 401) {
-            deleteToken("session");
-            const navigate = useNavigate();
-            navigate("/login");
-          }
-        }
-        return Promise.reject(refreshError);
-      }
+interface AuthenticationProviderProps {
+  children: React.ReactNode;
+}
 
-      // Retries the original request with the new token.
-      setToken(sessionToken, "session");
-      originalRequest.headers.Authorization = `Bearer ${sessionToken}`;
-      return await api(originalRequest);
+export const refreshSessionToken = async (
+  api: AxiosInstance,
+  refreshToken: string
+) => {
+  const response = await api.post<RefreshTokenResponse>(
+    "/users/refresh",
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${refreshToken}`,
+        "Access-Control-Allow-Origin": "*",
+      },
     }
-    return Promise.reject(error);
-  },
-);
+  );
+  return response.data.token;
+};
 
-export const RequiresLogin = ({ children }: RequiresLoginProps) => {
-  if (getToken("refresh") === null) {
-    // const redirect = window.location.pathname;
-    // Using HashRouter, so we need to include the hash in the redirect
-    const redirect = window.location.hash.substring(1);
-    return <Navigate to={`/login?redirect=${redirect}`} />;
+export const AuthenticationProvider = (props: AuthenticationProviderProps) => {
+  const { children } = props;
+
+  const [sessionToken, setSessionToken] = useState<string | null>(
+    getLocalStorageToken("session")
+  );
+  const [refreshToken, setRefreshToken] = useState<string | null>(
+    getLocalStorageToken("refresh")
+  );
+
+  const navigate = useNavigate();
+
+  const isAuthenticated = sessionToken !== null;
+
+  const api = axios.create({
+    withCredentials: true,
+    baseURL: BACKEND_URL,
+  });
+
+  useEffect(() => {
+    if (sessionToken === null) {
+      deleteLocalStorageToken("session");
+    } else {
+      setLocalStorageToken(sessionToken, "session");
+    }
+  }, [sessionToken]);
+
+  useEffect(() => {
+    if (refreshToken === null) {
+      deleteLocalStorageToken("refresh");
+    } else {
+      setLocalStorageToken(refreshToken, "refresh");
+    }
+  }, [refreshToken]);
+
+  useEffect(() => {
+    if (refreshToken !== null && sessionToken === null) {
+      (async () => {
+        const localSessionToken = await refreshSessionToken(api, refreshToken);
+        setSessionToken(localSessionToken);
+      })();
+    }
+  }, [refreshToken, sessionToken, api]);
+
+  const logout = useCallback(() => {
+    setSessionToken(null);
+    setRefreshToken(null);
+    navigate("/");
+  }, [navigate]);
+
+  api.interceptors.request.use(
+    (config) => {
+      if (sessionToken !== null) {
+        config.headers.Authorization = `Bearer ${sessionToken}`;
+        config.headers["Access-Control-Allow-Origin"] = "*";
+      }
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
+    }
+  );
+
+  api.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+      const originalRequest = error.config;
+      if (error.response.status === 401 && !originalRequest._retry) {
+        originalRequest._retry = true;
+        if (refreshToken === null) {
+          return Promise.reject(error);
+        }
+
+        try {
+          // Gets a new session token and try the request again.
+          const localSessionToken = await refreshSessionToken(
+            api,
+            refreshToken
+          );
+          setSessionToken(localSessionToken);
+          originalRequest.headers.Authorization = `Bearer ${localSessionToken}`;
+          return await api(originalRequest);
+        } catch (refreshError) {
+          if (axios.isAxiosError(refreshError)) {
+            const axiosError = refreshError as AxiosError;
+            if (axiosError?.response?.status === 401) {
+              logout();
+            }
+          }
+          return Promise.reject(refreshError);
+        }
+      }
+
+      return Promise.reject(error);
+    }
+  );
+
+  return (
+    <AuthenticationContext.Provider
+      value={{
+        sessionToken,
+        setSessionToken,
+        refreshToken,
+        setRefreshToken,
+        logout,
+        isAuthenticated,
+        api,
+      }}
+    >
+      {children}
+    </AuthenticationContext.Provider>
+  );
+};
+
+export const useAuthentication = (): AuthenticationContextProps => {
+  const context = React.useContext(AuthenticationContext);
+  if (!context) {
+    throw new Error(
+      "useAuthentication must be used within a AuthenticationProvider"
+    );
   }
-  return <>{children}</>;
+  return context;
 };
 
 interface OneTimePasswordWrapperProps {
@@ -131,19 +209,17 @@ export const OneTimePasswordWrapper = ({
 }: OneTimePasswordWrapperProps) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { setRefreshToken, api } = useAuthentication();
 
   useEffect(() => {
     (async () => {
       const payload = searchParams.get("otp");
       if (payload !== null) {
         try {
-          const response = await apiNoRetry.post<UserLoginResponse>(
-            "/users/otp",
-            {
-              payload,
-            },
-          );
-          setToken(response.data.token, "refresh");
+          const response = await api.post<UserLoginResponse>("/users/otp", {
+            payload,
+          });
+          setRefreshToken(response.data.token);
           navigate("/");
         } catch (error) {
         } finally {
@@ -151,7 +227,7 @@ export const OneTimePasswordWrapper = ({
         }
       }
     })();
-  }, [searchParams, navigate]);
+  }, [searchParams, navigate, setRefreshToken, api]);
 
   return <>{children}</>;
 };

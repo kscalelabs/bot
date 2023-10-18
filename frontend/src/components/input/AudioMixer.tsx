@@ -1,6 +1,7 @@
 import AudioSelection from "components/input/AudioSelection";
 import AudioPlayback from "components/playback/AudioPlayback";
-import { api, humanReadableError } from "constants/backend";
+import { humanReadableError } from "constants/backend";
+import { useAuthentication } from "hooks/auth";
 import { useClipboard } from "hooks/clipboard";
 import { useState } from "react";
 import { Alert, Button, Card, Col, Row, Spinner } from "react-bootstrap";
@@ -17,6 +18,7 @@ const AudioMixer = () => {
   const [lastId, setLastId] = useState<number | null>(null);
 
   const { sourceId, referenceId } = useClipboard();
+  const { api } = useAuthentication();
 
   const handleSubmit = async () => {
     if (sourceId === null && referenceId === null) {

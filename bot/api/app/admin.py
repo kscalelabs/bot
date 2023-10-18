@@ -18,7 +18,7 @@ async def is_admin(user_obj: User) -> bool:
 
 
 async def assert_is_admin(token_data: SessionTokenData = Depends(get_session_token)) -> SessionTokenData:
-    admin_user_obj = await User.get(id=token_data.user_id)
+    admin_user_obj = await User.get_or_none(id=token_data.user_id)
 
     # Validates that the logged in user can take admin actions.
     if not admin_user_obj:
@@ -31,7 +31,9 @@ async def assert_is_admin(token_data: SessionTokenData = Depends(get_session_tok
 
 @admin_router.get("/check")
 async def admin_check(token_data: SessionTokenData = Depends(get_session_token)) -> bool:
-    user_obj = await User.get(id=token_data.user_id)
+    user_obj = await User.get_or_none(id=token_data.user_id)
+    if user_obj is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
     return await is_admin(user_obj)
 
 

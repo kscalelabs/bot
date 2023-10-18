@@ -1,7 +1,7 @@
 import { faCancel } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { api, humanReadableError } from "constants/backend";
-import { deleteTokens } from "hooks/auth";
+import { humanReadableError } from "constants/backend";
+import { useAuthentication } from "hooks/auth";
 import { useCallback, useState } from "react";
 import { Button, Col, Form, Row, Spinner } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
@@ -11,6 +11,7 @@ const DeleteAccountComponent = () => {
   const [useSpinner, setUseSpinner] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { logout, api } = useAuthentication();
 
   const handleDeleteAccount = useCallback(
     async (e: React.FormEvent) => {
@@ -18,7 +19,7 @@ const DeleteAccountComponent = () => {
       setUseSpinner(true);
       try {
         await api.delete<boolean>("/users/me");
-        deleteTokens();
+        logout();
         navigate("/login");
       } catch (error) {
         setButtonEnabled(false);
@@ -27,7 +28,7 @@ const DeleteAccountComponent = () => {
         setUseSpinner(false);
       }
     },
-    [navigate],
+    [navigate, logout, api],
   );
 
   return (

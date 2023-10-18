@@ -10,13 +10,14 @@ Usage:
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
+from tortoise.contrib.fastapi import register_tortoise
 
 from bot.api.app.admin import admin_router
 from bot.api.app.audio import audio_router
 from bot.api.app.generation import generation_router
 from bot.api.app.infer import infer_router
 from bot.api.app.users import users_router
-from bot.api.db import close_db, init_db
+from bot.api.db import get_config
 from bot.settings import load_settings
 
 app = FastAPI()
@@ -38,16 +39,6 @@ app.add_middleware(
 )
 
 
-@app.on_event("startup")
-async def startup_event() -> None:
-    await init_db()
-
-
-@app.on_event("shutdown")
-async def shutdown_event() -> None:
-    await close_db()
-
-
 @app.get("/")
 async def read_index() -> bool:
     return True
@@ -58,3 +49,6 @@ app.include_router(audio_router, prefix="/audio", tags=["audio"])
 app.include_router(generation_router, prefix="/generation", tags=["generation"])
 app.include_router(infer_router, prefix="/infer", tags=["infer"])
 app.include_router(users_router, prefix="/users", tags=["users"])
+
+# Registers the database, generating schemas if not in production.
+register_tortoise(app, config=get_config(), generate_schemas=not settings.is_prod)

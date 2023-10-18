@@ -1,16 +1,16 @@
 import { faGoogle } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
-import { api, humanReadableError } from "constants/backend";
-import { setToken } from "hooks/auth";
+import { humanReadableError } from "constants/backend";
+import { useAuthentication } from "hooks/auth";
 import { useEffect, useState } from "react";
 import { Button } from "react-bootstrap";
+import { Variant } from "react-bootstrap/esm/types";
 
 const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID || "";
 
 interface Props {
-  setMessage: (message: [string, string] | null) => void;
-  redirectOnLogin: () => void;
+  setMessage: (message: [string, string, Variant] | null) => void;
 }
 
 interface UserLoginResponse {
@@ -18,9 +18,11 @@ interface UserLoginResponse {
   token_type: string;
 }
 
-const GoogleAuthComponentInner = ({ setMessage, redirectOnLogin }: Props) => {
+const GoogleAuthComponentInner = ({ setMessage }: Props) => {
   const [credential, setCredential] = useState<string | null>(null);
   const [disableButton, setDisableButton] = useState(false);
+
+  const { setRefreshToken, api } = useAuthentication();
 
   useEffect(() => {
     (async () => {
@@ -29,28 +31,27 @@ const GoogleAuthComponentInner = ({ setMessage, redirectOnLogin }: Props) => {
           const response = await api.post<UserLoginResponse>("/users/google", {
             token: credential,
           });
-          setToken(response.data.token, "refresh");
-          redirectOnLogin();
+          setRefreshToken(response.data.token);
         } catch (error) {
-          setMessage(["Error", humanReadableError(error)]);
+          setMessage(["Error", humanReadableError(error), "error"]);
         } finally {
           setCredential(null);
         }
       }
     })();
-  });
+  }, [credential, setMessage, setRefreshToken, api]);
 
   const login = useGoogleLogin({
     onSuccess: (tokenResponse) => {
-      const credential = tokenResponse.access_token;
-      if (credential === undefined) {
-        setMessage(["Error", "Failed to login using Google OAuth."]);
+      const returnedCredential = tokenResponse.access_token;
+      if (returnedCredential === undefined) {
+        setMessage(["Error", "Failed to login using Google OAuth.", "error"]);
       } else {
-        setCredential(credential);
+        setCredential(returnedCredential);
       }
     },
     onError: () => {
-      setMessage(["Error", "Failed to login using Google OAuth."]);
+      setMessage(["Error", "Failed to login using Google OAuth.", "error"]);
       setDisableButton(false);
     },
   });
@@ -63,7 +64,10 @@ const GoogleAuthComponentInner = ({ setMessage, redirectOnLogin }: Props) => {
       }}
       disabled={disableButton || credential !== null}
     >
-      <FontAwesomeIcon icon={faGoogle} />
+      <span style={{ display: "flex", alignItems: "center" }}>
+        Sign In with Google
+        <FontAwesomeIcon icon={faGoogle} style={{ marginLeft: 15 }} />
+      </span>
     </Button>
   );
 };
