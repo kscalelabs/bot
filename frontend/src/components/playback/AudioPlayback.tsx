@@ -42,7 +42,7 @@ const AudioPlayback: React.FC<Props> = ({
 }) => {
   const [deleted, setDeleted] = useState(false);
   const [localResponse, setLocalResponse] = useState<SingleIdResponse | null>(
-    response
+    response,
   );
   const [name, setName] = useState<string>("");
   const { api } = useAuthentication();
