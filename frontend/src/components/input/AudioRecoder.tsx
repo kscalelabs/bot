@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
 import { Alert, Button, Card, Spinner } from "react-bootstrap";
 import { useReactMediaRecorder } from "react-media-recorder";
 
-const TIMEOUT_MS = 10000;
+const TIMEOUT_MS = 30000;
+const MIN_MS = 5000;
 
 interface UploadAudioResponse {
   id: number;
@@ -20,6 +21,7 @@ const AudioRecorder = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [percentComplete, setPercentComplete] = useState<number | null>(null);
   const [intervalId, setIntervalId] = useState<number | null>(null);
+  const [buttonDisabled, setButtonDisabled] = useState(false);
 
   const { api } = useAuthentication();
 
@@ -52,7 +54,7 @@ const AudioRecorder = () => {
             headers: {
               "Content-Type": "multipart/form-data",
             },
-          },
+          }
         );
         setShowSuccess(true);
         setLastId(response.data.id);
@@ -92,6 +94,13 @@ const AudioRecorder = () => {
                     return next;
                   });
                 }, TIMEOUT_MS / 100);
+
+                // Disable button if recording is less than 1 second.
+                setButtonDisabled(true);
+                setTimeout(() => {
+                  setButtonDisabled(false);
+                }, MIN_MS);
+
                 setIntervalId(interval as unknown as number);
               };
 
@@ -112,6 +121,7 @@ const AudioRecorder = () => {
               setErrorMessage(null);
             }}
             variant={isRecording ? "danger" : "primary"}
+            disabled={buttonDisabled}
           >
             {isRecording
               ? percentComplete === null

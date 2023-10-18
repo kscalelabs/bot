@@ -58,7 +58,6 @@ def load_token(payload: str) -> dict:
     try:
         data: dict = jwt.decode(payload, settings.jwt_secret, algorithms=[settings.algorithm])
     except Exception:
-        logger.exception("Invalid token")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
     return data
 

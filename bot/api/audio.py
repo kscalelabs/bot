@@ -57,6 +57,8 @@ async def _save_audio(user_id: int, source: AudioSource, name: str | None, audio
         audio = audio.set_sample_width(settings.audio.sample_width)
     if audio.channels != settings.audio.num_channels:
         audio = audio.set_channels(settings.audio.num_channels)
+    if audio.duration_seconds < settings.audio.min_duration:
+        raise ValueError(f"Audio duration must be greater than {settings.audio.min_duration} seconds")
     if audio.duration_seconds > settings.audio.max_duration:
         raise ValueError(f"Audio duration must be less than {settings.audio.max_duration} seconds")
 
