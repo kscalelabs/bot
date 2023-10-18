@@ -60,8 +60,13 @@ const NavigationBar = () => {
                 </Nav.Link>
               </Nav.Item>
               <Nav.Item>
-                <Nav.Link eventKey="make" onClick={() => navigate("/make")}>
-                  make
+                <Nav.Link eventKey="upload" onClick={() => navigate("/upload")}>
+                  upload
+                </Nav.Link>
+              </Nav.Item>
+              <Nav.Item>
+                <Nav.Link eventKey="mix" onClick={() => navigate("/mix")}>
+                  mix
                 </Nav.Link>
               </Nav.Item>
             </Nav>

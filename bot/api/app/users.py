@@ -1,6 +1,7 @@
 """Defines the API endpoint for creating, deleting and updating user information."""
 
 import asyncio
+import datetime
 from email.utils import parseaddr as parse_email_address
 
 import aiohttp
@@ -52,7 +53,8 @@ class SessionTokenData(BaseModel):
 
     def encode(self) -> str:
         expire_minutes = load_settings().crypto.expire_token_minutes
-        return create_token({"uid": self.user_id}, expire_minutes=expire_minutes)
+        expire_after = datetime.timedelta(minutes=expire_minutes)
+        return create_token({"uid": self.user_id}, expire_after=expire_after)
 
     @classmethod
     def decode(cls, payload: str) -> "SessionTokenData":
