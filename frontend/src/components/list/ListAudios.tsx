@@ -63,7 +63,7 @@ const ListAudios = (props: Props) => {
           const response = await api.get<InfoMeResponse>("/audio/info/me");
           const newStart = Math.max(
             Math.min(start, response.data.count - paginationLimit),
-            0,
+            0
           );
           setInfo(response.data);
           setStart(newStart);
@@ -178,7 +178,7 @@ const ListAudios = (props: Props) => {
                     <Col className="mt-3">No samples found</Col>
                   ) : (
                     audios.map((audioId) => (
-                      <Col sm={12} md={6} lg={6} key={audioId} className="mt-3">
+                      <Col sm={12} md={6} lg={4} key={audioId} className="mt-3">
                         <AudioPlayback audioId={audioId} />
                       </Col>
                     ))

@@ -3,6 +3,7 @@ import {
   faClipboard,
   faClipboardCheck,
   faDownload,
+  faEdit,
   faPause,
   faPlay,
 } from "@fortawesome/free-solid-svg-icons";
@@ -20,6 +21,7 @@ import {
   CardProps,
   Form,
   OverlayTrigger,
+  Popover,
   Spinner,
   Tooltip,
 } from "react-bootstrap";
@@ -49,7 +51,7 @@ const AudioPlayback: React.FC<Props> = ({
   const [deleted, setDeleted] = useState(false);
   const { sourceId, setSourceId, referenceId, setReferenceId } = useClipboard();
   const [localResponse, setLocalResponse] = useState<SingleIdResponse | null>(
-    response,
+    response
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [editing, setEditing] = useState<boolean | null>(false);
@@ -96,12 +98,14 @@ const AudioPlayback: React.FC<Props> = ({
   const handleEditButtonClick = async () => {
     if (editing) {
       try {
-        setEditing(null);
-        await api.post<boolean>("/audio/update", {
-          id: audioId,
-          name,
-        });
-        setName(name ?? "");
+        if (name !== localResponse?.name) {
+          setEditing(null);
+          await api.post<boolean>("/audio/update", {
+            id: audioId,
+            name,
+          });
+          setName(name ?? "");
+        }
       } catch (error) {
         setName(localResponse?.name ?? "");
         setErrorMessage(humanReadableError(error));
@@ -155,50 +159,42 @@ const AudioPlayback: React.FC<Props> = ({
   };
 
   return (
-    <Card {...cardProps}>
-      {title !== null && <Card.Header>{title}</Card.Header>}
-      {deleted ? (
-        <Card.Body>
-          <Card.Text>Deleted</Card.Text>
-        </Card.Body>
-      ) : (
-        <Card.Body>
+    <OverlayTrigger
+      trigger="click"
+      rootClose
+      placement="bottom"
+      overlay={
+        <Popover>
           {!localResponse ? (
             <Spinner />
           ) : (
             <>
-              <Card.Title>
-                {editing === null ? (
-                  <Spinner />
+              <Popover.Header as="h3">
+                {editing ? (
+                  <Form.Control
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    onBlur={handleEditButtonClick}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleEditButtonClick();
+                      }
+                    }}
+                    autoFocus
+                  />
                 ) : (
-                  <>
-                    {editing ? (
-                      <Form.Control
-                        type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        onBlur={handleEditButtonClick}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            handleEditButtonClick();
-                          }
-                        }}
-                        autoFocus
-                      />
-                    ) : (
-                      <span>{name ?? localResponse.name}</span>
-                    )}
-                    <Button
-                      variant="link"
-                      size="sm"
+                  <span>
+                    <FontAwesomeIcon
+                      icon={faEdit}
                       onClick={handleEditButtonClick}
-                    >
-                      {editing ? "Save" : "Edit"}
-                    </Button>
-                  </>
+                      className="me-2"
+                    />
+                    {name ?? localResponse.name}
+                  </span>
                 )}
-              </Card.Title>
-              <Card.Text>
+              </Popover.Header>
+              <Popover.Body>
                 <strong>Source:</strong> {localResponse.source}
                 <br />
                 <strong>Created:</strong>{" "}
@@ -214,116 +210,139 @@ const AudioPlayback: React.FC<Props> = ({
                     </strong>
                   </>
                 )}
-              </Card.Text>
+              </Popover.Body>
             </>
           )}
-          <ButtonToolbar>
-            {showSelectionButtons && (
-              <ButtonGroup className="mt-2 me-2">
-                <OverlayTrigger
-                  placement="top"
-                  overlay={<Tooltip>Use as source</Tooltip>}
-                >
-                  <Button
-                    onClick={() => setSourceId(audioId)}
-                    disabled={sourceId === audioId}
-                    variant={sourceId === audioId ? "success" : "primary"}
-                  >
-                    {sourceId === audioId ? (
-                      <span>
-                        <FontAwesomeIcon icon={faClipboardCheck} /> S
-                      </span>
-                    ) : (
-                      <span>
-                        <FontAwesomeIcon icon={faClipboard} /> S
-                      </span>
-                    )}
-                  </Button>
-                </OverlayTrigger>
-                <OverlayTrigger
-                  placement="top"
-                  overlay={<Tooltip>Use as reference</Tooltip>}
-                >
-                  <Button
-                    onClick={() => setReferenceId(audioId)}
-                    disabled={referenceId === audioId}
-                    variant={referenceId === audioId ? "success" : "primary"}
-                  >
-                    {referenceId === audioId ? (
-                      <span>
-                        <FontAwesomeIcon icon={faClipboardCheck} /> R
-                      </span>
-                    ) : (
-                      <span>
-                        <FontAwesomeIcon icon={faClipboard} /> R
-                      </span>
-                    )}
-                  </Button>
-                </OverlayTrigger>
-              </ButtonGroup>
+        </Popover>
+      }
+    >
+      <Card {...cardProps}>
+        {title !== null && <Card.Header>{title}</Card.Header>}
+        {deleted ? (
+          <Card.Body>
+            <Card.Text>Deleted</Card.Text>
+          </Card.Body>
+        ) : (
+          <Card.Body>
+            {localResponse ? (
+              <Card.Title>
+                {editing === null ? (
+                  <Spinner />
+                ) : (
+                  <span>{name ?? localResponse.name}</span>
+                )}
+              </Card.Title>
+            ) : (
+              <Spinner />
             )}
-            {localResponse !== null && (
-              <ButtonGroup className="mt-2 me-2">
+            <ButtonToolbar>
+              {showSelectionButtons && (
+                <ButtonGroup className="mt-2 me-2">
+                  <OverlayTrigger
+                    placement="top"
+                    overlay={<Tooltip>Use as source</Tooltip>}
+                  >
+                    <Button
+                      onClick={() => setSourceId(audioId)}
+                      disabled={sourceId === audioId}
+                      variant={sourceId === audioId ? "success" : "primary"}
+                    >
+                      {sourceId === audioId ? (
+                        <span>
+                          <FontAwesomeIcon icon={faClipboardCheck} /> S
+                        </span>
+                      ) : (
+                        <span>
+                          <FontAwesomeIcon icon={faClipboard} /> S
+                        </span>
+                      )}
+                    </Button>
+                  </OverlayTrigger>
+                  <OverlayTrigger
+                    placement="top"
+                    overlay={<Tooltip>Use as reference</Tooltip>}
+                  >
+                    <Button
+                      onClick={() => setReferenceId(audioId)}
+                      disabled={referenceId === audioId}
+                      variant={referenceId === audioId ? "success" : "primary"}
+                    >
+                      {referenceId === audioId ? (
+                        <span>
+                          <FontAwesomeIcon icon={faClipboardCheck} /> R
+                        </span>
+                      ) : (
+                        <span>
+                          <FontAwesomeIcon icon={faClipboard} /> R
+                        </span>
+                      )}
+                    </Button>
+                  </OverlayTrigger>
+                </ButtonGroup>
+              )}
+              {localResponse !== null && (
+                <ButtonGroup className="mt-2 me-2">
+                  <OverlayTrigger
+                    placement="top"
+                    overlay={<Tooltip>{isPlaying ? "Pause" : "Play"}</Tooltip>}
+                  >
+                    <Button onClick={toggleAudio}>
+                      {isPlaying ? (
+                        <FontAwesomeIcon icon={faPause} />
+                      ) : (
+                        <FontAwesomeIcon icon={faPlay} />
+                      )}
+                    </Button>
+                  </OverlayTrigger>
+                  <OverlayTrigger
+                    placement="top"
+                    overlay={<Tooltip>Download</Tooltip>}
+                  >
+                    <Button as="a" variant="primary" href={getUri()} download>
+                      <FontAwesomeIcon icon={faDownload} />
+                    </Button>
+                  </OverlayTrigger>
+                </ButtonGroup>
+              )}
+              {showDeleteButton && (
+                <ButtonGroup className="mt-2 me-2">
+                  <OverlayTrigger
+                    placement="top"
+                    overlay={<Tooltip>Permanently delete</Tooltip>}
+                  >
+                    <Button
+                      onClick={handleDelete}
+                      variant="danger"
+                      disabled={acting}
+                    >
+                      <FontAwesomeIcon icon={faCancel} />
+                    </Button>
+                  </OverlayTrigger>
+                </ButtonGroup>
+              )}
+            </ButtonToolbar>
+            {errorMessage !== null && (
+              <Card.Text className="mt-2 text-danger">
                 <OverlayTrigger
                   placement="top"
-                  overlay={<Tooltip>{isPlaying ? "Pause" : "Play"}</Tooltip>}
-                >
-                  <Button onClick={toggleAudio}>
-                    {isPlaying ? (
-                      <FontAwesomeIcon icon={faPause} />
-                    ) : (
-                      <FontAwesomeIcon icon={faPlay} />
-                    )}
-                  </Button>
-                </OverlayTrigger>
-                <OverlayTrigger
-                  placement="top"
-                  overlay={<Tooltip>Download</Tooltip>}
-                >
-                  <Button as="a" variant="primary" href={getUri()} download>
-                    <FontAwesomeIcon icon={faDownload} />
-                  </Button>
-                </OverlayTrigger>
-              </ButtonGroup>
-            )}
-            {showDeleteButton && (
-              <ButtonGroup className="mt-2 me-2">
-                <OverlayTrigger
-                  placement="top"
-                  overlay={<Tooltip>Permanently delete</Tooltip>}
+                  overlay={<Tooltip>Dismiss</Tooltip>}
                 >
                   <Button
-                    onClick={handleDelete}
-                    variant="danger"
-                    disabled={acting}
+                    onClick={() => setErrorMessage(null)}
+                    variant="outline-danger"
+                    size="sm"
+                    className="me-2"
                   >
                     <FontAwesomeIcon icon={faCancel} />
                   </Button>
                 </OverlayTrigger>
-              </ButtonGroup>
+                {errorMessage}
+              </Card.Text>
             )}
-          </ButtonToolbar>
-          {errorMessage !== null && (
-            <Card.Text className="mt-2 text-danger">
-              <OverlayTrigger
-                placement="top"
-                overlay={<Tooltip>Dismiss</Tooltip>}
-              >
-                <Button
-                  onClick={() => setErrorMessage(null)}
-                  variant="outline-danger"
-                  size="sm"
-                  className="me-2"
-                >
-                  <FontAwesomeIcon icon={faCancel} />
-                </Button>
-              </OverlayTrigger>
-              {errorMessage}
-            </Card.Text>
-          )}
-        </Card.Body>
-      )}
-    </Card>
+          </Card.Body>
+        )}
+      </Card>
+    </OverlayTrigger>
   );
 };
 

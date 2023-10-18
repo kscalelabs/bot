@@ -7,7 +7,7 @@ import EmailAuthComponent from "./EmailAuthComponent";
 
 const LogInModal = () => {
   const [message, setMessage] = useState<[string, string, Variant] | null>(
-    null,
+    null
   );
   const navigate = useNavigate();
 
@@ -49,26 +49,32 @@ const LogInModal = () => {
                 <GoogleAuthComponent setMessage={setMessage} />
               </Col>
             </Row>
+
+            {message !== null && (
+              <Row className="mt-3">
+                <Col>
+                  <Alert
+                    variant={message[2]}
+                    onClose={() => setMessage(null)}
+                    dismissible
+                    style={{ margin: 0 }}
+                  >
+                    <Alert.Heading>{message[0]}</Alert.Heading>
+                    {message[1]}
+                    <div className="mt-2">
+                      <small>
+                        <i>
+                          Unexpected issues? Send an email to{" "}
+                          <code>ben@dpsh.dev</code>
+                        </i>
+                      </small>
+                    </div>
+                  </Alert>
+                </Col>
+              </Row>
+            )}
           </Col>
         </Row>
-        {message !== null && (
-          <Alert
-            variant={message[2]}
-            onClose={() => setMessage(null)}
-            dismissible
-            className="mt-3"
-          >
-            <Alert.Heading>{message[0]}</Alert.Heading>
-            {message[1]}
-            <div className="mt-2">
-              <small>
-                <i>
-                  Unexpected issues? Send an email to <code>ben@dpsh.dev</code>
-                </i>
-              </small>
-            </div>
-          </Alert>
-        )}
       </Modal.Body>
     </Modal>
   );
