@@ -54,23 +54,6 @@ interface AuthenticationProviderProps {
   children: React.ReactNode;
 }
 
-export const refreshSessionToken = async (
-  api: AxiosInstance,
-  refreshToken: string
-) => {
-  const response = await api.post<RefreshTokenResponse>(
-    "/users/refresh",
-    {},
-    {
-      headers: {
-        Authorization: `Bearer ${refreshToken}`,
-        "Access-Control-Allow-Origin": "*",
-      },
-    }
-  );
-  return response.data.token;
-};
-
 export const AuthenticationProvider = (props: AuthenticationProviderProps) => {
   const { children } = props;
 
@@ -83,9 +66,14 @@ export const AuthenticationProvider = (props: AuthenticationProviderProps) => {
 
   const navigate = useNavigate();
 
-  const isAuthenticated = sessionToken !== null;
+  const isAuthenticated = refreshToken !== null;
 
   const api = axios.create({
+    withCredentials: true,
+    baseURL: BACKEND_URL,
+  });
+
+  const baseApi = axios.create({
     withCredentials: true,
     baseURL: BACKEND_URL,
   });
@@ -137,10 +125,17 @@ export const AuthenticationProvider = (props: AuthenticationProviderProps) => {
 
         try {
           // Gets a new session token and try the request again.
-          const localSessionToken = await refreshSessionToken(
-            api,
-            refreshToken
+          const response = await baseApi.post<RefreshTokenResponse>(
+            "/users/refresh",
+            {},
+            {
+              headers: {
+                Authorization: `Bearer ${refreshToken}`,
+                "Access-Control-Allow-Origin": "*",
+              },
+            }
           );
+          const localSessionToken = response.data.token;
           setSessionToken(localSessionToken);
           originalRequest.headers.Authorization = `Bearer ${localSessionToken}`;
           return await api(originalRequest);
