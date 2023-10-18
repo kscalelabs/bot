@@ -1,4 +1,4 @@
-import { faR, faS, faWandSparkles } from "@fortawesome/free-solid-svg-icons";
+import { faR, faS } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAlertQueue } from "hooks/alerts";
 import { useAuthentication } from "hooks/auth";
@@ -62,7 +62,7 @@ const SourceButton = (props: Props) => {
               setSourceId(audioId);
             }
           }}
-          variant={isSource ? "success" : "primary"}
+          variant={isSource ? "secondary" : "primary"}
         >
           <span>
             <FontAwesomeIcon icon={faS} style={{ width: 15, height: 15 }} />
@@ -80,15 +80,16 @@ const SourceButton = (props: Props) => {
           </Tooltip>
         }
       >
-        <Button onClick={runInference} disabled={isDisabled} variant="primary">
+        <Button
+          onClick={runInference}
+          disabled={isDisabled}
+          variant={isReference ? "primary" : "success"}
+        >
           <span>
             {isDisabled ? (
               <Spinner animation="border" style={{ width: 15, height: 15 }} />
             ) : (
-              <FontAwesomeIcon
-                icon={isReference ? faS : faWandSparkles}
-                style={{ width: 15, height: 15 }}
-              />
+              <FontAwesomeIcon icon={faS} style={{ width: 15, height: 15 }} />
             )}
           </span>
         </Button>
@@ -146,7 +147,7 @@ const ReferenceButton = (props: Props) => {
               setReferenceId(audioId);
             }
           }}
-          variant={isReference ? "success" : "primary"}
+          variant={isReference ? "secondary" : "primary"}
         >
           <span>
             <FontAwesomeIcon icon={faR} style={{ width: 15, height: 15 }} />
@@ -162,15 +163,16 @@ const ReferenceButton = (props: Props) => {
           <Tooltip>{isSource ? "Use as reference" : "Mix with source"}</Tooltip>
         }
       >
-        <Button onClick={runInference} disabled={isDisabled} variant="primary">
+        <Button
+          onClick={runInference}
+          disabled={isDisabled}
+          variant={isSource ? "primary" : "success"}
+        >
           <span>
             {isDisabled ? (
               <Spinner animation="border" style={{ width: 15, height: 15 }} />
             ) : (
-              <FontAwesomeIcon
-                icon={isSource ? faR : faWandSparkles}
-                style={{ width: 15, height: 15 }}
-              />
+              <FontAwesomeIcon icon={faR} style={{ width: 15, height: 15 }} />
             )}
           </span>
         </Button>
