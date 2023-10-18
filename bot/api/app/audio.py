@@ -9,7 +9,6 @@ from fastapi import (
     Depends,
     Form,
     HTTPException,
-    Request,
     UploadFile,
     status,
 )
