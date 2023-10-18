@@ -28,7 +28,7 @@ const DeleteAccountComponent = () => {
         setUseSpinner(false);
       }
     },
-    [navigate, logout, api]
+    [navigate, logout, api],
   );
 
   return (

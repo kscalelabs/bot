@@ -8,7 +8,7 @@ Welcome to the discord bot package!
 
 # Installing
 
-1. Create a new Conda environment: `conda create --name discord-bot python=3.10`
+1. Create a new Conda environment: `conda create --name discord-bot python=3.11`
 2. Activate the environment: `conda activate discord-bot`
 3. Install the package: `make install-dev`
 

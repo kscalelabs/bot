@@ -68,7 +68,7 @@ const ListGenerations = (props: Props) => {
           const response = await api.get<InfoMeResponse>("/generation/info/me");
           const newStart = Math.max(
             Math.min(start, response.data.count - paginationLimit),
-            0
+            0,
           );
           setInfo(response.data);
           setStart(newStart);
@@ -87,7 +87,7 @@ const ListGenerations = (props: Props) => {
                 start: start,
                 limit: paginationLimit,
               } as QueryMeRequest,
-            }
+            },
           );
           setGenerations(response.data.generations);
         } catch (error) {

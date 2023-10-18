@@ -18,7 +18,7 @@ const SingleGenerationPage = () => {
   const { id } = useParams();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [response, setResponse] = useState<SingleGenerationResponse | null>(
-    null
+    null,
   );
   const { api } = useAuthentication();
 
@@ -32,7 +32,7 @@ const SingleGenerationPage = () => {
               params: {
                 id,
               },
-            }
+            },
           );
           setResponse(apiResponse.data);
         } catch (error) {
