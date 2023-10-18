@@ -27,7 +27,7 @@ interface AlertQueueContextProps {
 }
 
 const AlertQueueContext = createContext<AlertQueueContextProps | undefined>(
-  undefined
+  undefined,
 );
 
 interface AlertQueueProviderProps {
