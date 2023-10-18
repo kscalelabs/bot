@@ -22,6 +22,7 @@ interface AudioProps {
   showMixerButtons?: boolean;
   response?: SingleIdResponse;
   showLink?: boolean;
+  showDownload?: boolean;
   tooltipPlacement?: Placement;
   settingsPlacement?: Placement;
 }
@@ -34,13 +35,14 @@ const AudioPlayback: React.FC<Props> = ({
   showMixerButtons = true,
   response = null,
   showLink = true,
+  showDownload = true,
   tooltipPlacement = "top",
   settingsPlacement = "bottom",
   ...containerProps
 }) => {
   const [deleted, setDeleted] = useState(false);
   const [localResponse, setLocalResponse] = useState<SingleIdResponse | null>(
-    response,
+    response
   );
   const [name, setName] = useState<string>("");
   const { api } = useAuthentication();
@@ -97,6 +99,7 @@ const AudioPlayback: React.FC<Props> = ({
                   name={name}
                   setName={setName}
                   showLink={showLink}
+                  showDownload={showDownload}
                   showDeleteButton={showDeleteButton}
                   setDeleted={setDeleted}
                 />

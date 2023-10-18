@@ -17,11 +17,11 @@ const AudioPlayButton = (props: Props) => {
 
   const [isPlaying, setIsPlaying] = useState(false);
 
-  const url = `/audio/media/${audioId}.flac`;
-
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const getUri = useCallback(() => {
+    const url = `/audio/media/${audioId}.flac`;
+
     return api.getUri({
       url,
       method: "get",
@@ -29,7 +29,7 @@ const AudioPlayButton = (props: Props) => {
         access_token: sessionToken,
       },
     });
-  }, [url, sessionToken, api]);
+  }, [audioId, sessionToken, api]);
 
   useEffect(() => {
     if (audioRef.current !== null) {

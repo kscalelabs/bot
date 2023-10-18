@@ -5,7 +5,7 @@ import { SingleIdResponse } from "constants/types";
 import { useAlertQueue } from "hooks/alerts";
 import { useAuthentication } from "hooks/auth";
 import { useClipboard } from "hooks/clipboard";
-import React, { ForwardedRef, forwardRef, useState } from "react";
+import React, { ForwardedRef, forwardRef, useCallback, useState } from "react";
 import { Button, Form, Popover, Spinner } from "react-bootstrap";
 import { Link } from "react-router-dom";
 
@@ -15,6 +15,7 @@ interface Props {
   name: string;
   setName: (name: string) => void;
   showLink: boolean;
+  showDownload: boolean;
   showDeleteButton: boolean;
   setDeleted: (deleted: boolean) => void;
 }
@@ -27,6 +28,7 @@ const AudioPopover = forwardRef(
       name,
       setName,
       showLink,
+      showDownload,
       showDeleteButton,
       setDeleted,
       ...popoverProps
@@ -34,10 +36,22 @@ const AudioPopover = forwardRef(
     const [editing, setEditing] = useState<boolean | null>(false);
     const [acting, setActing] = useState(false);
 
-    const { api } = useAuthentication();
+    const { api, sessionToken } = useAuthentication();
     const { sourceId, setSourceId, referenceId, setReferenceId } =
       useClipboard();
     const { addAlert } = useAlertQueue();
+
+    const getUri = useCallback(() => {
+      const url = `/audio/media/${audioId}.flac`;
+
+      return api.getUri({
+        url,
+        method: "get",
+        params: {
+          access_token: sessionToken,
+        },
+      });
+    }, [audioId, sessionToken, api]);
 
     const handleEditButtonClick = async () => {
       if (editing) {
@@ -122,12 +136,26 @@ const AudioPopover = forwardRef(
               <br />
               <strong>Duration:</strong> {localResponse.duration.toFixed(1)}{" "}
               seconds
-              {showLink && (
+              {(showLink || showDownload) && (
                 <>
                   <br />
-                  <strong>
-                    <Link to={`/audio/${audioId}`}>Link</Link>
-                  </strong>
+                  <span>
+                    {showLink && (
+                      <strong>
+                        <Link to={`/audio/${audioId}`}>Permalink</Link>
+                      </strong>
+                    )}
+                    {showDownload && (
+                      <>
+                        {showLink && " | "}
+                        <strong>
+                          <a href={getUri()} download>
+                            Download
+                          </a>
+                        </strong>
+                      </>
+                    )}
+                  </span>
                 </>
               )}
               {showDeleteButton && (
@@ -149,7 +177,7 @@ const AudioPopover = forwardRef(
         )}
       </Popover>
     );
-  },
+  }
 );
 
 export default AudioPopover;
