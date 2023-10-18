@@ -11,18 +11,26 @@ interface AdminResopnse {
 }
 
 const AdminAudioComponent = () => {
-  const [uuid, setUuid] = useState("");
+  const [idString, setIdString] = useState("");
   const [isPublic, setIsPublic] = useState(false);
   const [buttonEnabled, setButtonEnabled] = useState(true);
 
   const { api } = useAuthentication();
   const { addAlert } = useAlertQueue();
 
-  const handleCheckEmail = async () => {
+  const handleCheck = async () => {
+    let id;
+    try {
+      id = parseInt(idString.trim());
+    } catch (error) {
+      addAlert("ID is not a number", "error");
+      return;
+    }
+
     setButtonEnabled(false);
     try {
       const response = await api.post<AdminResopnse>("/admin/act/content", {
-        uuid,
+        id,
       });
       setIsPublic(response.data.public);
       setButtonEnabled(true);
@@ -33,15 +41,23 @@ const AdminAudioComponent = () => {
     }
   };
 
-  const handleAdminAction = async () => {
+  const handleAct = async () => {
+    let id;
+    try {
+      id = parseInt(idString.trim());
+    } catch (error) {
+      addAlert("ID is not a number", "error");
+      return;
+    }
+
     setButtonEnabled(false);
     try {
       await api.post("/admin/act/content", {
-        uuid,
+        id,
         public: isPublic,
       });
       setIsPublic(false);
-      setUuid("");
+      setIdString("");
     } catch (error) {
       addAlert(humanReadableError(error), "error");
     } finally {
@@ -56,9 +72,9 @@ const AdminAudioComponent = () => {
           type="text"
           placeholder="Audio ID"
           onChange={(e) => {
-            setUuid(e.target.value);
+            setIdString(e.target.value);
           }}
-          value={uuid}
+          value={idString}
         />
       </Form.Group>
       <Form.Group>
@@ -76,15 +92,11 @@ const AdminAudioComponent = () => {
         <Button
           variant="primary"
           disabled={!buttonEnabled}
-          onClick={handleCheckEmail}
+          onClick={handleCheck}
         >
           <FontAwesomeIcon icon={faCheck} /> Check ID
         </Button>
-        <Button
-          variant="danger"
-          disabled={!buttonEnabled}
-          onClick={handleAdminAction}
-        >
+        <Button variant="danger" disabled={!buttonEnabled} onClick={handleAct}>
           <FontAwesomeIcon icon={faRunning} /> Take Action
         </Button>
       </ButtonGroup>

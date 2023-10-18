@@ -27,7 +27,7 @@ interface AlertQueueContextProps {
 }
 
 const AlertQueueContext = createContext<AlertQueueContextProps | undefined>(
-  undefined,
+  undefined
 );
 
 interface AlertQueueProviderProps {
@@ -107,7 +107,7 @@ export const AlertQueue = (props: AlertQueueProps) => {
       <ToastContainer
         className="p-3"
         position="bottom-center"
-        style={{ zIndex: 10 }}
+        style={{ zIndex: 10, position: "fixed" }}
       >
         {Array.from(alerts).map(([alertId, [alert, kind]]) => {
           return (
