@@ -7,7 +7,7 @@ import EmailAuthComponent from "./EmailAuthComponent";
 
 const LogInModal = () => {
   const [message, setMessage] = useState<[string, string, Variant] | null>(
-    null
+    null,
   );
   const navigate = useNavigate();
 
