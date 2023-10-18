@@ -68,7 +68,7 @@ const SidebarComponent = (props: Props) => {
                 width: "1.25em",
               }}
             />{" "}
-            Light Mode
+            {darkMode ? "Light" : "Dark"} Mode
           </ListGroup.Item>
           {isAuthenticated ? (
             <>

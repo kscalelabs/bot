@@ -1,5 +1,6 @@
 import AudioPlayback from "components/playback/AudioPlayback";
 import { humanReadableError } from "constants/backend";
+import { useAlertQueue } from "hooks/alerts";
 import { useAuthentication } from "hooks/auth";
 import { useEffect, useState } from "react";
 import { Alert, Button, Card, Spinner } from "react-bootstrap";
@@ -13,7 +14,6 @@ interface UploadAudioResponse {
 }
 
 const AudioRecorder = () => {
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [audioBlob, setAudioBlob] = useState<[string, Blob] | null>(null);
   const [showSpinner, setShowSpinner] = useState(false);
   const [lastId, setLastId] = useState<number | null>(null);
@@ -24,6 +24,7 @@ const AudioRecorder = () => {
   const [buttonDisabled, setButtonDisabled] = useState(false);
 
   const { api } = useAuthentication();
+  const { addAlert } = useAlertQueue();
 
   const { startRecording, stopRecording } = useReactMediaRecorder({
     audio: true,
@@ -38,7 +39,6 @@ const AudioRecorder = () => {
 
       const blob = audioBlob[1];
 
-      setErrorMessage(null);
       setShowSuccess(false);
       setShowSpinner(true);
 
@@ -59,7 +59,7 @@ const AudioRecorder = () => {
         setShowSuccess(true);
         setLastId(response.data.id);
       } catch (error) {
-        setErrorMessage(humanReadableError(error));
+        addAlert(humanReadableError(error), "error");
       } finally {
         setShowSpinner(false);
       }
@@ -118,7 +118,6 @@ const AudioRecorder = () => {
               } else {
                 start();
               }
-              setErrorMessage(null);
             }}
             variant={isRecording ? "danger" : "primary"}
             disabled={buttonDisabled}
@@ -131,21 +130,6 @@ const AudioRecorder = () => {
           </Button>
         )}
       </div>
-      {errorMessage && (
-        <Alert
-          variant="warning"
-          className="mt-3"
-          onClose={() => setErrorMessage(null)}
-          dismissible
-        >
-          <Alert.Heading>Oh snap!</Alert.Heading>
-          <div>
-            An error occurred while uploading your recorded audio:
-            <br />
-            <code>{errorMessage}</code>
-          </div>
-        </Alert>
-      )}
       {showSuccess && (
         <Alert
           variant="success"

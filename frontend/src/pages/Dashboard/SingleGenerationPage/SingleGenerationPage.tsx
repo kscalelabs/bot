@@ -1,8 +1,9 @@
 import SingleGeneration from "components/playback/SingleGeneration";
 import { humanReadableError } from "constants/backend";
+import { useAlertQueue } from "hooks/alerts";
 import { useAuthentication } from "hooks/auth";
 import { useEffect, useState } from "react";
-import { Alert, Col, Container, Row, Spinner } from "react-bootstrap";
+import { Col, Container, Row, Spinner } from "react-bootstrap";
 import { Navigate, useParams } from "react-router-dom";
 
 interface SingleGenerationResponse {
@@ -16,11 +17,12 @@ interface SingleGenerationResponse {
 
 const SingleGenerationPage = () => {
   const { id } = useParams();
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [response, setResponse] = useState<SingleGenerationResponse | null>(
     null,
   );
+
   const { api } = useAuthentication();
+  const { addAlert } = useAlertQueue();
 
   useEffect(() => {
     if (response === null) {
@@ -36,7 +38,7 @@ const SingleGenerationPage = () => {
           );
           setResponse(apiResponse.data);
         } catch (error) {
-          setErrorMessage(humanReadableError(error));
+          addAlert(humanReadableError(error), "error");
         }
       })();
     }
@@ -74,21 +76,6 @@ const SingleGenerationPage = () => {
               )}
             </Col>
           </Row>
-          {errorMessage !== null && (
-            <Alert
-              variant="danger"
-              className="mt-3"
-              onClose={() => setErrorMessage(null)}
-              dismissible
-            >
-              <Alert.Heading>Oh snap!</Alert.Heading>
-              <div>
-                Encountered an error retrieving this generation:
-                <br />
-                <code>{errorMessage}</code>
-              </div>
-            </Alert>
-          )}
         </Col>
       </Row>
     </Container>

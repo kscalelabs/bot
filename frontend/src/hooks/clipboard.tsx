@@ -1,5 +1,6 @@
 import { humanReadableError } from "constants/backend";
 import React, { createContext, useContext, useState } from "react";
+import { useAlertQueue } from "./alerts";
 import { useAuthentication } from "./auth";
 
 const MAX_SUBMISSION_IDS = 10;
@@ -9,7 +10,6 @@ interface ClipboardContextProps {
   referenceId: number | null;
   setSourceId: (id: number | null) => void;
   setReferenceId: (id: number | null) => void;
-  lastErrorMessage: string | null;
   submissionIds: number[];
   submitting: boolean;
   submit: () => void;
@@ -31,11 +31,11 @@ export const ClipboardProvider = (props: ClipboardProviderProps) => {
   const { children } = props;
   const [sourceId, setSourceId] = useState<number | null>(null);
   const [referenceId, setReferenceId] = useState<number | null>(null);
-  const [lastErrorMessage, setLastErrorMessage] = useState<string | null>(null);
   const [submissionIds, setSubmissionIds] = useState<number[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   const { api } = useAuthentication();
+  const { addAlert } = useAlertQueue();
 
   const submit = async () => {
     setSubmitting(true);
@@ -52,7 +52,7 @@ export const ClipboardProvider = (props: ClipboardProviderProps) => {
         }
       });
     } catch (error) {
-      setLastErrorMessage(humanReadableError(error));
+      addAlert(humanReadableError(error), "error");
     } finally {
       setSubmitting(false);
     }
@@ -65,7 +65,6 @@ export const ClipboardProvider = (props: ClipboardProviderProps) => {
         referenceId,
         setSourceId,
         setReferenceId,
-        lastErrorMessage,
         submissionIds,
         submitting,
         submit,

@@ -37,7 +37,7 @@ const AudioSelection = (props: Props) => {
             <AudioPlayback
               audioId={audioId}
               showDeleteButton={false}
-              showSelectionButtons={false}
+              showMixerButtons={false}
             />
             <ButtonGroup className="mt-3 me-2">
               <OverlayTrigger
