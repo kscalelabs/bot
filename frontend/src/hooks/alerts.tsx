@@ -27,7 +27,7 @@ interface AlertQueueContextProps {
 }
 
 const AlertQueueContext = createContext<AlertQueueContextProps | undefined>(
-  undefined,
+  undefined
 );
 
 interface AlertQueueProviderProps {
@@ -45,21 +45,24 @@ export const AlertQueueProvider = (props: AlertQueueProviderProps) => {
     return Math.random().toString(36).substring(2);
   }, []);
 
-  const addAlert = (alert: string | React.ReactNode, kind: AlertType) => {
-    setAlerts((prev) => {
-      const newAlerts = new Map(prev);
-      const alertId = generateAlertId();
-      newAlerts.set(alertId, [alert, kind]);
+  const addAlert = useCallback(
+    (alert: string | React.ReactNode, kind: AlertType) => {
+      setAlerts((prev) => {
+        const newAlerts = new Map(prev);
+        const alertId = generateAlertId();
+        newAlerts.set(alertId, [alert, kind]);
 
-      // Ensure the map doesn't exceed MAX_ERRORS
-      while (newAlerts.size > MAX_ERRORS) {
-        const firstKey = Array.from(newAlerts.keys())[0];
-        newAlerts.delete(firstKey);
-      }
+        // Ensure the map doesn't exceed MAX_ERRORS
+        while (newAlerts.size > MAX_ERRORS) {
+          const firstKey = Array.from(newAlerts.keys())[0];
+          newAlerts.delete(firstKey);
+        }
 
-      return newAlerts;
-    });
-  };
+        return newAlerts;
+      });
+    },
+    []
+  );
 
   const removeAlert = (alertId: string) => {
     setAlerts((prev) => {
@@ -68,8 +71,6 @@ export const AlertQueueProvider = (props: AlertQueueProviderProps) => {
       return newAlerts;
     });
   };
-
-  console.log(alerts);
 
   return (
     <AlertQueueContext.Provider
