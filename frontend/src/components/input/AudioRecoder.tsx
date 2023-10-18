@@ -54,7 +54,7 @@ const AudioRecorder = () => {
             headers: {
               "Content-Type": "multipart/form-data",
             },
-          }
+          },
         );
         setShowSuccess(true);
         setLastId(response.data.id);
