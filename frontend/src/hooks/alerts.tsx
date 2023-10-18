@@ -120,6 +120,11 @@ export const AlertQueue = (props: AlertQueueProps) => {
               onClose={() => removeAlert(alertId)}
               animation={true}
             >
+              <Toast.Header>
+                <strong className="me-auto">
+                  {kind.charAt(0).toUpperCase() + kind.slice(1)}
+                </strong>
+              </Toast.Header>
               <Toast.Body>{alert}</Toast.Body>
             </Toast>
           );
