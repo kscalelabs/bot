@@ -64,6 +64,7 @@ def mock_load_settings(mocker: MockerFixture, tmpdir_factory: TempdirFactory) ->
     settings.file.fs_type = "file"
     settings.file.audio.file_ext = "flac"
     settings.file.root_dir = str(file_root_dir)
+    settings.file.audio.min_duration = 0.0
 
     # Sets the default email settings.
     settings.email.host = "localhost"
