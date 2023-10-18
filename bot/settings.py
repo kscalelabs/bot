@@ -84,7 +84,8 @@ class AudioFileSettings:
     num_channels: int = field(default=1)
     res_type: str = field(default="kaiser_fast")
     max_mb: int = field(default=10)
-    max_duration: float = field(default=10.0)
+    min_duration: float = field(default=5.0)
+    max_duration: float = field(default=30.0)
 
 
 @dataclass

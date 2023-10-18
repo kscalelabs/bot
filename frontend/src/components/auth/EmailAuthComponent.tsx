@@ -1,19 +1,16 @@
 import { faEnvelope } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { humanReadableError } from "constants/backend";
+import { useAlertQueue } from "hooks/alerts";
 import { useAuthentication } from "hooks/auth";
 import { useState } from "react";
 import { Button, ButtonGroup, FloatingLabel, Form } from "react-bootstrap";
-import { Variant } from "react-bootstrap/esm/types";
 
-interface Props {
-  setMessage: (message: [string, string, Variant] | null) => void;
-}
-
-const EmailAuthComponent = ({ setMessage }: Props) => {
+const EmailAuthComponent = () => {
   const [email, setEmail] = useState("");
   const [isDisabled, setIsDisabled] = useState(false);
   const { api } = useAuthentication();
+  const { addAlert } = useAlertQueue();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,9 +23,9 @@ const EmailAuthComponent = ({ setMessage }: Props) => {
         email,
         login_url,
       });
-      setMessage(["Success!", "Check your email for a login link.", "success"]);
+      addAlert("Check your email for a login link.", "success");
     } catch (error) {
-      setMessage(["Error", humanReadableError(error), "error"]);
+      addAlert(humanReadableError(error), "error");
     } finally {
       setIsDisabled(false);
     }

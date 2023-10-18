@@ -1,14 +1,9 @@
 import GoogleAuthComponent from "components/auth/GoogleAuthComponent";
-import { useState } from "react";
-import { Alert, Col, Modal, Row } from "react-bootstrap";
-import { Variant } from "react-bootstrap/esm/types";
+import { Col, Modal, Row } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import EmailAuthComponent from "./EmailAuthComponent";
 
 const LogInModal = () => {
-  const [message, setMessage] = useState<[string, string, Variant] | null>(
-    null,
-  );
   const navigate = useNavigate();
 
   const navigateToPreviousPage = () => {
@@ -28,7 +23,7 @@ const LogInModal = () => {
 
             <Row className="mb-3 text-center">
               <Col>
-                <EmailAuthComponent setMessage={setMessage} />
+                <EmailAuthComponent />
               </Col>
             </Row>
 
@@ -46,29 +41,11 @@ const LogInModal = () => {
 
             <Row className="mt-3 text-center">
               <Col>
-                <GoogleAuthComponent setMessage={setMessage} />
+                <GoogleAuthComponent />
               </Col>
             </Row>
           </Col>
         </Row>
-        {message !== null && (
-          <Alert
-            variant={message[2]}
-            onClose={() => setMessage(null)}
-            dismissible
-            className="mt-3"
-          >
-            <Alert.Heading>{message[0]}</Alert.Heading>
-            {message[1]}
-            <div className="mt-2">
-              <small>
-                <i>
-                  Unexpected issues? Send an email to <code>ben@dpsh.dev</code>
-                </i>
-              </small>
-            </div>
-          </Alert>
-        )}
       </Modal.Body>
     </Modal>
   );

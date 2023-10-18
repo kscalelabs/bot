@@ -123,6 +123,7 @@ export const AuthenticationProvider = (props: AuthenticationProviderProps) => {
           return Promise.reject(error);
         }
 
+        let localSessionToken;
         try {
           // Gets a new session token and try the request again.
           const response = await baseApi.post<RefreshTokenResponse>(
@@ -135,10 +136,7 @@ export const AuthenticationProvider = (props: AuthenticationProviderProps) => {
               },
             },
           );
-          const localSessionToken = response.data.token;
-          setSessionToken(localSessionToken);
-          originalRequest.headers.Authorization = `Bearer ${localSessionToken}`;
-          return await api(originalRequest);
+          localSessionToken = response.data.token;
         } catch (refreshError) {
           if (axios.isAxiosError(refreshError)) {
             const axiosError = refreshError as AxiosError;
@@ -148,6 +146,17 @@ export const AuthenticationProvider = (props: AuthenticationProviderProps) => {
           }
           return Promise.reject(refreshError);
         }
+
+        // Retry the request with the new session token.
+        setSessionToken(localSessionToken);
+        const updatedRequest = {
+          ...originalRequest,
+          headers: {
+            Authorization: `Bearer ${localSessionToken}`,
+            "Access-Control-Allow-Origin": "*",
+          },
+        };
+        return await baseApi(updatedRequest);
       }
 
       return Promise.reject(error);

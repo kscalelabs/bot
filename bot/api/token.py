@@ -15,15 +15,14 @@ logger = logging.getLogger(__name__)
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
-def create_token(data: dict, expire_minutes: int | None = None) -> str:
+def create_token(data: dict, expire_after: datetime.timedelta | None = None) -> str:
     """Creates a token from a dictionary.
 
     The "exp" key is reserved for internal use.
 
     Args:
         data: The data to encode.
-        expire_minutes: The number of minutes until the token expires. If not
-            provided, will default to the internal settings.
+        expire_after: If provided, token will expire after this amount of time.
 
     Returns:
         The encoded JWT.
@@ -35,9 +34,8 @@ def create_token(data: dict, expire_minutes: int | None = None) -> str:
 
     # JWT exp claim expects a timestamp in seconds. This will automatically be
     # used to determine if the token is expired.
-    expires: datetime.datetime | None = None
-    if expire_minutes is not None:
-        expires = server_time() + datetime.timedelta(minutes=expire_minutes)
+    if expire_after is not None:
+        expires = server_time() + expire_after
         to_encode.update({"exp": expires})
 
     encoded_jwt = jwt.encode(to_encode, settings.jwt_secret, algorithm=settings.algorithm)
@@ -58,7 +56,6 @@ def load_token(payload: str) -> dict:
     try:
         data: dict = jwt.decode(payload, settings.jwt_secret, algorithms=[settings.algorithm])
     except Exception:
-        logger.exception("Invalid token")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
     return data
 

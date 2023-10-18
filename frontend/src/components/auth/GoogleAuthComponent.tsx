@@ -2,27 +2,24 @@ import { faGoogle } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
 import { humanReadableError } from "constants/backend";
+import { useAlertQueue } from "hooks/alerts";
 import { useAuthentication } from "hooks/auth";
 import { useEffect, useState } from "react";
 import { Button } from "react-bootstrap";
-import { Variant } from "react-bootstrap/esm/types";
 
 const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID || "";
-
-interface Props {
-  setMessage: (message: [string, string, Variant] | null) => void;
-}
 
 interface UserLoginResponse {
   token: string;
   token_type: string;
 }
 
-const GoogleAuthComponentInner = ({ setMessage }: Props) => {
+const GoogleAuthComponentInner = () => {
   const [credential, setCredential] = useState<string | null>(null);
   const [disableButton, setDisableButton] = useState(false);
 
   const { setRefreshToken, api } = useAuthentication();
+  const { addAlert } = useAlertQueue();
 
   useEffect(() => {
     (async () => {
@@ -33,25 +30,25 @@ const GoogleAuthComponentInner = ({ setMessage }: Props) => {
           });
           setRefreshToken(response.data.token);
         } catch (error) {
-          setMessage(["Error", humanReadableError(error), "error"]);
+          addAlert(humanReadableError(error), "error");
         } finally {
           setCredential(null);
         }
       }
     })();
-  }, [credential, setMessage, setRefreshToken, api]);
+  }, [credential, setRefreshToken, api, addAlert]);
 
   const login = useGoogleLogin({
     onSuccess: (tokenResponse) => {
       const returnedCredential = tokenResponse.access_token;
       if (returnedCredential === undefined) {
-        setMessage(["Error", "Failed to login using Google OAuth.", "error"]);
+        addAlert("Failed to login using Google OAuth.", "error");
       } else {
         setCredential(returnedCredential);
       }
     },
     onError: () => {
-      setMessage(["Error", "Failed to login using Google OAuth.", "error"]);
+      addAlert("Failed to login using Google OAuth.", "error");
       setDisableButton(false);
     },
   });
@@ -72,10 +69,10 @@ const GoogleAuthComponentInner = ({ setMessage }: Props) => {
   );
 };
 
-const GoogleAuthComponent = (props: Props) => {
+const GoogleAuthComponent = () => {
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <GoogleAuthComponentInner {...props} />
+      <GoogleAuthComponentInner />
     </GoogleOAuthProvider>
   );
 };

@@ -1,6 +1,7 @@
 import AudioSelection from "components/input/AudioSelection";
 import AudioPlayback from "components/playback/AudioPlayback";
 import { humanReadableError } from "constants/backend";
+import { useAlertQueue } from "hooks/alerts";
 import { useAuthentication } from "hooks/auth";
 import { useClipboard } from "hooks/clipboard";
 import { useState } from "react";
@@ -11,31 +12,28 @@ interface RunResponse {
 }
 
 const AudioMixer = () => {
-  const [preErrorMessage, setPreErrorMessage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showSpinner, setShowSpinner] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [lastId, setLastId] = useState<number | null>(null);
 
   const { sourceId, referenceId } = useClipboard();
   const { api } = useAuthentication();
+  const { addAlert } = useAlertQueue();
 
   const handleSubmit = async () => {
     if (sourceId === null && referenceId === null) {
-      setPreErrorMessage("Please select a source and reference audio file.");
+      addAlert("Please select a source and reference audio file.", "error");
       return;
     }
     if (sourceId === null) {
-      setPreErrorMessage("Please select a source audio file.");
+      addAlert("Please select a source audio file.", "error");
       return;
     }
     if (referenceId === null) {
-      setPreErrorMessage("Please select a reference audio file.");
+      addAlert("Please select a reference audio file.", "error");
       return;
     }
 
-    setPreErrorMessage(null);
-    setErrorMessage(null);
     setShowSuccess(false);
     setShowSpinner(true);
 
@@ -47,7 +45,7 @@ const AudioMixer = () => {
       setShowSuccess(true);
       setLastId(response.data.id);
     } catch (error) {
-      setErrorMessage(humanReadableError(error));
+      addAlert(humanReadableError(error), "error");
     } finally {
       setShowSpinner(false);
     }
@@ -72,28 +70,6 @@ const AudioMixer = () => {
           <Button onClick={handleSubmit}>Mix</Button>
         )}
       </div>
-      {(errorMessage || preErrorMessage) && (
-        <Alert
-          variant="warning"
-          className="mt-3"
-          onClose={() => {
-            setErrorMessage(null);
-            setPreErrorMessage(null);
-          }}
-          dismissible
-        >
-          <Alert.Heading>Oh snap!</Alert.Heading>
-          {preErrorMessage === null ? (
-            <div>
-              An error occurred while mixing your audio samples:
-              <br />
-              <code>{errorMessage}</code>
-            </div>
-          ) : (
-            <div>{preErrorMessage}</div>
-          )}
-        </Alert>
-      )}
       {showSuccess && (
         <Alert
           variant="success"
@@ -111,7 +87,7 @@ const AudioMixer = () => {
           audioId={lastId}
           title="Last Upload"
           showDeleteButton={false}
-          showSelectionButtons={false}
+          showMixerButtons={false}
         />
       )}
     </Card.Body>

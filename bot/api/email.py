@@ -2,6 +2,7 @@
 
 import argparse
 import asyncio
+import datetime
 import logging
 import textwrap
 from dataclasses import dataclass
@@ -40,7 +41,8 @@ class OneTimePassPayload:
 
     def encode(self) -> str:
         expire_minutes = load_settings().crypto.expire_otp_minutes
-        return create_token({"email": self.email}, expire_minutes=expire_minutes)
+        expire_after = datetime.timedelta(minutes=expire_minutes)
+        return create_token({"email": self.email}, expire_after=expire_after)
 
     @classmethod
     def decode(cls, payload: str) -> "OneTimePassPayload":

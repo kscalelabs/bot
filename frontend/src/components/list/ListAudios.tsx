@@ -2,10 +2,10 @@ import { faSync } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import AudioPlayback from "components/playback/AudioPlayback";
 import { humanReadableError } from "constants/backend";
+import { useAlertQueue } from "hooks/alerts";
 import { useAuthentication } from "hooks/auth";
 import { useEffect, useState } from "react";
 import {
-  Alert,
   Button,
   ButtonGroup,
   ButtonToolbar,
@@ -17,7 +17,7 @@ import {
   Spinner,
 } from "react-bootstrap";
 
-const DEFAULT_PAGINATE_LIMIT = 10;
+const DEFAULT_PAGINATE_LIMIT = 50;
 
 interface ListProps {
   paginationLimit?: number;
@@ -50,11 +50,11 @@ const ListAudios = (props: Props) => {
   } = props;
   const [info, setInfo] = useState<InfoMeResponse | null>(null);
   const [audios, setAudios] = useState<number[] | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [start, setStart] = useState(0);
   const [searchTerm, setSearchTerm] = useState<string>("");
 
   const { api } = useAuthentication();
+  const { addAlert } = useAlertQueue();
 
   useEffect(() => {
     if (info === null) {
@@ -69,7 +69,7 @@ const ListAudios = (props: Props) => {
           setStart(newStart);
           setAudios(null);
         } catch (error) {
-          setErrorMessage(humanReadableError(error));
+          addAlert(humanReadableError(error), "error");
         }
       })();
     } else if (audios === null) {
@@ -94,11 +94,11 @@ const ListAudios = (props: Props) => {
             setAudios(response.data.ids);
           }
         } catch (error) {
-          setErrorMessage(humanReadableError(error));
+          addAlert(humanReadableError(error), "error");
         }
       })();
     }
-  }, [info, audios, start, paginationLimit, searchTerm, api]);
+  }, [info, audios, start, paginationLimit, searchTerm, api, addAlert]);
 
   const handleRefresh = () => {
     setAudios(null);
@@ -178,7 +178,14 @@ const ListAudios = (props: Props) => {
                     <Col className="mt-3">No samples found</Col>
                   ) : (
                     audios.map((audioId) => (
-                      <Col sm={12} md={6} lg={6} key={audioId} className="mt-3">
+                      <Col
+                        sm={12}
+                        md={6}
+                        lg={4}
+                        xxl={3}
+                        key={audioId}
+                        className="mt-3"
+                      >
                         <AudioPlayback audioId={audioId} />
                       </Col>
                     ))
@@ -187,23 +194,6 @@ const ListAudios = (props: Props) => {
               </Col>
             </Row>
           ))}
-        {errorMessage && (
-          <Row>
-            <Alert
-              variant="warning"
-              className="mt-3"
-              onClose={() => setErrorMessage(null)}
-              dismissible
-            >
-              <Alert.Heading>Oh snap!</Alert.Heading>
-              <div>
-                An error occurred while fetching your information.
-                <br />
-                <code>{errorMessage}</code>
-              </div>
-            </Alert>
-          </Row>
-        )}
       </Col>
     </Row>
   );

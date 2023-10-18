@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-backend:
+  build-api:
     environment:
       name: dev
       url: ${{ vars.SITE_BACKEND }}
@@ -59,6 +59,7 @@ jobs:
           ECS_CLUSTER_NAME: ${{ vars.ECS_CLUSTER_NAME }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           HF_HUB_TOKEN: ${{ secrets.HF_HUB_TOKEN }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
           LAMBDA_FUNCTION_NAME: ${{ vars.LAMBDA_FUNCTION_NAME }}
           S3_BUCKET: ${{ vars.S3_BUCKET }}
           SITE_HOMEPAGE: ${{ vars.SITE_HOMEPAGE }}
@@ -69,12 +70,70 @@ jobs:
           CLEANUP_DOCKER: true
         # Need to prune docker between builds to avoid running out of space.
         run: |
-          ./scripts/build_docker_images.sh
+          ./scripts/build_api_docker_image.sh
+
+  build-worker:
+    environment:
+      name: dev
+      url: ${{ vars.SITE_BACKEND }}
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: .
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@master
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Install Python package
+        shell: bash
+        run: |
+          pip install omegaconf
+          pip install --no-deps .
+
+      - name: Build and publish
+        # The build script requires access to the secrets and vars in the
+        # dev environment, as environment variables.
+        env:
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_READ_HOST: ${{ vars.DB_READ_HOST }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_WRITE_HOST: ${{ vars.DB_WRITE_HOST }}
+          ECR_URI: ${{ secrets.ECR_URI }}
+          ECS_CLUSTER_NAME: ${{ vars.ECS_CLUSTER_NAME }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          HF_HUB_TOKEN: ${{ secrets.HF_HUB_TOKEN }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          LAMBDA_FUNCTION_NAME: ${{ vars.LAMBDA_FUNCTION_NAME }}
+          S3_BUCKET: ${{ vars.S3_BUCKET }}
+          SITE_HOMEPAGE: ${{ vars.SITE_HOMEPAGE }}
+          SMTP_EMAIL: ${{ vars.SMTP_EMAIL }}
+          SMTP_HOST: ${{ vars.SMTP_HOST }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SQS_QUEUE: ${{ vars.SQS_QUEUE}}
+          CLEANUP_DOCKER: true
+        # Need to prune docker between builds to avoid running out of space.
+        run: |
+          ./scripts/build_api_docker_image.sh
 
   build-frontend:
     environment: dev
     runs-on: ubuntu-latest
-    needs: build-backend
+    needs:
+      - build-api
+      - build-worker
 
     defaults:
       run:

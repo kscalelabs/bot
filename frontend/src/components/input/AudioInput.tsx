@@ -29,31 +29,33 @@ const AudioInput = (props: Props) => {
 
   return (
     <Card>
-      <Card.Header>
-        <Nav
-          variant="tabs"
-          activeKey={currentTab}
-          onSelect={(event) => {
-            setCurrentTab(event as Tab);
-          }}
-        >
-          <Nav.Item>
-            <Nav.Link eventKey="record" hidden={!tabs.includes("record")}>
-              Record
-            </Nav.Link>
-          </Nav.Item>
-          <Nav.Item>
-            <Nav.Link eventKey="upload" hidden={!tabs.includes("upload")}>
-              Upload
-            </Nav.Link>
-          </Nav.Item>
-          <Nav.Item>
-            <Nav.Link eventKey="mix" hidden={!tabs.includes("mix")}>
-              Mix
-            </Nav.Link>
-          </Nav.Item>
-        </Nav>
-      </Card.Header>
+      {tabs.length > 1 && (
+        <Card.Header>
+          <Nav
+            variant="tabs"
+            activeKey={currentTab}
+            onSelect={(event) => {
+              setCurrentTab(event as Tab);
+            }}
+          >
+            <Nav.Item>
+              <Nav.Link eventKey="record" hidden={!tabs.includes("record")}>
+                Record
+              </Nav.Link>
+            </Nav.Item>
+            <Nav.Item>
+              <Nav.Link eventKey="upload" hidden={!tabs.includes("upload")}>
+                Upload
+              </Nav.Link>
+            </Nav.Item>
+            <Nav.Item>
+              <Nav.Link eventKey="mix" hidden={!tabs.includes("mix")}>
+                Mix
+              </Nav.Link>
+            </Nav.Item>
+          </Nav>
+        </Card.Header>
+      )}
       {getCurrentTab()}
     </Card>
   );

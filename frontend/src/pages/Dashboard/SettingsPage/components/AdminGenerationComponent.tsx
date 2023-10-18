@@ -1,6 +1,7 @@
 import { faCheck, faRunning } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { humanReadableError } from "constants/backend";
+import { useAlertQueue } from "hooks/alerts";
 import { useAuthentication } from "hooks/auth";
 import { useState } from "react";
 import { Button, ButtonGroup, Col, Form } from "react-bootstrap";
@@ -13,9 +14,9 @@ const AdminGenerationComponent = () => {
   const [uuid, setUuid] = useState("");
   const [isPublic, setIsPublic] = useState(false);
   const [buttonEnabled, setButtonEnabled] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const { api } = useAuthentication();
+  const { addAlert } = useAlertQueue();
 
   const handleCheckEmail = async () => {
     setButtonEnabled(false);
@@ -26,7 +27,7 @@ const AdminGenerationComponent = () => {
       setIsPublic(response.data.public);
       setButtonEnabled(true);
     } catch (error) {
-      setErrorMessage(humanReadableError(error));
+      addAlert(humanReadableError(error), "error");
     } finally {
       setButtonEnabled(true);
     }
@@ -42,7 +43,7 @@ const AdminGenerationComponent = () => {
       setIsPublic(false);
       setUuid("");
     } catch (error) {
-      setErrorMessage(humanReadableError(error));
+      addAlert(humanReadableError(error), "error");
     } finally {
       setButtonEnabled(true);
     }
@@ -55,27 +56,20 @@ const AdminGenerationComponent = () => {
           type="text"
           placeholder="Generation ID"
           onChange={(e) => {
-            setErrorMessage(null);
             setUuid(e.target.value);
           }}
           value={uuid}
-          isInvalid={errorMessage !== null}
         />
-        <Form.Control.Feedback type="invalid">
-          {errorMessage}
-        </Form.Control.Feedback>
       </Form.Group>
       <Form.Group>
         <Form.Check
           type="switch"
           label="Public"
           onChange={(e) => {
-            setErrorMessage(null);
             setIsPublic(e.target.checked);
           }}
           checked={isPublic}
           className="mb-3"
-          isInvalid={errorMessage !== null}
         />
       </Form.Group>
       <ButtonGroup>

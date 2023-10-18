@@ -1,18 +1,19 @@
 import AudioPlayback from "components/playback/AudioPlayback";
 import { humanReadableError } from "constants/backend";
+import { useAlertQueue } from "hooks/alerts";
 import { useAuthentication } from "hooks/auth";
 import { useEffect, useState } from "react";
 import { Alert, Button, Card, Spinner } from "react-bootstrap";
 import { useReactMediaRecorder } from "react-media-recorder";
 
-const TIMEOUT_MS = 10000;
+const TIMEOUT_MS = 30000;
+const MIN_MS = 5000;
 
 interface UploadAudioResponse {
   id: number;
 }
 
 const AudioRecorder = () => {
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [audioBlob, setAudioBlob] = useState<[string, Blob] | null>(null);
   const [showSpinner, setShowSpinner] = useState(false);
   const [lastId, setLastId] = useState<number | null>(null);
@@ -20,8 +21,10 @@ const AudioRecorder = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [percentComplete, setPercentComplete] = useState<number | null>(null);
   const [intervalId, setIntervalId] = useState<number | null>(null);
+  const [buttonDisabled, setButtonDisabled] = useState(false);
 
   const { api } = useAuthentication();
+  const { addAlert } = useAlertQueue();
 
   const { startRecording, stopRecording } = useReactMediaRecorder({
     audio: true,
@@ -36,7 +39,6 @@ const AudioRecorder = () => {
 
       const blob = audioBlob[1];
 
-      setErrorMessage(null);
       setShowSuccess(false);
       setShowSpinner(true);
 
@@ -57,12 +59,12 @@ const AudioRecorder = () => {
         setShowSuccess(true);
         setLastId(response.data.id);
       } catch (error) {
-        setErrorMessage(humanReadableError(error));
+        addAlert(humanReadableError(error), "error");
       } finally {
         setShowSpinner(false);
       }
     })();
-  }, [audioBlob, api]);
+  }, [audioBlob, api, addAlert]);
 
   return (
     <Card.Body>
@@ -92,6 +94,13 @@ const AudioRecorder = () => {
                     return next;
                   });
                 }, TIMEOUT_MS / 100);
+
+                // Disable button if recording is less than 1 second.
+                setButtonDisabled(true);
+                setTimeout(() => {
+                  setButtonDisabled(false);
+                }, MIN_MS);
+
                 setIntervalId(interval as unknown as number);
               };
 
@@ -109,9 +118,9 @@ const AudioRecorder = () => {
               } else {
                 start();
               }
-              setErrorMessage(null);
             }}
             variant={isRecording ? "danger" : "primary"}
+            disabled={buttonDisabled}
           >
             {isRecording
               ? percentComplete === null
@@ -121,21 +130,6 @@ const AudioRecorder = () => {
           </Button>
         )}
       </div>
-      {errorMessage && (
-        <Alert
-          variant="warning"
-          className="mt-3"
-          onClose={() => setErrorMessage(null)}
-          dismissible
-        >
-          <Alert.Heading>Oh snap!</Alert.Heading>
-          <div>
-            An error occurred while uploading your recorded audio:
-            <br />
-            <code>{errorMessage}</code>
-          </div>
-        </Alert>
-      )}
       {showSuccess && (
         <Alert
           variant="success"

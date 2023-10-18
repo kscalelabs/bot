@@ -1,6 +1,7 @@
 import { faCheck, faRunning } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { humanReadableError } from "constants/backend";
+import { useAlertQueue } from "hooks/alerts";
 import { useAuthentication } from "hooks/auth";
 import { useState } from "react";
 import { Button, ButtonGroup, Col, Form } from "react-bootstrap";
@@ -15,9 +16,9 @@ const AdminUserComponent = () => {
   const [banned, setBanned] = useState(false);
   const [deleted, setDeleted] = useState(false);
   const [buttonEnabled, setButtonEnabled] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const { api } = useAuthentication();
+  const { addAlert } = useAlertQueue();
 
   const handleCheckEmail = async () => {
     setButtonEnabled(false);
@@ -29,7 +30,7 @@ const AdminUserComponent = () => {
       setDeleted(response.data.deleted);
       setButtonEnabled(true);
     } catch (error) {
-      setErrorMessage(humanReadableError(error));
+      addAlert(humanReadableError(error), "error");
     } finally {
       setButtonEnabled(true);
     }
@@ -47,7 +48,7 @@ const AdminUserComponent = () => {
       setDeleted(false);
       setEmail("");
     } catch (error) {
-      setErrorMessage(humanReadableError(error));
+      addAlert(humanReadableError(error), "error");
     } finally {
       setButtonEnabled(true);
     }
@@ -60,27 +61,20 @@ const AdminUserComponent = () => {
           type="email"
           placeholder="name@example.com"
           onChange={(e) => {
-            setErrorMessage(null);
             setEmail(e.target.value);
           }}
           value={email}
-          isInvalid={errorMessage !== null}
         />
-        <Form.Control.Feedback type="invalid">
-          {errorMessage}
-        </Form.Control.Feedback>
       </Form.Group>
       <Form.Group>
         <Form.Check
           type="switch"
           label="Banned"
           onChange={(e) => {
-            setErrorMessage(null);
             setBanned(e.target.checked);
           }}
           checked={banned}
           className="mb-3"
-          isInvalid={errorMessage !== null}
         />
       </Form.Group>
       <Form.Group>
@@ -88,12 +82,10 @@ const AdminUserComponent = () => {
           type="switch"
           label="Deleted"
           onChange={(e) => {
-            setErrorMessage(null);
             setDeleted(e.target.checked);
           }}
           checked={deleted}
           className="mb-3"
-          isInvalid={errorMessage !== null}
         />
       </Form.Group>
       <ButtonGroup>

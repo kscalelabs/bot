@@ -2,10 +2,10 @@ import { faSync } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import SingleGeneration from "components/playback/SingleGeneration";
 import { humanReadableError } from "constants/backend";
+import { useAlertQueue } from "hooks/alerts";
 import { useAuthentication } from "hooks/auth";
 import { useEffect, useState } from "react";
 import {
-  Alert,
   Button,
   ButtonGroup,
   ButtonToolbar,
@@ -56,10 +56,10 @@ const ListGenerations = (props: Props) => {
   const [generations, setGenerations] = useState<
     SingleGenerationResponse[] | null
   >(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [start, setStart] = useState(0);
 
   const { api } = useAuthentication();
+  const { addAlert } = useAlertQueue();
 
   useEffect(() => {
     if (info === null) {
@@ -74,7 +74,7 @@ const ListGenerations = (props: Props) => {
           setStart(newStart);
           setGenerations(null);
         } catch (error) {
-          setErrorMessage(humanReadableError(error));
+          addAlert(humanReadableError(error), "error");
         }
       })();
     } else if (generations === null) {
@@ -91,7 +91,7 @@ const ListGenerations = (props: Props) => {
           );
           setGenerations(response.data.generations);
         } catch (error) {
-          setErrorMessage(humanReadableError(error));
+          addAlert(humanReadableError(error), "error");
         }
       })();
     }
@@ -177,23 +177,6 @@ const ListGenerations = (props: Props) => {
               </Col>
             </Row>
           ))}
-        {errorMessage && (
-          <Row>
-            <Alert
-              variant="warning"
-              className="mt-3"
-              onClose={() => setErrorMessage(null)}
-              dismissible
-            >
-              <Alert.Heading>Oh snap!</Alert.Heading>
-              <div>
-                An error occurred while fetching your information.
-                <br />
-                <code>{errorMessage}</code>
-              </div>
-            </Alert>
-          </Row>
-        )}
       </Col>
     </Row>
   );

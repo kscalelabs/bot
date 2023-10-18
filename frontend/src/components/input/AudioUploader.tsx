@@ -1,5 +1,6 @@
 import AudioPlayback from "components/playback/AudioPlayback";
 import { humanReadableError } from "constants/backend";
+import { useAlertQueue } from "hooks/alerts";
 import { useAuthentication } from "hooks/auth";
 import React, { useState } from "react";
 import { Alert, Card, Form, Spinner } from "react-bootstrap";
@@ -9,17 +10,16 @@ interface UploadAudioResponse {
 }
 
 const AudioUploader = () => {
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showSpinner, setShowSpinner] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [lastId, setLastId] = useState<number | null>(null);
 
   const { api } = useAuthentication();
+  const { addAlert } = useAlertQueue();
 
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    setErrorMessage(null);
     setShowSuccess(false);
     setShowSpinner(true);
 
@@ -44,7 +44,7 @@ const AudioUploader = () => {
       setShowSuccess(true);
       setLastId(response.data.id);
     } catch (error) {
-      setErrorMessage(humanReadableError(error));
+      addAlert(humanReadableError(error), "error");
     } finally {
       setShowSpinner(false);
     }
@@ -61,14 +61,7 @@ const AudioUploader = () => {
         ) : (
           <>
             <Form.Label>Upload an audio recording.</Form.Label>
-            <Form.Control
-              type="file"
-              onChange={handleFileChange}
-              isInvalid={errorMessage !== null}
-            />
-            <Form.Control.Feedback type="invalid">
-              {errorMessage}
-            </Form.Control.Feedback>
+            <Form.Control type="file" onChange={handleFileChange} />
           </>
         )}
       </Form.Group>
