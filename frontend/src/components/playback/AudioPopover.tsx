@@ -149,7 +149,7 @@ const AudioPopover = forwardRef(
         )}
       </Popover>
     );
-  }
+  },
 );
 
 export default AudioPopover;

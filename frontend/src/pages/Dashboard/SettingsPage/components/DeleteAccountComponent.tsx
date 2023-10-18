@@ -30,7 +30,7 @@ const DeleteAccountComponent = () => {
         setUseSpinner(false);
       }
     },
-    [navigate, logout, api, addAlert]
+    [navigate, logout, api, addAlert],
   );
 
   return (
