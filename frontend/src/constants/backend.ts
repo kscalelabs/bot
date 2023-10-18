@@ -2,16 +2,6 @@ import axios, { AxiosError } from "axios";
 
 export const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
-export const api = axios.create({
-  withCredentials: true,
-  baseURL: BACKEND_URL,
-});
-
-export const apiNoRetry = axios.create({
-  withCredentials: true,
-  baseURL: BACKEND_URL,
-});
-
 export const humanReadableError = (error: any | undefined) => {
   if (axios.isAxiosError(error)) {
     const axiosError = error as AxiosError;
@@ -27,7 +17,7 @@ export const humanReadableError = (error: any | undefined) => {
       } else if (response.status === 500) {
         return "An internal server error occurred.";
       } else {
-        return "An unknown error occurred.";
+        return "An unknown error occurred while handling the response.";
       }
     } else if (request) {
       return "An unknown error occurred while handling the request.";

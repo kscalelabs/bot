@@ -1,7 +1,8 @@
 import { faSync } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import SingleGeneration from "components/playback/SingleGeneration";
-import { api, humanReadableError } from "constants/backend";
+import { humanReadableError } from "constants/backend";
+import { useAuthentication } from "hooks/auth";
 import { useEffect, useState } from "react";
 import {
   Alert,
@@ -58,6 +59,8 @@ const ListGenerations = (props: Props) => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [start, setStart] = useState(0);
 
+  const { api } = useAuthentication();
+
   useEffect(() => {
     if (info === null) {
       (async () => {
@@ -65,7 +68,7 @@ const ListGenerations = (props: Props) => {
           const response = await api.get<InfoMeResponse>("/generation/info/me");
           const newStart = Math.max(
             Math.min(start, response.data.count - paginationLimit),
-            0,
+            0
           );
           setInfo(response.data);
           setStart(newStart);
@@ -84,7 +87,7 @@ const ListGenerations = (props: Props) => {
                 start: start,
                 limit: paginationLimit,
               } as QueryMeRequest,
-            },
+            }
           );
           setGenerations(response.data.generations);
         } catch (error) {

@@ -1,5 +1,6 @@
 import AudioPlayback from "components/playback/AudioPlayback";
-import { api, humanReadableError } from "constants/backend";
+import { humanReadableError } from "constants/backend";
+import { useAuthentication } from "hooks/auth";
 import React, { useState } from "react";
 import { Alert, Card, Form, Spinner } from "react-bootstrap";
 
@@ -13,8 +14,10 @@ const AudioUploader = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [lastId, setLastId] = useState<number | null>(null);
 
+  const { api } = useAuthentication();
+
   const handleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>,
+    event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setErrorMessage(null);
     setShowSuccess(false);
@@ -36,7 +39,7 @@ const AudioUploader = () => {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-        },
+        }
       );
       setShowSuccess(true);
       setLastId(response.data.id);

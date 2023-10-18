@@ -140,13 +140,14 @@ class GoogleLogin(BaseModel):
 
 
 async def get_google_user_info(token: str) -> dict:
-    response = await aiohttp.ClientSession().get(
-        "https://www.googleapis.com/oauth2/v3/userinfo",
-        params={"access_token": token},
-    )
-    if response.status != 200:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid Google token")
-    return await response.json()
+    async with aiohttp.ClientSession() as session:
+        response = await session.get(
+            "https://www.googleapis.com/oauth2/v3/userinfo",
+            params={"access_token": token},
+        )
+        if response.status != 200:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid Google token")
+        return await response.json()
 
 
 @users_router.post("/google")

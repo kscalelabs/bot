@@ -1,0 +1,128 @@
+import {
+  faCog,
+  faMoon,
+  faSignOut,
+  faSun,
+} from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useAuthentication } from "hooks/auth";
+import { useTheme } from "hooks/theme";
+import { useCallback, useEffect, useState } from "react";
+import { Container, Nav, NavDropdown, Navbar } from "react-bootstrap";
+import { useLocation, useNavigate } from "react-router-dom";
+
+interface UserInfoResponse {
+  email: string;
+}
+
+const NavigationBar = () => {
+  const { isAuthenticated, logout, api } = useAuthentication();
+  const { theme, setTheme } = useTheme();
+
+  const [darkMode, setDarkMode] = useState<boolean>(theme === "dark");
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const [email, setEmail] = useState<string | null>(null);
+
+  const toggleDarkMode = useCallback(() => {
+    setDarkMode((prev) => {
+      setTheme(prev ? "light" : "dark");
+      return !prev;
+    });
+  }, [setTheme]);
+
+  const getActiveTab = useCallback(() => {
+    switch (location.pathname) {
+      case "/make":
+        return "make";
+      case "/":
+        return "home";
+      default:
+        return "";
+    }
+  }, [location.pathname]);
+
+  useEffect(() => {
+    (async () => {
+      if (isAuthenticated) {
+        if (email === null) {
+          try {
+            const response = await api.get<UserInfoResponse>("/users/me");
+            setEmail(response.data.email);
+          } catch (error) {}
+        }
+      } else {
+        setEmail(null);
+      }
+    })();
+  }, [email, isAuthenticated, api]);
+
+  return (
+    <>
+      <style>
+        {`#basic-nav-dropdown::after {
+          display: none;
+        }`}
+      </style>
+      <Navbar>
+        <Container>
+          <Navbar.Toggle aria-controls="basic-navbar-nav" />
+          <Navbar.Collapse id="basic-navbar-nav">
+            <Nav
+              className="mr-auto"
+              variant="underline"
+              style={{ justifyContent: "center", flex: "1" }}
+              activeKey={getActiveTab()}
+            >
+              <Nav.Item>
+                <Nav.Link eventKey="home" onClick={() => navigate("/")}>
+                  Home
+                </Nav.Link>
+              </Nav.Item>
+              <Nav.Item>
+                <Nav.Link eventKey="make" onClick={() => navigate("/make")}>
+                  Make
+                </Nav.Link>
+              </Nav.Item>
+            </Nav>
+
+            {/* Navbar dropdown */}
+            <Nav>
+              <NavDropdown
+                title={<i className="fa fa-lg fa-ellipsis-v" />}
+                id="basic-nav-dropdown"
+                align="end"
+              >
+                {email !== null && (
+                  <NavDropdown.Header>{email}</NavDropdown.Header>
+                )}
+                <NavDropdown.Item onClick={() => navigate("/settings")}>
+                  <FontAwesomeIcon icon={faCog} /> Settings
+                </NavDropdown.Item>
+                <NavDropdown.Item onClick={toggleDarkMode}>
+                  {darkMode ? (
+                    <span>
+                      <FontAwesomeIcon icon={faSun} /> Light Mode
+                    </span>
+                  ) : (
+                    <span>
+                      <FontAwesomeIcon icon={faMoon} /> Dark Mode
+                    </span>
+                  )}
+                </NavDropdown.Item>
+                {isAuthenticated && (
+                  <NavDropdown.Item onClick={logout}>
+                    <FontAwesomeIcon icon={faSignOut} /> Log Out
+                  </NavDropdown.Item>
+                )}
+              </NavDropdown>
+            </Nav>
+          </Navbar.Collapse>
+        </Container>
+      </Navbar>
+    </>
+  );
+};
+
+export default NavigationBar;

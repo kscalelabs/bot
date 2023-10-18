@@ -7,9 +7,9 @@ import {
   faPlay,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { api, humanReadableError } from "constants/backend";
+import { humanReadableError } from "constants/backend";
 import { QueryIdsResponse, SingleIdResponse } from "constants/types";
-import { getToken } from "hooks/auth";
+import { useAuthentication } from "hooks/auth";
 import { useClipboard } from "hooks/clipboard";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -49,12 +49,13 @@ const AudioPlayback: React.FC<Props> = ({
   const [deleted, setDeleted] = useState(false);
   const { sourceId, setSourceId, referenceId, setReferenceId } = useClipboard();
   const [localResponse, setLocalResponse] = useState<SingleIdResponse | null>(
-    response,
+    response
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [editing, setEditing] = useState<boolean | null>(false);
   const [name, setName] = useState<string>("");
   const [isPlaying, setIsPlaying] = useState(false);
+  const { sessionToken, api } = useAuthentication();
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -65,10 +66,10 @@ const AudioPlayback: React.FC<Props> = ({
       url,
       method: "get",
       params: {
-        access_token: getToken("session"),
+        access_token: sessionToken,
       },
     });
-  }, [url]);
+  }, [url, sessionToken, api]);
 
   const handleDelete = async () => {
     setActing(true);
@@ -131,7 +132,7 @@ const AudioPlayback: React.FC<Props> = ({
         setErrorMessage(humanReadableError(error));
       }
     })();
-  }, [audioId]);
+  }, [audioId, api]);
 
   const toggleAudio = () => {
     if (audioRef.current === null) {

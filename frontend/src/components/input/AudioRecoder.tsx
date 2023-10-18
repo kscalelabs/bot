@@ -1,5 +1,6 @@
 import AudioPlayback from "components/playback/AudioPlayback";
-import { api, humanReadableError } from "constants/backend";
+import { humanReadableError } from "constants/backend";
+import { useAuthentication } from "hooks/auth";
 import { useEffect, useState } from "react";
 import { Alert, Button, Card, Spinner } from "react-bootstrap";
 import { useReactMediaRecorder } from "react-media-recorder";
@@ -19,6 +20,8 @@ const AudioRecorder = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [percentComplete, setPercentComplete] = useState<number | null>(null);
   const [intervalId, setIntervalId] = useState<number | null>(null);
+
+  const { api } = useAuthentication();
 
   const { startRecording, stopRecording } = useReactMediaRecorder({
     audio: true,
@@ -49,7 +52,7 @@ const AudioRecorder = () => {
             headers: {
               "Content-Type": "multipart/form-data",
             },
-          },
+          }
         );
         setShowSuccess(true);
         setLastId(response.data.id);
@@ -59,7 +62,7 @@ const AudioRecorder = () => {
         setShowSpinner(false);
       }
     })();
-  }, [audioBlob]);
+  }, [audioBlob, api]);
 
   return (
     <Card.Body>
