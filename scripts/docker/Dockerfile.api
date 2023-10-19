@@ -1,6 +1,7 @@
 # Dockerfile for the FastAPI application.
 
 FROM public.ecr.aws/lambda/python:3.11-arm64
+# FROM public.ecr.aws/lambda/python:3.11
 
 WORKDIR ${LAMBDA_TASK_ROOT}
 
@@ -9,13 +10,20 @@ RUN yum update -y && \
     yum install -y wget git gcc make tar xz libsndfile
 
 # Install FFMPEG.
-RUN wget https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz && \
-    wget https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz.md5 && \
-    md5sum -c ffmpeg-release-amd64-static.tar.xz.md5 && \
-    tar xvf ffmpeg-release-amd64-static.tar.xz && \
-    mv ffmpeg-*-amd64-static/ffmpeg /usr/local/bin/ && \
-    mv ffmpeg-*-amd64-static/ffprobe /usr/local/bin/ && \
-    rm -rf ffmpeg-*-amd64-static ffmpeg-release-amd64-static.tar.xz
+RUN wget https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-arm64-static.tar.xz && \
+    wget https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-arm64-static.tar.xz.md5 && \
+    md5sum -c ffmpeg-release-arm64-static.tar.xz.md5 && \
+    tar xvf ffmpeg-release-arm64-static.tar.xz && \
+    mv ffmpeg-*-arm64-static/ffmpeg /usr/local/bin/ && \
+    mv ffmpeg-*-arm64-static/ffprobe /usr/local/bin/ && \
+    rm -rf ffmpeg-*-arm64-static ffmpeg-release-arm64-static.tar.xz
+# RUN wget https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz && \
+#     wget https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz.md5 && \
+#     md5sum -c ffmpeg-release-amd64-static.tar.xz.md5 && \
+#     tar xvf ffmpeg-release-amd64-static.tar.xz && \
+#     mv ffmpeg-*-amd64-static/ffmpeg /usr/local/bin/ && \
+#     mv ffmpeg-*-amd64-static/ffprobe /usr/local/bin/ && \
+#     rm -rf ffmpeg-*-amd64-static ffmpeg-release-amd64-static.tar.xz
 
 # Ensure the conda environment is activated on RUN commands
 ENV CONDA_PREFIX=miniconda
