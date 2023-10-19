@@ -122,6 +122,12 @@ def get_file_format(content_type: str | None) -> str | None:
             return "mp3"
         case "audio/mp3":
             return "mp3"
+        case "audio/webm":
+            return "webm"
+        case "audio/x-webm":
+            return "webm"
+        case "audio/mp4":
+            return "mp4"
         case "audio/ogg":
             return "ogg"
         case "audio/x-ogg":
