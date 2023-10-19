@@ -48,7 +48,10 @@ async def _save_audio(user_id: int, source: AudioSource, name: str | None, audio
 
     # Standardizes the audio format.
     if audio.frame_rate < settings.audio.min_sample_rate:
-        raise ValueError(f"Audio sample rate must be at least {settings.audio.min_sample_rate} Hz")
+        raise ValueError(
+            f"Audio sample rate must be at least {settings.audio.min_sample_rate} frames per second, "
+            f"got {audio.frame_rate} frames per second"
+        )
     if audio.frame_rate != settings.audio.sample_rate:
         audio = audio.set_frame_rate(settings.audio.sample_rate)
     if audio.sample_width != settings.audio.sample_width:
@@ -56,9 +59,15 @@ async def _save_audio(user_id: int, source: AudioSource, name: str | None, audio
     if audio.channels != settings.audio.num_channels:
         audio = audio.set_channels(settings.audio.num_channels)
     if audio.duration_seconds < settings.audio.min_duration:
-        raise ValueError(f"Audio duration must be greater than {settings.audio.min_duration} seconds")
+        raise ValueError(
+            f"Audio duration must be greater than {settings.audio.min_duration} seconds, "
+            f"got {audio.duration_seconds} seconds"
+        )
     if audio.duration_seconds > settings.audio.max_duration:
-        raise ValueError(f"Audio duration must be less than {settings.audio.max_duration} seconds")
+        raise ValueError(
+            f"Audio duration must be less than {settings.audio.max_duration} seconds, "
+            f"got {audio.duration_seconds} seconds"
+        )
 
     key_bytes = sha1(uuid.NAMESPACE_OID.bytes + f"user-{user_id}".encode("utf-8") + os.urandom(16))
     key = UUID(bytes=key_bytes.digest()[:16], version=5)
@@ -152,7 +161,11 @@ async def save_audio_file(
     fmt = get_file_format(file.content_type)
     with tempfile.NamedTemporaryFile(suffix=f".{'wav' if fmt is None else fmt}") as temp_file:
         shutil.copyfileobj(file.file, temp_file)
-        audio = AudioSegment.from_file(temp_file.name, fmt)
+        try:
+            audio = AudioSegment.from_file(temp_file.name, fmt)
+        except Exception:
+            logger.exception("Error processing %s with format %s (%s)", file.filename, fmt, file.content_type)
+            raise
     return await _save_audio(user_id, source, name, audio)
 
 
