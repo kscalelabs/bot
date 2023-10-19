@@ -26,6 +26,8 @@ logger = logging.getLogger(__name__)
 
 FSType = Literal["file", "s3"]
 
+AudioSegment.converter = shutil.which("ffmpeg")
+
 
 @functools.lru_cache()
 def get_fs_type() -> FSType:
@@ -121,7 +123,11 @@ async def save_audio_file(
         The row in audio table.
     """
     file_extension = _get_extension(name, "wav")
-    audio = AudioSegment.from_file(file, file_extension)
+    try:
+        audio = AudioSegment.from_file(file, file_extension)
+    except Exception:
+        logger.exception("Error processing %s", name)
+        raise
     return await _save_audio(user_id, source, name, audio)
 
 
