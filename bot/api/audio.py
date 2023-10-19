@@ -2,6 +2,7 @@
 
 import functools
 import logging
+import mimetypes
 import os
 import shutil
 import tempfile
@@ -100,6 +101,37 @@ async def _save_audio(user_id: int, source: AudioSource, name: str | None, audio
     )
 
 
+def get_file_format(content_type: str | None) -> str | None:
+    if content_type is None:
+        return None
+    match content_type:
+        case "audio/wav":
+            return "wav"
+        case "audio/x-wav":
+            return "wav"
+        case "audio/mpeg":
+            return "mp3"
+        case "audio/mp3":
+            return "mp3"
+        case "audio/ogg":
+            return "ogg"
+        case "audio/x-ogg":
+            return "ogg"
+        case "audio/flac":
+            return "flac"
+        case "audio/x-flac":
+            return "flac"
+        case "audio/x-m4a":
+            return "m4a"
+        case "audio/aac":
+            return "aac"
+        case "audio/x-aac":
+            return "aac"
+    ext = mimetypes.guess_extension(content_type)
+    if ext is not None:
+        return ext[1:]
+
+
 async def save_audio_file(
     user_id: int,
     source: AudioSource,
@@ -117,11 +149,11 @@ async def save_audio_file(
     Returns:
         The row in audio table.
     """
+    fmt = get_file_format(file.content_type)
     try:
-        file_format = None if file.content_type is None else file.content_type.split("/")[1]
-        audio = AudioSegment.from_file(BytesIO(await file.read()), file_format)
+        audio = AudioSegment.from_file(BytesIO(await file.read()), fmt)
     except Exception:
-        logger.exception("Error processing %s with content type %s", file.filename, file.content_type)
+        logger.exception("Error processing %s with content type %s / %s", file.filename, file.content_type, fmt)
         raise
     return await _save_audio(user_id, source, name, audio)
 
