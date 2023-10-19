@@ -1,6 +1,8 @@
 """Defines the API endpoint for running the ML model."""
 
 import logging
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
 
 from fastapi import APIRouter, Depends
 from pydantic.main import BaseModel
@@ -11,19 +13,19 @@ from bot.worker.message_passing import get_message_queue
 
 logger = logging.getLogger(__name__)
 
-infer_router = APIRouter()
-
 mq = get_message_queue()
 
 
-@infer_router.on_event("startup")
-async def startup_event() -> None:
+@asynccontextmanager
+async def lifespan(router: APIRouter) -> AsyncGenerator[None, None]:
     await mq.initialize()
+    try:
+        yield
+    finally:
+        await mq.close()
 
 
-@infer_router.on_event("shutdown")
-async def shutdown_event() -> None:
-    await mq.close()
+infer_router = APIRouter(lifespan=lifespan)
 
 
 async def generate(source_id: int, reference_id: int, user_id: int) -> Generation:
