@@ -9,11 +9,12 @@ import uuid
 from datetime import timedelta
 from hashlib import sha1
 from io import BytesIO
-from typing import BinaryIO, Literal, cast, get_args
+from typing import Literal, cast, get_args
 from uuid import UUID
 
 import aioboto3
 import numpy as np
+from fastapi import UploadFile
 from pydub import AudioSegment
 
 from bot.api.model import Audio, AudioSource
@@ -102,7 +103,7 @@ async def _save_audio(user_id: int, source: AudioSource, name: str | None, audio
 async def save_audio_file(
     user_id: int,
     source: AudioSource,
-    file: BinaryIO,
+    file: UploadFile,
     name: str | None = None,
 ) -> Audio:
     """Saves the audio file to the file system.
@@ -117,9 +118,10 @@ async def save_audio_file(
         The row in audio table.
     """
     try:
-        audio = AudioSegment.from_file(file)
+        file_format = None if file.content_type is None else file.content_type.split("/")[1]
+        audio = AudioSegment.from_file(BytesIO(await file.read()), file_format)
     except Exception:
-        logger.exception("Error processing %s", name)
+        logger.exception("Error processing %s with content type %s", file.filename, file.content_type)
         raise
     return await _save_audio(user_id, source, name, audio)
 
