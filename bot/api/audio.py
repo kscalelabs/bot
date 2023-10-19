@@ -104,7 +104,7 @@ async def _save_audio(user_id: int, source: AudioSource, name: str | None, audio
 def get_file_format(content_type: str | None) -> str | None:
     if content_type is None:
         return None
-    match content_type:
+    match content_type.strip().lower().split(";", 1)[0]:
         case "audio/wav":
             return "wav"
         case "audio/x-wav":
@@ -150,11 +150,9 @@ async def save_audio_file(
         The row in audio table.
     """
     fmt = get_file_format(file.content_type)
-    try:
-        audio = AudioSegment.from_file(BytesIO(await file.read()), fmt)
-    except Exception:
-        logger.exception("Error processing %s with content type %s / %s", file.filename, file.content_type, fmt)
-        raise
+    with tempfile.NamedTemporaryFile(suffix=f".{'wav' if fmt is None else fmt}") as temp_file:
+        shutil.copyfileobj(file.file, temp_file)
+        audio = AudioSegment.from_file(temp_file.name, fmt)
     return await _save_audio(user_id, source, name, audio)
 
 
