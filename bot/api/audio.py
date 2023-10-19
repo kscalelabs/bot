@@ -167,7 +167,8 @@ async def save_audio_file(
     """
     fmt = get_file_format(file.content_type)
     with tempfile.NamedTemporaryFile(suffix=f".{'wav' if fmt is None else fmt}") as temp_file:
-        shutil.copyfileobj(file.file, temp_file)  # type: ignore[misc]
+        temp_file.write(await file.read())
+        temp_file.flush()
         try:
             audio = AudioSegment.from_file(temp_file.name, fmt)
         except Exception:
