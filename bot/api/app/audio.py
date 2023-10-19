@@ -1,6 +1,7 @@
 """Defines the API endpoint for querying images."""
 
 import datetime
+import io
 import re
 from typing import Any, cast
 
@@ -168,7 +169,8 @@ async def upload(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Source must be one of {AudioSource.uploaded}, {AudioSource.recorded}",
         )
-    audio_entry = await save_audio_file(user_data.user_id, source_enum, file.file, file.filename)
+    audio_data = await file.read()
+    audio_entry = await save_audio_file(user_data.user_id, source_enum, io.BytesIO(audio_data), file.filename)
     return UploadResponse(id=audio_entry.id)
 
 

@@ -41,12 +41,6 @@ def _get_path(key: UUID) -> str:
     return f"{settings.file.root_dir}/{key}.{settings.file.audio.file_ext}"
 
 
-def _get_extension(filename: str | None, default: str) -> str:
-    if filename is None:
-        return default
-    return filename.split(".")[-1].lower() if "." in filename else default
-
-
 async def _save_audio(user_id: int, source: AudioSource, name: str | None, audio: AudioSegment) -> Audio:
     settings = load_settings().file
 
@@ -122,9 +116,8 @@ async def save_audio_file(
     Returns:
         The row in audio table.
     """
-    file_extension = _get_extension(name, "wav")
     try:
-        audio = AudioSegment.from_file(file, file_extension)
+        audio = AudioSegment.from_file(file)
     except Exception:
         logger.exception("Error processing %s", name)
         raise
