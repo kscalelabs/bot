@@ -139,6 +139,7 @@ def get_file_format(content_type: str | None) -> str | None:
     ext = mimetypes.guess_extension(content_type)
     if ext is not None:
         return ext[1:]
+    return None
 
 
 async def save_audio_file(
@@ -160,7 +161,7 @@ async def save_audio_file(
     """
     fmt = get_file_format(file.content_type)
     with tempfile.NamedTemporaryFile(suffix=f".{'wav' if fmt is None else fmt}") as temp_file:
-        shutil.copyfileobj(file.file, temp_file)
+        shutil.copyfileobj(file.file, temp_file)  # type: ignore[misc]
         try:
             audio = AudioSegment.from_file(temp_file.name, fmt)
         except Exception:
