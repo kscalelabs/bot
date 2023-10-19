@@ -45,31 +45,32 @@ export const AlertQueueProvider = (props: AlertQueueProviderProps) => {
     return Math.random().toString(36).substring(2);
   }, []);
 
-  const addAlert = (alert: string | React.ReactNode, kind: AlertType) => {
-    setAlerts((prev) => {
-      const newAlerts = new Map(prev);
-      const alertId = generateAlertId();
-      newAlerts.set(alertId, [alert, kind]);
+  const addAlert = useCallback(
+    (alert: string | React.ReactNode, kind: AlertType) => {
+      setAlerts((prev) => {
+        const newAlerts = new Map(prev);
+        const alertId = generateAlertId();
+        newAlerts.set(alertId, [alert, kind]);
 
-      // Ensure the map doesn't exceed MAX_ERRORS
-      while (newAlerts.size > MAX_ERRORS) {
-        const firstKey = Array.from(newAlerts.keys())[0];
-        newAlerts.delete(firstKey);
-      }
+        // Ensure the map doesn't exceed MAX_ERRORS
+        while (newAlerts.size > MAX_ERRORS) {
+          const firstKey = Array.from(newAlerts.keys())[0];
+          newAlerts.delete(firstKey);
+        }
 
-      return newAlerts;
-    });
-  };
+        return newAlerts;
+      });
+    },
+    [generateAlertId],
+  );
 
-  const removeAlert = (alertId: string) => {
+  const removeAlert = useCallback((alertId: string) => {
     setAlerts((prev) => {
       const newAlerts = new Map(prev);
       newAlerts.delete(alertId);
       return newAlerts;
     });
-  };
-
-  console.log(alerts);
+  }, []);
 
   return (
     <AlertQueueContext.Provider
@@ -119,6 +120,11 @@ export const AlertQueue = (props: AlertQueueProps) => {
               onClose={() => removeAlert(alertId)}
               animation={true}
             >
+              <Toast.Header>
+                <strong className="me-auto">
+                  {kind.charAt(0).toUpperCase() + kind.slice(1)}
+                </strong>
+              </Toast.Header>
               <Toast.Body>{alert}</Toast.Body>
             </Toast>
           );
