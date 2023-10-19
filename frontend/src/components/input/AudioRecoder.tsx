@@ -31,6 +31,13 @@ const AudioRecorder = () => {
     onStop: (blobUrl, blob) => {
       setAudioBlob([blobUrl, blob]);
     },
+    blobPropertyBag: {
+      type: "audio/webm",
+    },
+    mediaRecorderOptions: {
+      audioBitsPerSecond: 16000,
+      mimeType: "audio/webm",
+    },
   });
 
   useEffect(() => {

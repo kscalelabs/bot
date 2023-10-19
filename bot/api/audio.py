@@ -2,6 +2,7 @@
 
 import functools
 import logging
+import mimetypes
 import os
 import shutil
 import tempfile
@@ -9,11 +10,12 @@ import uuid
 from datetime import timedelta
 from hashlib import sha1
 from io import BytesIO
-from typing import BinaryIO, Literal, cast, get_args
+from typing import Literal, cast, get_args
 from uuid import UUID
 
 import aioboto3
 import numpy as np
+from fastapi import UploadFile
 from pydub import AudioSegment
 
 from bot.api.model import Audio, AudioSource
@@ -46,7 +48,10 @@ async def _save_audio(user_id: int, source: AudioSource, name: str | None, audio
 
     # Standardizes the audio format.
     if audio.frame_rate < settings.audio.min_sample_rate:
-        raise ValueError(f"Audio sample rate must be at least {settings.audio.min_sample_rate} Hz")
+        raise ValueError(
+            f"Audio sample rate must be at least {settings.audio.min_sample_rate} frames per second, "
+            f"got {audio.frame_rate} frames per second"
+        )
     if audio.frame_rate != settings.audio.sample_rate:
         audio = audio.set_frame_rate(settings.audio.sample_rate)
     if audio.sample_width != settings.audio.sample_width:
@@ -54,9 +59,15 @@ async def _save_audio(user_id: int, source: AudioSource, name: str | None, audio
     if audio.channels != settings.audio.num_channels:
         audio = audio.set_channels(settings.audio.num_channels)
     if audio.duration_seconds < settings.audio.min_duration:
-        raise ValueError(f"Audio duration must be greater than {settings.audio.min_duration} seconds")
+        raise ValueError(
+            f"Audio duration must be greater than {settings.audio.min_duration} seconds, "
+            f"got {audio.duration_seconds} seconds"
+        )
     if audio.duration_seconds > settings.audio.max_duration:
-        raise ValueError(f"Audio duration must be less than {settings.audio.max_duration} seconds")
+        raise ValueError(
+            f"Audio duration must be less than {settings.audio.max_duration} seconds, "
+            f"got {audio.duration_seconds} seconds"
+        )
 
     key_bytes = sha1(uuid.NAMESPACE_OID.bytes + f"user-{user_id}".encode("utf-8") + os.urandom(16))
     key = UUID(bytes=key_bytes.digest()[:16], version=5)
@@ -99,10 +110,41 @@ async def _save_audio(user_id: int, source: AudioSource, name: str | None, audio
     )
 
 
+def get_file_format(content_type: str | None) -> str | None:
+    if content_type is None:
+        return None
+    match content_type.strip().lower().split(";", 1)[0]:
+        case "audio/wav":
+            return "wav"
+        case "audio/x-wav":
+            return "wav"
+        case "audio/mpeg":
+            return "mp3"
+        case "audio/mp3":
+            return "mp3"
+        case "audio/ogg":
+            return "ogg"
+        case "audio/x-ogg":
+            return "ogg"
+        case "audio/flac":
+            return "flac"
+        case "audio/x-flac":
+            return "flac"
+        case "audio/x-m4a":
+            return "m4a"
+        case "audio/aac":
+            return "aac"
+        case "audio/x-aac":
+            return "aac"
+    ext = mimetypes.guess_extension(content_type)
+    if ext is not None:
+        return ext[1:]
+
+
 async def save_audio_file(
     user_id: int,
     source: AudioSource,
-    file: BinaryIO,
+    file: UploadFile,
     name: str | None = None,
 ) -> Audio:
     """Saves the audio file to the file system.
@@ -116,11 +158,14 @@ async def save_audio_file(
     Returns:
         The row in audio table.
     """
-    try:
-        audio = AudioSegment.from_file(file)
-    except Exception:
-        logger.exception("Error processing %s", name)
-        raise
+    fmt = get_file_format(file.content_type)
+    with tempfile.NamedTemporaryFile(suffix=f".{'wav' if fmt is None else fmt}") as temp_file:
+        shutil.copyfileobj(file.file, temp_file)
+        try:
+            audio = AudioSegment.from_file(temp_file.name, fmt)
+        except Exception:
+            logger.exception("Error processing %s with format %s (%s)", file.filename, fmt, file.content_type)
+            raise
     return await _save_audio(user_id, source, name, audio)
 
 
