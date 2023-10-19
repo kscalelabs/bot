@@ -127,9 +127,6 @@ jobs:
   build-frontend:
     environment: dev
     runs-on: ubuntu-latest
-    needs:
-      - build-api
-      - build-worker
 
     defaults:
       run:
