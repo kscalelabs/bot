@@ -5,7 +5,7 @@ import datetime
 from email.utils import parseaddr as parse_email_address
 
 import aiohttp
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.security.utils import get_authorization_scheme_param
 from pydantic.main import BaseModel
 
@@ -163,12 +163,6 @@ async def google_login(data: GoogleLogin, response: Response) -> UserLoginRespon
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Google email not verified")
     user_obj = await create_or_get(email)
     return await get_login_response(response, user_obj)
-
-
-def get_token_from_cookie(token: str | None = Cookie(None)) -> str:
-    if token is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-    return token
 
 
 async def get_refresh_token(request: Request) -> RefreshTokenData:
