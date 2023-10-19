@@ -7,7 +7,7 @@ import jwt
 from fastapi import HTTPException, status
 
 from bot.api.model import Token, User
-from bot.settings import load_settings
+from bot.settings import settings
 from bot.utils import server_time
 
 logger = logging.getLogger(__name__)
@@ -29,7 +29,6 @@ def create_token(data: dict, expire_after: datetime.timedelta | None = None) -> 
     """
     if "exp" in data:
         raise ValueError("The payload should not contain an expiration time")
-    settings = load_settings().crypto
     to_encode = data.copy()
 
     # JWT exp claim expects a timestamp in seconds. This will automatically be
@@ -38,7 +37,7 @@ def create_token(data: dict, expire_after: datetime.timedelta | None = None) -> 
         expires = server_time() + expire_after
         to_encode.update({"exp": expires})
 
-    encoded_jwt = jwt.encode(to_encode, settings.jwt_secret, algorithm=settings.algorithm)
+    encoded_jwt = jwt.encode(to_encode, settings.crypto.jwt_secret, algorithm=settings.crypto.algorithm)
     return encoded_jwt
 
 
@@ -52,9 +51,8 @@ def load_token(payload: str) -> dict:
     Returns:
         The decoded payload.
     """
-    settings = load_settings().crypto
     try:
-        data: dict = jwt.decode(payload, settings.jwt_secret, algorithms=[settings.algorithm])
+        data: dict = jwt.decode(payload, settings.crypto.jwt_secret, algorithms=[settings.crypto.algorithm])
     except Exception:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
     return data

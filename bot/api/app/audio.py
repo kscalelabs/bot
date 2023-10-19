@@ -20,11 +20,9 @@ from tortoise.expressions import Q
 from bot.api.app.users import SessionTokenData, get_session_token
 from bot.api.audio import get_audio_url, save_audio_file
 from bot.api.model import Audio, AudioSource, cast_audio_source
-from bot.settings import load_settings
+from bot.settings import settings
 
 MAX_UUIDS_PER_QUERY = 100
-
-settings = load_settings()
 
 audio_router = APIRouter()
 

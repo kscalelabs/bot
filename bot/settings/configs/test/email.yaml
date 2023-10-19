@@ -1,0 +1,6 @@
+email:
+  host: localhost
+  port: 587
+  name: Ben from DPSH
+  email: email
+  password: password

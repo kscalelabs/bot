@@ -13,7 +13,7 @@ from aio_pika import Message, connect_robust
 from aio_pika.abc import AbstractChannel, AbstractConnection, AbstractIncomingMessage
 from ml.utils.logging import configure_logging
 
-from bot.settings import load_settings
+from bot.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -85,14 +85,13 @@ class RabbitMessageQueue(BaseQueue):
     channel: AbstractChannel
 
     async def initialize(self) -> None:
-        settings = load_settings().worker.rabbit
-        self.queue_name = settings.queue_name
+        self.queue_name = settings.worker.rabbit.queue_name
         self.connection = await connect_robust(
-            host=settings.host,
-            port=settings.port,
-            virtualhost=settings.virtual_host,
-            login=settings.username,
-            password=settings.password,
+            host=settings.worker.rabbit.host,
+            port=settings.worker.rabbit.port,
+            virtualhost=settings.worker.rabbit.virtual_host,
+            login=settings.worker.rabbit.username,
+            password=settings.worker.rabbit.password,
         )
         self.channel = await self.connection.channel()
         await self.channel.declare_queue(name=self.queue_name)
@@ -138,18 +137,16 @@ class SqsMessageQueue(BaseQueue):
         pass
 
     async def send(self, generation_id: int) -> None:
-        settings = load_settings().worker.sqs
         async with self.session.resource("sqs") as sqs:
-            queue = await sqs.get_queue_by_name(QueueName=settings.queue_name)
+            queue = await sqs.get_queue_by_name(QueueName=settings.worker.sqs.queue_name)
             await queue.send_message(MessageBody=json.dumps({"generation_id": generation_id}))
 
     async def receive(self, callback: Callable[[int], Awaitable[None]]) -> None:
         logger.info("Starting SQS worker...")
-        settings = load_settings().worker.sqs
         callback = handle_errors(callback)
 
         async with self.session.resource("sqs") as sqs:
-            queue = await sqs.get_queue_by_name(QueueName=settings.queue_name)
+            queue = await sqs.get_queue_by_name(QueueName=settings.worker.sqs.queue_name)
 
             while True:
                 logger.info("Waiting for messages...")
@@ -185,9 +182,8 @@ class DummyQueue(BaseQueue):
 
 
 def get_message_queue() -> BaseQueue:
-    settings = load_settings().worker
-
-    match settings.queue_type:
+    queue_type = settings.worker.queue_type
+    match queue_type:
         case "rabbit":
             return RabbitMessageQueue()
         case "sqs":
@@ -195,7 +191,7 @@ def get_message_queue() -> BaseQueue:
         case "dummy":
             return DummyQueue()
         case _:
-            raise ValueError(f"Invalid queue type {settings.queue_type}")
+            raise ValueError(f"Invalid queue type {queue_type}")
 
 
 async def test_queue_adhoc() -> None:

@@ -1,0 +1,8 @@
+database:
+  kind: postgres
+  generate_schemas: false
+  postgres:
+    host: ${oc.env:DB_DEV_HOST}
+    port: ${oc.decode:${oc.env:DB_PORT,5432}}
+    username: ${oc.env:DB_USERNAME}
+    password: ${oc.env:DB_PASSWORD}

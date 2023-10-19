@@ -14,13 +14,11 @@ from bot.api.db import close_db, init_db
 from bot.api.model import AudioSource, Generation
 from bot.model.hubert.model import HubertModel
 from bot.model.hubert.pretrained import cast_pretrained_model, pretrained_hubert
-from bot.settings import load_settings
+from bot.settings import settings
 from bot.utils import server_time
 from bot.worker.message_passing import get_message_queue
 
 logger = logging.getLogger(__name__)
-
-settings = load_settings().worker
 
 
 class _ModelRunner:
@@ -33,13 +31,12 @@ class _ModelRunner:
 
     async def initialize(self) -> None:
         device = detect_device()
-        settings = load_settings().worker
-        model = pretrained_hubert(cast_pretrained_model(settings.model_key))
+        model = pretrained_hubert(cast_pretrained_model(settings.worker.model_key))
         model.eval()
         device.module_to(model)
         self._model = model
         self._device = device
-        self._model_key = settings.model_key
+        self._model_key = settings.worker.model_key
 
     @property
     def model(self) -> HubertModel:
@@ -94,7 +91,7 @@ async def run_model(generation_id: int) -> None:
 
         # Runs the model.
         with device.autocast_context(), torch.inference_mode():
-            output_audio = model.run(source_audio, reference_audio, settings.sampling_timesteps)
+            output_audio = model.run(source_audio, reference_audio, settings.worker.sampling_timesteps)
 
         # Saves the output audio.
         output_audio_arr = output_audio.squeeze(0).float().cpu().numpy()

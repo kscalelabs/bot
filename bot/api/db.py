@@ -4,7 +4,8 @@ import logging
 
 from tortoise import Model, Tortoise
 
-from bot.settings import PostgreSQLEndpointSettings, load_settings
+from bot.settings import settings
+from bot.settings.structure import PostgreSQLDatabaseSettings
 
 logger = logging.getLogger(__name__)
 
@@ -18,13 +19,19 @@ class DatabaseRouter:
 
 
 def get_sqlite_config() -> dict:
-    settings = load_settings().database.sqlite
+    """Gets a simple SQLite configuration for TortoiseORM.
 
+    Use `host = ":memory:"` to use an in-memory database, which is useful for
+    testing and local development.
+
+    Returns:
+        The configuration dictionary to pass to Tortoise ORM.
+    """
     return {
         "connections": {
             "default": {
                 "engine": "tortoise.backends.sqlite",
-                "credentials": {"file_path": settings.host},
+                "credentials": {"file_path": settings.database.sqlite.host},
             },
         },
         "apps": {
@@ -37,9 +44,16 @@ def get_sqlite_config() -> dict:
 
 
 def get_postgres_config() -> dict:
-    settings = load_settings().database.postgres
+    """Returns the database configuration for PostgreSQL.
 
-    def get_credential(endpoint_settings: "PostgreSQLEndpointSettings") -> dict:
+    This can support separate read replicas, if the upstream infrastructure
+    is configured to support them.
+
+    Returns:
+        The configuration dictionary to pass to Tortoise ORM.
+    """
+
+    def get_credential(endpoint_settings: "PostgreSQLDatabaseSettings") -> dict:
         return {
             "host": endpoint_settings.host,
             "port": endpoint_settings.port,
@@ -52,11 +66,11 @@ def get_postgres_config() -> dict:
         "connections": {
             "default": {
                 "engine": "tortoise.backends.asyncpg",
-                "credentials": get_credential(settings.write_endpoint),
+                "credentials": get_credential(settings.database.postgres),
             },
             "read_replica": {
                 "engine": "tortoise.backends.asyncpg",
-                "credentials": get_credential(settings.read_endpoint),
+                "credentials": get_credential(settings.database.postgres),
             },
         },
         "apps": {
@@ -69,8 +83,7 @@ def get_postgres_config() -> dict:
 
 
 def get_config() -> dict:
-    db_kind = load_settings().database.kind
-
+    db_kind = settings.database.kind
     match db_kind:
         case "sqlite":
             return get_sqlite_config()

@@ -9,7 +9,7 @@ from huggingface_hub import hf_hub_download
 from safetensors import safe_open
 
 from bot.model.hubert.model import HubertModel
-from bot.settings import load_settings
+from bot.settings import settings
 
 PretrainedHubertModel = Literal["hubert-quantized-20231015"]
 
@@ -22,8 +22,7 @@ def cast_pretrained_model(key: str) -> PretrainedHubertModel:
 
 
 def _load_model(key: PretrainedHubertModel, ckpt_path: str | Path | None = None) -> HubertModel:
-    settings = load_settings().model
-    cache_dir_str, token = settings.cache_dir, settings.hf_hub_token
+    cache_dir_str, token = settings.model.cache_dir, settings.model.hf_hub_token
     cache_dir = None if cache_dir_str is None else Path(cache_dir_str).expanduser().resolve()
     if ckpt_path is None:
         ckpt_path = hf_hub_download(REPO_ID, f"{key}.bin", cache_dir=cache_dir, token=token)

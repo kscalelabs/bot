@@ -12,26 +12,24 @@ from email.mime.text import MIMEText
 import aiosmtplib
 
 from bot.api.token import create_token, load_token
-from bot.settings import load_settings
+from bot.settings import settings
 
 logger = logging.getLogger(__name__)
 
 
 async def send_email(subject: str, body: str, to: str) -> None:
-    settings = load_settings().email
-
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
-    msg["From"] = f"{settings.name} <{settings.email}>"
+    msg["From"] = f"{settings.email.name} <{settings.email.email}>"
     msg["To"] = to
 
     msg.attach(MIMEText(body, "html"))
 
-    smtp_client = aiosmtplib.SMTP(hostname=settings.host, port=settings.port)
+    smtp_client = aiosmtplib.SMTP(hostname=settings.email.host, port=settings.email.port)
 
     await smtp_client.connect()
-    await smtp_client.login(settings.email, settings.password)
-    await smtp_client.sendmail(settings.email, to, msg.as_string())
+    await smtp_client.login(settings.email.email, settings.email.password)
+    await smtp_client.sendmail(settings.email.email, to, msg.as_string())
     await smtp_client.quit()
 
 
@@ -40,7 +38,7 @@ class OneTimePassPayload:
     email: str
 
     def encode(self) -> str:
-        expire_minutes = load_settings().crypto.expire_otp_minutes
+        expire_minutes = settings.crypto.expire_otp_minutes
         expire_after = datetime.timedelta(minutes=expire_minutes)
         return create_token({"email": self.email}, expire_after=expire_after)
 

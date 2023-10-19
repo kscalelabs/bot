@@ -1,0 +1,6 @@
+email:
+  host: ${oc.env:SMTP_HOST}
+  port: 587
+  name: Ben from DPSH
+  email: ${oc.env:SMTP_EMAIL}
+  password: ${oc.env:SMTP_PASSWORD}

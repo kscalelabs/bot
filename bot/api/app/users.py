@@ -12,7 +12,7 @@ from pydantic.main import BaseModel
 from bot.api.email import OneTimePassPayload, send_delete_email, send_otp_email, send_waitlist_email
 from bot.api.model import Token, User
 from bot.api.token import create_refresh_token, create_token, load_refresh_token, load_token
-from bot.settings import load_settings
+from bot.settings import settings
 
 users_router = APIRouter()
 
@@ -23,12 +23,11 @@ TOKEN_TYPE = "Bearer"
 
 
 def set_token_cookie(response: Response, token: str, key: str) -> None:
-    is_prod = load_settings().is_prod
     response.set_cookie(
         key=key,
         value=token,
         httponly=True,
-        secure=is_prod,
+        secure=False,
         # samesite="strict",
         samesite="none",
     )
@@ -52,7 +51,7 @@ class SessionTokenData(BaseModel):
     user_id: int
 
     def encode(self) -> str:
-        expire_minutes = load_settings().crypto.expire_token_minutes
+        expire_minutes = settings.crypto.expire_token_minutes
         expire_after = datetime.timedelta(minutes=expire_minutes)
         return create_token({"uid": self.user_id}, expire_after=expire_after)
 
@@ -103,14 +102,12 @@ async def create_or_get(email: str) -> User:
     # Gets or creates the user object.
     user_obj = await User.get_or_none(email=email)
     if user_obj is None:
-        settings = load_settings().user
-
         # For initial rollout, set a few authorized emails through the config,
         # other users will be added to the database but will be banned (meaning,
         # they are waitlisted).
-        authorized_emails = settings.authorized_users
+        authorized_emails = settings.user.authorized_users
         if authorized_emails is not None:
-            if email not in authorized_emails and email not in settings.admin_emails:
+            if email not in authorized_emails and email not in settings.user.admin_emails:
                 await add_to_waitlist(email)
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You're on the waitlist!")
         user_obj = await User.create(email=email)

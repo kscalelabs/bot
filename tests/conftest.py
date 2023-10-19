@@ -9,10 +9,9 @@ import torch
 from _pytest.legacypath import TempdirFactory
 from _pytest.python import Function, Metafunc
 from fastapi.testclient import TestClient
-from omegaconf import OmegaConf
 from pytest_mock.plugin import MockerFixture, MockType
 
-from bot.settings import Settings
+os.environ["DPSH_CONFIG_KEY"] = "test"
 
 
 @functools.lru_cache()
@@ -40,49 +39,16 @@ def pytest_generate_tests(metafunc: Metafunc) -> None:
 
 @pytest.fixture(scope="function", autouse=True)
 def mock_load_settings(mocker: MockerFixture, tmpdir_factory: TempdirFactory) -> MockType:
-    mock = mocker.patch("bot.settings.load_settings")
-    settings = Settings()
+    mock = mocker.patch("bot.settings._load")
 
-    # Sets the default app settings.
-    settings.is_prod = False
-
-    # Sets the user settings.
-    settings.user.admin_emails = ["ben@dpsh.dev"]
-
-    # Sets the default site settings.
-    settings.site.homepage = "http://localhost"
-
-    # Sets the default database settings.
-    settings.database.kind = "sqlite"
-    settings.database.sqlite.host = ":memory:"
-
-    # Sets the default worker settings.
-    settings.worker.queue_type = "dummy"
+    from bot.settings import settings
 
     # Sets the default image settings.
     file_root_dir = tmpdir_factory.mktemp("files")
-    settings.file.fs_type = "file"
-    settings.file.audio.file_ext = "flac"
     settings.file.root_dir = str(file_root_dir)
-    settings.file.audio.min_duration = 0.0
-
-    # Sets the default email settings.
-    settings.email.host = "localhost"
-    settings.email.port = 587
-    settings.email.name = "name"
-    settings.email.email = "email"
-    settings.email.password = "password"
-
-    # Sets the default crypto settings.
-    settings.crypto.jwt_secret = "jwt_secret"
-    settings.crypto.google_client_id = "testclientid"
-
-    # Saves the settings to a temporary file.
-    settings_file = str(tmpdir_factory.mktemp("settings").join("settings.yaml"))
-    OmegaConf.save(settings, settings_file)
-    os.environ["DPSH_CONFIG"] = settings_file
 
     mock.return_value = settings
+
     return mock
 
 

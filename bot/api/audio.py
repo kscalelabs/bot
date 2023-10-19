@@ -19,7 +19,7 @@ from fastapi import UploadFile
 from pydub import AudioSegment
 
 from bot.api.model import Audio, AudioSource
-from bot.settings import load_settings
+from bot.settings import settings
 from bot.utils import server_time
 
 DEFAULT_NAME = "Untitled"
@@ -33,39 +33,36 @@ AudioSegment.converter = shutil.which("ffmpeg")
 
 @functools.lru_cache()
 def get_fs_type() -> FSType:
-    fs_type_str = load_settings().file.fs_type
+    fs_type_str = settings.file.fs_type
     assert fs_type_str in get_args(FSType), f"Invalid file system type in configuration: {fs_type_str}"
     return cast(FSType, fs_type_str)
 
 
 def _get_path(key: UUID) -> str:
-    settings = load_settings()
     return f"{settings.file.root_dir}/{key}.{settings.file.audio.file_ext}"
 
 
 async def _save_audio(user_id: int, source: AudioSource, name: str | None, audio: AudioSegment) -> Audio:
-    settings = load_settings().file
-
     # Standardizes the audio format.
-    if audio.frame_rate < settings.audio.min_sample_rate:
+    if audio.frame_rate < settings.file.audio.min_sample_rate:
         raise ValueError(
-            f"Audio sample rate must be at least {settings.audio.min_sample_rate} frames per second, "
+            f"Audio sample rate must be at least {settings.file.audio.min_sample_rate} frames per second, "
             f"got {audio.frame_rate} frames per second"
         )
-    if audio.frame_rate != settings.audio.sample_rate:
-        audio = audio.set_frame_rate(settings.audio.sample_rate)
-    if audio.sample_width != settings.audio.sample_width:
-        audio = audio.set_sample_width(settings.audio.sample_width)
-    if audio.channels != settings.audio.num_channels:
-        audio = audio.set_channels(settings.audio.num_channels)
-    if audio.duration_seconds < settings.audio.min_duration:
+    if audio.frame_rate != settings.file.audio.sample_rate:
+        audio = audio.set_frame_rate(settings.file.audio.sample_rate)
+    if audio.sample_width != settings.file.audio.sample_width:
+        audio = audio.set_sample_width(settings.file.audio.sample_width)
+    if audio.channels != settings.file.audio.num_channels:
+        audio = audio.set_channels(settings.file.audio.num_channels)
+    if audio.duration_seconds < settings.file.audio.min_duration:
         raise ValueError(
-            f"Audio duration must be greater than {settings.audio.min_duration} seconds, "
+            f"Audio duration must be greater than {settings.file.audio.min_duration} seconds, "
             f"got {audio.duration_seconds} seconds"
         )
-    if audio.duration_seconds > settings.audio.max_duration:
+    if audio.duration_seconds > settings.file.audio.max_duration:
         raise ValueError(
-            f"Audio duration must be less than {settings.audio.max_duration} seconds, "
+            f"Audio duration must be less than {settings.file.audio.max_duration} seconds, "
             f"got {audio.duration_seconds} seconds"
         )
 
@@ -73,22 +70,22 @@ async def _save_audio(user_id: int, source: AudioSource, name: str | None, audio
     key = UUID(bytes=key_bytes.digest()[:16], version=5)
     fs_type = get_fs_type()
     fs_path = _get_path(key)
-    max_bytes = settings.audio.max_mb * 1024 * 1024
+    max_bytes = settings.file.audio.max_mb * 1024 * 1024
 
     match fs_type:
         case "file":
-            with tempfile.NamedTemporaryFile(suffix=f".{settings.audio.file_ext}", delete=False) as temp_file:
-                audio.export(temp_file.name, format=settings.audio.file_ext)
+            with tempfile.NamedTemporaryFile(suffix=f".{settings.file.audio.file_ext}", delete=False) as temp_file:
+                audio.export(temp_file.name, format=settings.file.audio.file_ext)
             if os.path.getsize(temp_file.name) > max_bytes:
                 raise ValueError("Audio file is too large")
             shutil.move(temp_file.name, fs_path)
 
         case "s3":
-            with tempfile.NamedTemporaryFile(suffix=f".{settings.audio.file_ext}") as temp_file:
-                audio.export(temp_file.name, format=settings.audio.file_ext)
+            with tempfile.NamedTemporaryFile(suffix=f".{settings.file.audio.file_ext}") as temp_file:
+                audio.export(temp_file.name, format=settings.file.audio.file_ext)
                 if os.path.getsize(temp_file.name) > max_bytes:
                     raise ValueError("Audio file is too large")
-                s3_bucket = settings.s3.bucket
+                s3_bucket = settings.file.s3.bucket
                 session = aioboto3.Session()
                 async with session.resource("s3") as s3:
                     bucket = await s3.Bucket(s3_bucket)
@@ -187,7 +184,6 @@ async def get_audio_url(audio_entry: Audio) -> tuple[str, bool]:
         The file path or URL for serving the audio file, along with a boolean
         indicating if it is a URL.
     """
-    settings = load_settings().file
     cur_time = server_time()
     fs_type = get_fs_type()
     fs_path = _get_path(audio_entry.key)
@@ -205,15 +201,15 @@ async def get_audio_url(audio_entry: Audio) -> tuple[str, bool]:
             case "s3":
                 if audio_entry.url is not None and audio_entry.url_expires > cur_time:
                     return audio_entry.url, True
-                s3_bucket = settings.s3.bucket
+                s3_bucket = settings.file.s3.bucket
                 session = aioboto3.Session()
                 async with session.client("s3") as s3:
                     audio_entry.url = await s3.generate_presigned_url(
                         ClientMethod="get_object",
                         Params={"Bucket": s3_bucket, "Key": fs_path},
-                        ExpiresIn=settings.s3.url_expiration,
+                        ExpiresIn=settings.file.s3.url_expiration,
                     )
-                audio_entry.url_expires = cur_time + timedelta(seconds=settings.s3.url_expiration - 1)
+                audio_entry.url_expires = cur_time + timedelta(seconds=settings.file.s3.url_expiration - 1)
                 await audio_entry.save()
                 return audio_entry.url, True
 
@@ -234,7 +230,6 @@ async def load_audio_array(audio_uuid: UUID) -> np.ndarray:
     Returns:
         The audio as a Numpy array.
     """
-    settings = load_settings().file
     fs_type = get_fs_type()
     fs_path = _get_path(audio_uuid)
 
@@ -243,16 +238,16 @@ async def load_audio_array(audio_uuid: UUID) -> np.ndarray:
 
         match fs_type:
             case "file":
-                audio = AudioSegment.from_file(fs_path, settings.audio.file_ext)
+                audio = AudioSegment.from_file(fs_path, settings.file.audio.file_ext)
 
             case "s3":
-                s3_bucket = settings.s3.bucket
+                s3_bucket = settings.file.s3.bucket
                 session = aioboto3.Session()
                 async with session.client("s3") as s3:
                     obj = await s3.get_object(Bucket=s3_bucket, Key=fs_path)
                     data = await obj["Body"].read()
                     audio_file_io = BytesIO(data)
-                    audio = AudioSegment.from_file(audio_file_io, settings.audio.file_ext)
+                    audio = AudioSegment.from_file(audio_file_io, settings.file.audio.file_ext)
 
             case _:
                 raise ValueError(f"Invalid file system type: {fs_type}")
@@ -281,11 +276,10 @@ async def save_audio_array(
     Returns:
         The row in audio table containing the audio Id.
     """
-    settings = load_settings().file
     audio = AudioSegment(
         audio_array.tobytes(),
-        sample_width=settings.audio.sample_width,
-        frame_rate=settings.audio.sample_rate,
-        channels=settings.audio.num_channels,
+        sample_width=settings.file.audio.sample_width,
+        frame_rate=settings.file.audio.sample_rate,
+        channels=settings.file.audio.num_channels,
     )
     return await _save_audio(user_id, source, name, audio)

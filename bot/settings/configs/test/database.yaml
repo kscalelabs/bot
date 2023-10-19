@@ -1,0 +1,5 @@
+database:
+  kind: sqlite
+  generate_schemas: true
+  sqlite:
+    host: ":memory:"

@@ -30,3 +30,7 @@ ml-pretrained
 ml-starter
 torch
 torchaudio
+
+# Deployment requirements.
+pulumi
+pulumi_aws
