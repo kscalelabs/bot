@@ -1,11 +1,13 @@
 """Defines the API endpoint for querying images."""
 
+import asyncio
 import datetime
 import re
-from typing import Any, cast
+from typing import Any
 
 from fastapi import (
     APIRouter,
+    BackgroundTasks,
     Depends,
     Form,
     HTTPException,
@@ -16,57 +18,43 @@ from fastapi.responses import FileResponse, RedirectResponse
 from pydantic.main import BaseModel
 from tortoise.contrib.postgres.functions import Random
 from tortoise.expressions import Q
+from tortoise.transactions import in_transaction
 
 from bot.api.app.users import SessionTokenData, get_session_token
-from bot.api.audio import get_audio_url, save_audio_file
-from bot.api.model import Audio, AudioSource, cast_audio_source
-from bot.settings import settings
+from bot.api.audio import delete_audio as delete_audio_impl, get_audio_url, save_audio_file
+from bot.api.model import Audio, AudioDeleteTask, AudioSource, cast_audio_source
+from bot.settings import env_settings as settings
 
 MAX_UUIDS_PER_QUERY = 100
 
 audio_router = APIRouter()
 
 
-class InfoMeResponse(BaseModel):
-    count: int
-
-
-@audio_router.get("/info/me", response_model=InfoMeResponse)
-async def info_me(
-    q: str | None = None,
-    source: AudioSource | None = None,
-    user_data: SessionTokenData = Depends(get_session_token),
-) -> InfoMeResponse:
-    query = Audio.filter(user_id=user_data.user_id)
-    if q is not None:
-        query = query.filter(name__icontains=q)
-    if source is not None:
-        query = query.filter(source=source)
-    count = await query.count()
-    return InfoMeResponse(count=count)
-
-
 class QueryMeResponse(BaseModel):
     ids: list[int]
+    total: int
 
 
 @audio_router.get("/query/me", response_model=QueryMeResponse)
 async def query_me(
     start: int,
     limit: int,
-    q: str | None = None,
+    q: str = "",
     source: AudioSource | None = None,
     user_data: SessionTokenData = Depends(get_session_token),
 ) -> QueryMeResponse:
     start = max(start, 0)
     limit = min(limit, MAX_UUIDS_PER_QUERY)
     query = Audio.filter(user_id=user_data.user_id)
-    if q is not None:
+    if len(q) > 0:
         query = query.filter(name__icontains=q)
     if source is not None:
         query = query.filter(source=source)
-    ids = cast(list[int], await query.order_by("-created").offset(start).limit(limit).values_list("id", flat=True))
-    return QueryMeResponse(ids=ids)
+    ids, total = await asyncio.gather(
+        query.order_by("-created").offset(start).limit(limit).values_list("id", flat=True),
+        query.count(),
+    )
+    return QueryMeResponse(ids=ids, total=total)
 
 
 class SingleIdResponse(BaseModel):
@@ -104,9 +92,21 @@ async def query_ids(
     return QueryIdsResponse(infos=infos)
 
 
+async def delete_audio_in_background(key: str) -> None:
+    await delete_audio_impl(key)
+    await AudioDeleteTask.filter(key=key).delete()
+
+
 @audio_router.delete("/delete")
-async def delete_audio(id: int, user_data: SessionTokenData = Depends(get_session_token)) -> bool:
-    await Audio.filter(id=id, user_id=user_data.user_id).delete()
+async def delete_audio(
+    id: int,
+    background_tasks: BackgroundTasks,
+    user_data: SessionTokenData = Depends(get_session_token),
+) -> bool:
+    async with in_transaction():
+        audio = await Audio.get(id=id, user_id=user_data.user_id)
+        await asyncio.gather(AudioDeleteTask.create(key=audio.key), audio.delete())
+    background_tasks.add_task(delete_audio_in_background, audio.key)
     return True
 
 

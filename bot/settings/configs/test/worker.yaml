@@ -1,3 +1,0 @@
-worker:
-  model_key: dummy
-  queue_type: dummy

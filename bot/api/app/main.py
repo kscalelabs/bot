@@ -14,7 +14,6 @@ from typing import AsyncGenerator
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from mangum import Mangum
 from tortoise import Tortoise
 from tortoise.contrib.fastapi import register_tortoise
 
@@ -24,7 +23,7 @@ from bot.api.app.generation import generation_router
 from bot.api.app.infer import infer_router
 from bot.api.app.users import users_router
 from bot.api.db import get_config
-from bot.settings import settings
+from bot.settings import env_settings as settings
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +41,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 
 app = FastAPI(lifespan=lifespan)
-handler = Mangum(app)
 
 # Just link to the official terms of service.
 app.terms_of_service = "https://dpsh.dev/tos"

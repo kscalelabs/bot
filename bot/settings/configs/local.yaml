@@ -1,0 +1,28 @@
+crypto:
+  jwt_secret: ${oc.env:JWT_SECRET}
+  google_client_id: ${oc.env:GOOGLE_CLIENT_ID}
+database:
+  kind: sqlite
+  generate_schemas: true
+  sqlite:
+    # host: ":memory:"
+    host: "${oc.env:DATA_DIR}/dpsh-bot/db.sqlite"
+email:
+  host: ${oc.env:SMTP_HOST}
+  port: 587
+  name: Ben from DPSH
+  email: ${oc.env:SMTP_EMAIL}
+  password: ${oc.env:SMTP_PASSWORD}
+file:
+  fs_type: file
+  root_dir: ${oc.env:DATA_DIR}/dpsh-bot/samples
+site:
+  homepage: http://localhost:3000
+user:
+  admin_emails:
+    - "ben@bolte.cc"
+    - "ben@dpsh.dev"
+worker:
+  model_key: "hubert-quantized-20231015"
+  worker_url: "http://localhost:8080"
+  sampling_timesteps: 50

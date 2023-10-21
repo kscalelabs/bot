@@ -9,7 +9,7 @@ from huggingface_hub import hf_hub_download
 from safetensors import safe_open
 
 from bot.model.hubert.model import HubertModel
-from bot.settings import settings
+from bot.settings import env_settings as settings
 
 PretrainedHubertModel = Literal["hubert-quantized-20231015"]
 

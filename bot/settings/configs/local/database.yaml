@@ -1,6 +1,0 @@
-database:
-  kind: sqlite
-  generate_schemas: true
-  sqlite:
-    # host: ":memory:"
-    host: "${oc.env:DATA_DIR}/dpsh-bot/db.sqlite"

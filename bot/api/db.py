@@ -4,8 +4,8 @@ import logging
 
 from tortoise import Model, Tortoise
 
-from bot.settings import settings
-from bot.settings.structure import PostgreSQLDatabaseSettings
+from bot.settings import env_settings as settings
+from bot.settings.environment import PostgreSQLDatabaseSettings
 
 logger = logging.getLogger(__name__)
 

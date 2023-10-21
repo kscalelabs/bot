@@ -12,7 +12,7 @@ from pydantic.main import BaseModel
 from bot.api.email import OneTimePassPayload, send_delete_email, send_otp_email, send_waitlist_email
 from bot.api.model import Token, User
 from bot.api.token import create_refresh_token, create_token, load_refresh_token, load_token
-from bot.settings import settings
+from bot.settings import env_settings as settings
 
 users_router = APIRouter()
 

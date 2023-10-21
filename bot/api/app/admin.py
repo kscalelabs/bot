@@ -6,7 +6,7 @@ from pydantic.main import BaseModel
 
 from bot.api.app.users import SessionTokenData, get_session_token
 from bot.api.model import Audio, Generation, User
-from bot.settings import settings
+from bot.settings import env_settings as settings
 
 admin_router = APIRouter()
 

@@ -45,8 +45,8 @@ if [[ $prune != false ]]; then
 fi
 
 # Updates the Lambda function.
-aws lambda update-function-code \
-    --function-name ${LAMBDA_FUNCTION_NAME} \
-    --image-uri ${ECR_URI}:latest-api \
-    --no-cli-pager \
-    --architecture arm64
+# aws lambda update-function-code \
+#     --function-name ${LAMBDA_FUNCTION_NAME} \
+#     --image-uri ${ECR_URI}:latest-api \
+#     --no-cli-pager \
+#     --architecture arm64

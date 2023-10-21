@@ -1,4 +1,4 @@
-"""Defines the bot settings."""
+"""Defines the bot environment settings."""
 
 from dataclasses import dataclass, field
 
@@ -41,26 +41,9 @@ class DatabaseSettings:
 
 
 @dataclass
-class RabbitMessageQueueSettings:
-    host: str = field(default="localhost")
-    port: int = field(default=5672)
-    virtual_host: str = field(default="/")
-    username: str = field(default="guest")
-    password: str = field(default="guest")
-    queue_name: str = field(default="dpsh")
-
-
-@dataclass
-class SqsMessageQueueSettings:
-    queue_name: str = field(default=MISSING)
-
-
-@dataclass
 class WorkerSettings:
     model_key: str = field(default=MISSING)
-    queue_type: str = field(default=MISSING)
-    rabbit: RabbitMessageQueueSettings = field(default_factory=RabbitMessageQueueSettings)
-    sqs: SqsMessageQueueSettings = field(default_factory=SqsMessageQueueSettings)
+    worker_url: str = field(default=MISSING)
     sampling_timesteps: int | None = field(default=None)
     soft_time_limit: int = field(default=30)
     max_retries: int = field(default=3)
@@ -118,7 +101,7 @@ class ModelSettings:
 
 
 @dataclass
-class Settings:
+class EnvironmentSettings:
     app_name: str = field(default="bot")
     environment: str = field(default=MISSING)
     user: UserSettings = field(default_factory=UserSettings)

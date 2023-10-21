@@ -6,12 +6,12 @@ import { useAlertQueue } from "hooks/alerts";
 import { useAuthentication } from "hooks/auth";
 import { useClipboard } from "hooks/clipboard";
 import React, { ForwardedRef, forwardRef, useCallback, useState } from "react";
-import { Button, Form, Popover, Spinner } from "react-bootstrap";
+import { Button, Form, Popover, PopoverProps, Spinner } from "react-bootstrap";
 import { Link } from "react-router-dom";
 
-interface Props {
+interface ComponentProps {
   audioId: number;
-  localResponse: SingleIdResponse | null;
+  response: SingleIdResponse | null;
   name: string;
   setName: (name: string) => void;
   showLink: boolean;
@@ -20,11 +20,13 @@ interface Props {
   setDeleted: (deleted: boolean) => void;
 }
 
+type Props = ComponentProps & PopoverProps;
+
 const AudioPopover = forwardRef(
   (props: Props, ref: ForwardedRef<HTMLDivElement>): React.ReactElement => {
     const {
       audioId,
-      localResponse,
+      response,
       name,
       setName,
       showLink,
@@ -56,7 +58,7 @@ const AudioPopover = forwardRef(
     const handleEditButtonClick = async () => {
       if (editing) {
         try {
-          if (name !== localResponse?.name) {
+          if (name !== response?.name) {
             setEditing(null);
             await api.post<boolean>("/audio/update", {
               id: audioId,
@@ -65,7 +67,7 @@ const AudioPopover = forwardRef(
             setName(name ?? "");
           }
         } catch (error) {
-          setName(localResponse?.name ?? "");
+          setName(response?.name ?? "");
         } finally {
           setEditing(false);
         }
@@ -98,7 +100,7 @@ const AudioPopover = forwardRef(
 
     return (
       <Popover ref={ref} {...popoverProps}>
-        {localResponse === null ? (
+        {response === null ? (
           <Spinner style={{ margin: 10 }} />
         ) : (
           <>
@@ -124,18 +126,17 @@ const AudioPopover = forwardRef(
                     className="me-2"
                     style={{ cursor: "pointer" }}
                   />
-                  {name ?? localResponse.name}
+                  {name ?? response.name}
                 </span>
               )}
             </Popover.Header>
             <Popover.Body>
-              <strong>Source:</strong> {localResponse.source}
+              <strong>Source:</strong> {response.source}
               <br />
               <strong>Created:</strong>{" "}
-              {new Date(localResponse.created).toLocaleString()}
+              {new Date(response.created).toLocaleString()}
               <br />
-              <strong>Duration:</strong> {localResponse.duration.toFixed(1)}{" "}
-              seconds
+              <strong>Duration:</strong> {response.duration.toFixed(1)} seconds
               {(showLink || showDownload) && (
                 <>
                   <br />
@@ -177,7 +178,7 @@ const AudioPopover = forwardRef(
         )}
       </Popover>
     );
-  },
+  }
 );
 
 export default AudioPopover;

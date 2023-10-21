@@ -1,4 +1,4 @@
-import AudioPlayback from "components/playback/AudioPlayback";
+import SingleAudioPlayback from "components/playback/SingleAudioPlayback";
 import { humanReadableError } from "constants/backend";
 import { useAlertQueue } from "hooks/alerts";
 import { useAuthentication } from "hooks/auth";
@@ -18,7 +18,7 @@ const AudioUploader = () => {
   const { addAlert } = useAlertQueue();
 
   const handleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>,
+    event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setShowSuccess(false);
     setShowSpinner(true);
@@ -39,7 +39,7 @@ const AudioUploader = () => {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-        },
+        }
       );
       setShowSuccess(true);
       setLastId(response.data.id);
@@ -77,7 +77,11 @@ const AudioUploader = () => {
         </Alert>
       )}
       {lastId !== null && (
-        <AudioPlayback className="mt-3" audioId={lastId} title="Last Upload" />
+        <SingleAudioPlayback
+          className="mt-3"
+          audioId={lastId}
+          title="Last Upload"
+        />
       )}
     </Card.Body>
   );

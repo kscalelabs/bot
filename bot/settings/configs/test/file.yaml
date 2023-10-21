@@ -1,5 +1,0 @@
-file:
-  fs_type: file
-  audio:
-    file_ext: flac
-    min_duration: 0.0

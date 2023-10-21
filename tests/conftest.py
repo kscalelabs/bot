@@ -11,7 +11,7 @@ from _pytest.python import Function, Metafunc
 from fastapi.testclient import TestClient
 from pytest_mock.plugin import MockerFixture, MockType
 
-os.environ["DPSH_CONFIG_KEY"] = "test"
+os.environ["DPSH_ENVIRONMENT"] = "test"
 
 
 @functools.lru_cache()
@@ -39,9 +39,9 @@ def pytest_generate_tests(metafunc: Metafunc) -> None:
 
 @pytest.fixture(scope="function", autouse=True)
 def mock_load_settings(mocker: MockerFixture, tmpdir_factory: TempdirFactory) -> MockType:
-    mock = mocker.patch("bot.settings._load")
+    mock = mocker.patch("bot.settings._load_environment_settings")
 
-    from bot.settings import settings
+    from bot.settings import env_settings as settings
 
     # Sets the default image settings.
     file_root_dir = tmpdir_factory.mktemp("files")

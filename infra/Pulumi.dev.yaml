@@ -1,0 +1,25 @@
+config:
+  aws:region: us-east-1
+
+  dpsh:key: dev
+
+  # Database parameters.
+  dpsh:db_password:
+    secure: AAABAO6fgGGqom8bv6sHyhscONT2TP8omIAsH2BQ574ZAZDmf9NeJGoVOlNMqBILQWfSGhMkODiQPi1YeW88OQY4UlNuJdP81RXFiaJNmvUmuJsUzQuTAQ1Fd7aKAI0I
+  dpsh:db_username: postgres
+  dpsh:db_instance_class: db.t4g.large
+  dpsh:db_allocated_storage: 20
+  dpsh:db_max_allocated_storage: 100
+  dpsh:db_skip_final_snapshot: true
+
+  # API parameters.
+  dpsh:api_instance_type: t2.micro
+  dpsh:api_ami: ami-03eb6185d756497f8  # Amazon Linux 2 AMI (HVM), SSD Volume Type
+  dpsh:min_num_api_instances: 1
+  dpsh:max_num_api_instances: 1
+
+  # Worker parameters.
+  dpsh:worker_instance_type: g5.xlarge  # A10G
+  dpsh:worker_ami: ami-069ef9bcf69a50f63  # Amazon Linux 2 AMI (HVM) - Kernel 5.10, SSD Volume Type
+  dpsh:min_num_worker_instances: 1
+  dpsh:max_num_worker_instances: 1

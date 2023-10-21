@@ -40,11 +40,6 @@ async def test_audio_functions(
             data = response.json()
             id_list.append(data["id"])
 
-    # Gets the info for the current user.
-    response = app_client.get("/audio/info/me", params={"q": "test"})
-    assert response.status_code == 200, response.json()
-    assert response.json()["count"] == 10
-
     # Tests querying the audio files for the user.
     for source, id_list in (("uploaded", upload_ids), ("recorded", record_ids)):
         response = app_client.get("/audio/query/me", params={"start": 0, "limit": 5, "source": source})

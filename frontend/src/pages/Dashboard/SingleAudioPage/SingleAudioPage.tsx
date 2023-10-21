@@ -1,4 +1,4 @@
-import AudioPlayback from "components/playback/AudioPlayback";
+import SingleAudioPlayback from "components/playback/SingleAudioPlayback";
 import { Col, Container, Row } from "react-bootstrap";
 import { Navigate, useParams } from "react-router-dom";
 
@@ -10,7 +10,6 @@ const SingleAudioPage = () => {
     return <Navigate to="/library" />;
   }
 
-  // return <AudioPlayback audioId={id} />;
   return (
     <Container className="mt-5 mb-5">
       <Row className="justify-content-center">
@@ -21,7 +20,7 @@ const SingleAudioPage = () => {
             </Col>
           </Row>
           <Row className="mb-3">
-            <AudioPlayback audioId={idNumber} showLink={false} />
+            <SingleAudioPlayback audioId={idNumber} showLink={false} />
           </Row>
         </Col>
       </Row>

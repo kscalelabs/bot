@@ -1,6 +1,6 @@
 import { faSync } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import AudioPlayback from "components/playback/AudioPlayback";
+import AudioPlaybackList from "components/playback/AudioPlaybackList";
 import { humanReadableError } from "constants/backend";
 import { useAlertQueue } from "hooks/alerts";
 import { useAuthentication } from "hooks/auth";
@@ -17,7 +17,7 @@ import {
   Spinner,
 } from "react-bootstrap";
 
-const DEFAULT_PAGINATE_LIMIT = 50;
+const DEFAULT_PAGINATE_LIMIT = 24;
 
 interface ListProps {
   paginationLimit?: number;
@@ -27,10 +27,6 @@ interface ListProps {
 
 type Props = ListProps & RowProps;
 
-interface InfoMeResponse {
-  count: number;
-}
-
 interface QueryMeRequest {
   start: number;
   limit: number;
@@ -39,6 +35,7 @@ interface QueryMeRequest {
 
 interface QueryMeResponse {
   ids: number[];
+  total: number;
 }
 
 const ListAudios = (props: Props) => {
@@ -48,8 +45,7 @@ const ListAudios = (props: Props) => {
     showSearchBar = true,
     ...rowProps
   } = props;
-  const [info, setInfo] = useState<InfoMeResponse | null>(null);
-  const [audios, setAudios] = useState<number[] | null>(null);
+  const [audios, setAudios] = useState<QueryMeResponse | null>(null);
   const [start, setStart] = useState(0);
   const [searchTerm, setSearchTerm] = useState<string>("");
 
@@ -57,52 +53,30 @@ const ListAudios = (props: Props) => {
   const { addAlert } = useAlertQueue();
 
   useEffect(() => {
-    if (info === null) {
+    if (audios === null) {
       (async () => {
         try {
-          const response = await api.get<InfoMeResponse>("/audio/info/me");
-          const newStart = Math.max(
-            Math.min(start, response.data.count - paginationLimit),
-            0,
-          );
-          setInfo(response.data);
-          setStart(newStart);
-          setAudios(null);
-        } catch (error) {
-          addAlert(humanReadableError(error), "error");
-        }
-      })();
-    } else if (audios === null) {
-      (async () => {
-        try {
-          if (searchTerm.length > 0) {
-            const response = await api.get<QueryMeResponse>("/audio/query/me", {
-              params: {
-                start: start,
-                limit: paginationLimit,
-                q: searchTerm,
-              } as QueryMeRequest,
-            });
-            setAudios(response.data.ids);
+          const response = await api.get<QueryMeResponse>("/audio/query/me", {
+            params: {
+              start: start,
+              limit: paginationLimit,
+              q: searchTerm,
+            } as QueryMeRequest,
+          });
+          if (response.data.ids.length === 0 && start > 0) {
+            setStart(Math.max(start - paginationLimit, 0));
           } else {
-            const response = await api.get<QueryMeResponse>("/audio/query/me", {
-              params: {
-                start: start,
-                limit: paginationLimit,
-              } as QueryMeRequest,
-            });
-            setAudios(response.data.ids);
+            setAudios(response.data);
           }
         } catch (error) {
           addAlert(humanReadableError(error), "error");
         }
       })();
     }
-  }, [info, audios, start, paginationLimit, searchTerm, api, addAlert]);
+  }, [audios, start, paginationLimit, searchTerm, api, addAlert]);
 
   const handleRefresh = () => {
     setAudios(null);
-    setInfo(null);
   };
 
   return (
@@ -110,7 +84,7 @@ const ListAudios = (props: Props) => {
       <Col>
         <Row>
           <Col className="text-center">
-            {info === null ? (
+            {audios === null ? (
               <Spinner />
             ) : (
               <ButtonToolbar>
@@ -121,7 +95,7 @@ const ListAudios = (props: Props) => {
                     </Button>
                   </ButtonGroup>
                 )}
-                {info.count > paginationLimit && (
+                {audios.total > paginationLimit && (
                   <ButtonGroup className="mt-2 me-2">
                     <Button
                       onClick={() => {
@@ -137,7 +111,7 @@ const ListAudios = (props: Props) => {
                         setStart(start + paginationLimit);
                         setAudios(null);
                       }}
-                      disabled={start + paginationLimit >= info.count}
+                      disabled={start + paginationLimit >= audios.total}
                     >
                       Next
                     </Button>
@@ -163,37 +137,7 @@ const ListAudios = (props: Props) => {
             )}
           </Col>
         </Row>
-        {info !== null &&
-          (audios === null ? (
-            <Row>
-              <Col className="text-center">
-                <Spinner />
-              </Col>
-            </Row>
-          ) : (
-            <Row>
-              <Col>
-                <Row>
-                  {audios.length === 0 ? (
-                    <Col className="mt-3">No samples found</Col>
-                  ) : (
-                    audios.map((audioId) => (
-                      <Col
-                        sm={12}
-                        md={6}
-                        lg={4}
-                        xxl={3}
-                        key={audioId}
-                        className="mt-3"
-                      >
-                        <AudioPlayback audioId={audioId} />
-                      </Col>
-                    ))
-                  )}
-                </Row>
-              </Col>
-            </Row>
-          ))}
+        {audios !== null && <AudioPlaybackList audioIds={audios.ids} />}
       </Col>
     </Row>
   );

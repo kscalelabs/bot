@@ -19,7 +19,7 @@ from fastapi import UploadFile
 from pydub import AudioSegment
 
 from bot.api.model import Audio, AudioSource
-from bot.settings import settings
+from bot.settings import env_settings as settings
 from bot.utils import server_time
 
 DEFAULT_NAME = "Untitled"
@@ -283,3 +283,31 @@ async def save_audio_array(
         channels=settings.file.audio.num_channels,
     )
     return await _save_audio(user_id, source, name, audio)
+
+
+async def delete_audio(key: UUID) -> None:
+    """Deletes the audio file from the file system.
+
+    Args:
+        key: The UUID of the audio file to delete
+    """
+    fs_type = get_fs_type()
+    fs_path = _get_path(key)
+
+    try:
+        match fs_type:
+            case "file":
+                os.remove(fs_path)
+
+            case "s3":
+                s3_bucket = settings.file.s3.bucket
+                session = aioboto3.Session()
+                async with session.client("s3") as s3:
+                    await s3.delete_object(Bucket=s3_bucket, Key=fs_path)
+
+            case _:
+                raise ValueError(f"Invalid file system type: {fs_type}")
+
+    except Exception:
+        logger.exception("Error processing %s", key)
+        raise
