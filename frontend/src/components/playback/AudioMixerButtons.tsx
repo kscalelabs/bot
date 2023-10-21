@@ -53,7 +53,7 @@ const SourceButton = (props: Props) => {
           audioId={response.data.output_id}
           settingsPlacement="top-start"
         />,
-        "success"
+        "success",
       );
     } catch (error) {
       addAlert("Failed to add job", "error");
@@ -144,7 +144,7 @@ const ReferenceButton = (props: Props) => {
           audioId={response.data.output_id}
           settingsPlacement="top-start"
         />,
-        "success"
+        "success",
       );
     } catch (error) {
       addAlert("Failed to start mixing", "error");

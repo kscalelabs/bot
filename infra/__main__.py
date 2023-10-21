@@ -1,3 +1,4 @@
+# mypy: disable-error-code="operator"
 """Defines the AWS components for the application."""
 
 import pulumi

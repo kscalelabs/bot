@@ -3,7 +3,8 @@
 import asyncio
 import datetime
 import re
-from typing import Any
+from typing import Any, cast
+from uuid import UUID
 
 from fastapi import (
     APIRouter,
@@ -54,7 +55,7 @@ async def query_me(
         query.order_by("-created").offset(start).limit(limit).values_list("id", flat=True),
         query.count(),
     )
-    return QueryMeResponse(ids=ids, total=total)
+    return QueryMeResponse(ids=cast(list[int], ids), total=total)
 
 
 class SingleIdResponse(BaseModel):
@@ -92,7 +93,7 @@ async def query_ids(
     return QueryIdsResponse(infos=infos)
 
 
-async def delete_audio_in_background(key: str) -> None:
+async def delete_audio_in_background(key: UUID) -> None:
     await delete_audio_impl(key)
     await AudioDeleteTask.filter(key=key).delete()
 

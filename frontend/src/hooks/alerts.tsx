@@ -28,7 +28,7 @@ interface AlertQueueContextProps {
 }
 
 const AlertQueueContext = createContext<AlertQueueContextProps | undefined>(
-  undefined
+  undefined,
 );
 
 interface AlertQueueProviderProps {
@@ -62,7 +62,7 @@ export const AlertQueueProvider = (props: AlertQueueProviderProps) => {
         return newAlerts;
       });
     },
-    [generateAlertId]
+    [generateAlertId],
   );
 
   const removeAlert = useCallback((alertId: string) => {

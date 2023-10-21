@@ -23,7 +23,7 @@ const SingleAudioPlayback = (props: Props) => {
   const { api } = useAuthentication();
 
   const [localResponse, setLocalResponse] = useState<SingleIdResponse | null>(
-    null
+    null,
   );
 
   useEffect(() => {

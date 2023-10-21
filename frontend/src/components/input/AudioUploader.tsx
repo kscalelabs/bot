@@ -18,7 +18,7 @@ const AudioUploader = () => {
   const { addAlert } = useAlertQueue();
 
   const handleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     setShowSuccess(false);
     setShowSpinner(true);
@@ -39,7 +39,7 @@ const AudioUploader = () => {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-        }
+        },
       );
       setShowSuccess(true);
       setLastId(response.data.id);

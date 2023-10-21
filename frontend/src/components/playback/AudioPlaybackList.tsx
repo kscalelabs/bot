@@ -32,7 +32,7 @@ const AudioPlaybackList = (props: Props) => {
             "/audio/query/ids",
             {
               ids: audioIds,
-            } as QueryIdsRequest
+            } as QueryIdsRequest,
           );
           // setAudioInfos(response.data);
           const infos = new Map<number, SingleIdResponse>();

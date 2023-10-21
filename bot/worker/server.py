@@ -212,7 +212,8 @@ class Server:
         await asyncio.gather(*tasks)
 
         logger.info("Shutting down server...")
-        await asyncio.gather(runner.cleanup(), self.runner_lock.release(), close_db())
+        await asyncio.gather(runner.cleanup(), close_db())
+        self.runner_lock.release()
 
 
 def main() -> None:

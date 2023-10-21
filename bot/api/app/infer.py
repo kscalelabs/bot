@@ -37,5 +37,5 @@ async def run(data: RunRequest, user_data: SessionTokenData = Depends(get_sessio
         async with session.get(url) as response:
             if response.status != 200:
                 raise HTTPException(status_code=response.status, detail=response.reason)
-            data = await response.json()
-    return RunResponse(**data)
+            response_data = await response.json()
+    return RunResponse(**response_data)
