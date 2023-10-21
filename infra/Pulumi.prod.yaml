@@ -16,6 +16,7 @@ config:
   dpsh:api_ami: ami-03eb6185d756497f8  # Amazon Linux 2 AMI (HVM), SSD Volume Type
   dpsh:min_num_api_instances: 4
   dpsh:max_num_api_instances: 64
+  dpsh:domain_name: api.dpsh.dev
 
   # Worker parameters.
   dpsh:worker_instance_type: g5.xlarge  # A10G

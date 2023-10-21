@@ -21,13 +21,12 @@ db_skip_final_snapshot = config.require_bool("db_skip_final_snapshot")
 
 # API parameters.
 api_instance_type = config.require("api_instance_type")
-api_ami = config.require("api_ami")
 min_num_api_instances = config.require("min_num_api_instances")
 max_num_api_instances = config.require("max_num_api_instances")
+domain_name = config.require("domain_name")
 
 # Worker parameters.
 worker_instance_type = config.require("worker_instance_type")
-worker_ami = config.require("worker_ami")
 min_num_worker_instances = config.require("min_num_worker_instances")
 max_num_worker_instances = config.require("max_num_worker_instances")
 
@@ -47,6 +46,7 @@ internet_gateway = aws.ec2.InternetGateway(
     "DpshInternetGateway",
     vpc_id=vpc.id,
     tags={"Project": "dpsh", "Environment": env, "Name": f"{env.upper()} Internet Gateway"},
+    opts=pulumi.ResourceOptions(depends_on=[vpc]),
 )
 
 # ------------------ #
@@ -61,6 +61,12 @@ def get_subnet(key: str, i: int, az: str) -> tuple[aws.ec2.Subnet, int]:
         cidr_block=f"10.0.{i}.0/24",
         vpc_id=vpc.id,
         availability_zone=az,
+        tags={
+            "Project": "dpsh",
+            "Environment": env,
+            "Name": f"{env.upper()} {key.capitalize()} Subnet {letter.upper()}",
+        },
+        opts=pulumi.ResourceOptions(depends_on=[vpc]),
     )
     return subnet, i + 1
 
@@ -72,16 +78,24 @@ api_subnet_c, i = get_subnet("api", i, "us-east-1c")
 api_subnet_d, i = get_subnet("api", i, "us-east-1d")
 api_subnet_e, i = get_subnet("api", i, "us-east-1e")
 api_subnet_f, i = get_subnet("api", i, "us-east-1f")
-api_subnet_ids = [api_subnet_a.id, api_subnet_b.id, api_subnet_c.id, api_subnet_d.id, api_subnet_e.id, api_subnet_f.id]
+api_subnets = [api_subnet_a, api_subnet_b, api_subnet_c, api_subnet_d, api_subnet_e, api_subnet_f]
+api_subnet_ids = [api_subnet.id for api_subnet in api_subnets]
 
 gpu_subnet_a, i = get_subnet("gpu", i, "us-east-1a")
 gpu_subnet_b, i = get_subnet("gpu", i, "us-east-1b")
 gpu_subnet_c, i = get_subnet("gpu", i, "us-east-1c")
 gpu_subnet_d, i = get_subnet("gpu", i, "us-east-1d")
 gpu_subnet_f, i = get_subnet("gpu", i, "us-east-1f")
-gpu_subnet_ids = [gpu_subnet_a.id, gpu_subnet_b.id, gpu_subnet_c.id, gpu_subnet_d.id, gpu_subnet_f.id]
+gpu_subnets = [gpu_subnet_a, gpu_subnet_b, gpu_subnet_c, gpu_subnet_d, gpu_subnet_f]
+gpu_subnet_ids = [gpu_subnet.id for gpu_subnet in gpu_subnets]
 
-db_subnet = aws.rds.SubnetGroup("DpshDBSubnet", subnet_ids=api_subnet_ids + gpu_subnet_ids, name="db-subnet")
+db_subnet = aws.rds.SubnetGroup(
+    "DpshDBSubnet",
+    subnet_ids=api_subnet_ids + gpu_subnet_ids,
+    name="db-subnet",
+    tags={"Project": "dpsh", "Environment": env, "Name": f"{env.upper()} DB Subnet"},
+    opts=pulumi.ResourceOptions(depends_on=api_subnets + gpu_subnets),
+)
 
 # ------------------ #
 #  Security Groups   #
@@ -92,10 +106,21 @@ api_sg = aws.ec2.SecurityGroup(
     description="Allow the API to be accessed from the internet.",
     vpc_id=vpc.id,
     ingress=[
-        aws.ec2.SecurityGroupIngressArgs(protocol="tcp", from_port=80, to_port=80, cidr_blocks=["0.0.0.0/0"]),
-        aws.ec2.SecurityGroupIngressArgs(protocol="tcp", from_port=443, to_port=443, cidr_blocks=["0.0.0.0/0"]),
+        aws.ec2.SecurityGroupIngressArgs(
+            protocol="tcp",
+            from_port=80,
+            to_port=80,
+            cidr_blocks=["0.0.0.0/0"],
+        ),
+        aws.ec2.SecurityGroupIngressArgs(
+            protocol="tcp",
+            from_port=443,
+            to_port=443,
+            cidr_blocks=["0.0.0.0/0"],
+        ),
     ],
     tags={"Project": "dpsh", "Environment": env, "Name": f"{env.upper()} API Security Group"},
+    opts=pulumi.ResourceOptions(depends_on=[internet_gateway]),
 )
 
 gpu_sg = aws.ec2.SecurityGroup(
@@ -103,12 +128,23 @@ gpu_sg = aws.ec2.SecurityGroup(
     description="Allow the GPU instances to communicate with the API, and vice versa",
     vpc_id=vpc.id,
     ingress=[
-        aws.ec2.SecurityGroupIngressArgs(protocol="tcp", from_port=80, to_port=80, security_groups=[api_sg.id]),
+        aws.ec2.SecurityGroupIngressArgs(
+            protocol="tcp",
+            from_port=80,
+            to_port=80,
+            security_groups=[api_sg.id],
+        ),
     ],
     egress=[
-        aws.ec2.SecurityGroupEgressArgs(protocol="tcp", from_port=80, to_port=80, security_groups=[api_sg.id]),
+        aws.ec2.SecurityGroupEgressArgs(
+            protocol="tcp",
+            from_port=80,
+            to_port=80,
+            security_groups=[api_sg.id],
+        ),
     ],
     tags={"Project": "dpsh", "Environment": env, "Name": f"{env.upper()} GPU Security Group"},
+    opts=pulumi.ResourceOptions(depends_on=[api_sg]),
 )
 
 db_sg = aws.ec2.SecurityGroup(
@@ -132,6 +168,7 @@ db_sg = aws.ec2.SecurityGroup(
         ),
     ],
     tags={"Project": "dpsh", "Environment": env, "Name": f"{env.upper()} Database Security Group"},
+    opts=pulumi.ResourceOptions(depends_on=[gpu_sg]),
 )
 
 # ------------------ #
@@ -162,7 +199,11 @@ api_s3_role = aws.iam.Role(
     ),
 )
 
-gpu_s3_role = aws.iam.Role("DpshApplicationGpuS3Role", assume_role_policy=api_s3_role.assume_role_policy)
+gpu_s3_role = aws.iam.Role(
+    "DpshApplicationGpuS3Role",
+    assume_role_policy=api_s3_role.assume_role_policy,
+    opts=pulumi.ResourceOptions(depends_on=[api_s3_role]),
+)
 
 # ------------------ #
 #        IAM         #
@@ -171,23 +212,27 @@ gpu_s3_role = aws.iam.Role("DpshApplicationGpuS3Role", assume_role_policy=api_s3
 api_instance_profile = aws.iam.InstanceProfile(
     "DpshApplicationApiInstanceProfile",
     role=api_s3_role,
+    opts=pulumi.ResourceOptions(depends_on=[api_s3_role]),
 )
 
 gpu_instance_profile = aws.iam.InstanceProfile(
     "DpshApplicationGpuInstanceProfile",
     role=gpu_s3_role,
+    opts=pulumi.ResourceOptions(depends_on=[gpu_s3_role]),
 )
 
 api_role_policy_attachment = aws.iam.RolePolicyAttachment(
     "DpshApiRolePolicyAttachment",
     role=api_s3_role,
     policy_arn="arn:aws:iam::aws:policy/AmazonS3FullAccess",
+    opts=pulumi.ResourceOptions(depends_on=[api_s3_role]),
 )
 
 gpu_role_policy_attachment = aws.iam.RolePolicyAttachment(
     "DpshGpuRolePolicyAttachment",
     role=gpu_s3_role,
     policy_arn="arn:aws:iam::aws:policy/AmazonS3FullAccess",
+    opts=pulumi.ResourceOptions(depends_on=[gpu_s3_role]),
 )
 
 # ------------------ #
@@ -205,6 +250,7 @@ aurora_cluster = aws.rds.Cluster(
     vpc_security_group_ids=[db_sg.id],
     skip_final_snapshot=db_skip_final_snapshot,
     tags={"Project": "dpsh", "Environment": env, "Name": f"{env.upper()} Database"},
+    opts=pulumi.ResourceOptions(depends_on=[db_sg, db_subnet]),
 )
 
 aurora_cluster_instance = aws.rds.ClusterInstance(
@@ -217,15 +263,27 @@ aurora_cluster_instance = aws.rds.ClusterInstance(
     publicly_accessible=False,
     db_subnet_group_name=db_subnet.id,
     tags={"Project": "dpsh", "Environment": env, "Name": f"{env.upper()} Database"},
+    opts=pulumi.ResourceOptions(depends_on=[aurora_cluster]),
 )
 
 # ------------------ #
 #  Launch Templates  #
 # ------------------ #
 
+amazon_linux_2_ami = aws.ec2.get_ami(
+    most_recent=True,
+    owners=["amazon"],
+    filters=[
+        aws.ec2.GetAmiFilterArgs(
+            name="name",
+            values=["amzn2-ami-hvm-*-x86_64-ebs"],
+        ),
+    ],
+)
+
 api_launch_template = aws.ec2.LaunchTemplate(
     "DpshApplicationApiLaunchTemplate",
-    image_id=api_ami,
+    image_id=amazon_linux_2_ami.id,
     instance_type=api_instance_type,
     vpc_security_group_ids=[api_sg.id],
     iam_instance_profile={
@@ -241,11 +299,12 @@ api_launch_template = aws.ec2.LaunchTemplate(
             },
         },
     ],
+    opts=pulumi.ResourceOptions(depends_on=[amazon_linux_2_ami, api_instance_profile, api_sg]),
 )
 
 gpu_launch_template = aws.ec2.LaunchTemplate(
     "DpshApplicationGpuLaunchTemplate",
-    image_id=worker_ami,
+    image_id=amazon_linux_2_ami.id,
     instance_type=worker_instance_type,
     vpc_security_group_ids=[gpu_sg.id],
     iam_instance_profile={
@@ -261,6 +320,7 @@ gpu_launch_template = aws.ec2.LaunchTemplate(
             },
         },
     ],
+    opts=pulumi.ResourceOptions(depends_on=[amazon_linux_2_ami, gpu_instance_profile, gpu_sg]),
 )
 
 # ------------------ #
@@ -277,6 +337,7 @@ api_asg = aws.autoscaling.Group(
         "version": "$Latest",
     },
     force_delete=True,
+    opts=pulumi.ResourceOptions(depends_on=[api_launch_template] + api_subnets),
 )
 
 gpu_asg = aws.autoscaling.Group(
@@ -289,11 +350,19 @@ gpu_asg = aws.autoscaling.Group(
         "version": "$Latest",
     },
     force_delete=True,
+    opts=pulumi.ResourceOptions(depends_on=[gpu_launch_template] + gpu_subnets),
 )
 
 # ------------------ #
 #   Load Balancers   #
 # ------------------ #
+
+ssl_certificate = aws.acm.Certificate(
+    "DpshSslCertificate",
+    domain_name=domain_name,
+    validation_method="DNS",
+    tags={"Project": "dpsh", "Environment": env, "Name": f"{env.upper()} SSL Certificate"},
+)
 
 api_load_balancer = aws.elb.LoadBalancer(
     "DpshApiLoadBalancer",
@@ -312,6 +381,7 @@ api_load_balancer = aws.elb.LoadBalancer(
             instance_protocol="http",
             lb_port=443,
             lb_protocol="https",
+            ssl_certificate_id=ssl_certificate.arn,
         ),
     ],
     health_check=aws.elb.LoadBalancerHealthCheckArgs(
@@ -322,6 +392,7 @@ api_load_balancer = aws.elb.LoadBalancer(
         timeout=5,
     ),
     instances=[api_asg.name],
+    opts=pulumi.ResourceOptions(depends_on=[ssl_certificate, api_asg] + api_subnets),
 )
 
 gpu_load_balancer = aws.elb.LoadBalancer(
@@ -345,6 +416,7 @@ gpu_load_balancer = aws.elb.LoadBalancer(
         timeout=5,
     ),
     instances=[gpu_asg.name],
+    opts=pulumi.ResourceOptions(depends_on=[gpu_asg] + gpu_subnets),
 )
 
 # Export the URL of the API and GPU load balancers.
