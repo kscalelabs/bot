@@ -3,7 +3,7 @@
 import functools
 import os
 import uuid
-from typing import Callable, Generator
+from typing import AsyncGenerator, Callable, Generator
 
 import pytest
 import torch
@@ -111,7 +111,7 @@ async def mock_call_infer_backend(mocker: MockerFixture) -> MockType:
 
 
 @pytest.fixture()
-async def infer_client(mocker: MockerFixture, aiohttp_client: Callable) -> AsyncTestClient:
+async def infer_client(mocker: MockerFixture, aiohttp_client: Callable) -> AsyncGenerator[AsyncTestClient, None]:
     from bot.worker.server import Server
 
     async with Server() as server:

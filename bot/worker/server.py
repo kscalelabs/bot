@@ -194,7 +194,7 @@ class Server:
             which can be used for load balancing.
         """
 
-        async def start_web_server() -> web.Application:
+        async def start_web_server() -> None:
             assert self._app is None, "Server already started"
             self._app = web.Application()
             self._app.router.add_get("/", self.handle_request)
