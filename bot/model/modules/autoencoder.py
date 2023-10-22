@@ -11,7 +11,7 @@ import torch
 from pretrained.vocoder.hifigan import PretrainedHiFiGANType, pretrained_hifigan
 from torch import Tensor, nn
 
-AutoencoderType = Literal["hifigan"]
+AutoencoderType = Literal["test", "hifigan"]
 
 
 def cast_autoencoder_type(s: str) -> AutoencoderType:
@@ -144,8 +144,34 @@ class HifiganAutoencoder(BaseAutoencoder):
         return x
 
 
+class TestAutoencoder(BaseAutoencoder):
+    def __init__(self, stride: int = 320, dims: int = 64) -> None:
+        super().__init__()
+
+        self._stride = stride
+        self._dims = dims
+
+    @property
+    def stride(self) -> int:
+        return self._stride
+
+    @property
+    def autoencoder_dims(self) -> int:
+        return self._dims
+
+    @torch.no_grad()
+    def encode(self, audio: Tensor) -> Tensor:
+        return audio.new_empty(audio.shape[0], audio.shape[1] // self._stride, self.autoencoder_dims).random_()
+
+    @torch.no_grad()
+    def decode(self, latents: Tensor) -> Tensor:
+        return latents.new_empty(latents.shape[0], latents.shape[1] * self._stride).random_()
+
+
 def get_autoencoder(autoencoder_type: AutoencoderType, sample_rate: int) -> BaseAutoencoder:
     match autoencoder_type:
+        case "test":
+            return TestAutoencoder()
         case "hifigan":
             match sample_rate:
                 case 16000:

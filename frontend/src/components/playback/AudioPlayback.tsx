@@ -1,8 +1,8 @@
-import { faCog } from "@fortawesome/free-solid-svg-icons";
+import { faPause, faPlay } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { QueryIdsResponse, SingleIdResponse } from "constants/types";
+import { SingleIdResponse } from "constants/types";
 import { useAuthentication } from "hooks/auth";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Button,
   ButtonGroup,
@@ -13,102 +13,150 @@ import {
 } from "react-bootstrap";
 import { Placement } from "react-bootstrap/esm/types";
 import AudioMixerButtons from "./AudioMixerButtons";
-import AudioPlayButton from "./AudioPlayButton";
 import AudioPopover from "./AudioPopover";
 
-interface AudioProps {
+interface ComponentProps {
   audioId: number;
+  response: SingleIdResponse | null;
   showDeleteButton?: boolean;
   showMixerButtons?: boolean;
-  response?: SingleIdResponse;
   showLink?: boolean;
   showDownload?: boolean;
   tooltipPlacement?: Placement;
   settingsPlacement?: Placement;
 }
 
-type Props = AudioProps & ContainerProps;
+type Props = ComponentProps & ContainerProps;
 
 const AudioPlayback: React.FC<Props> = ({
   audioId,
+  response,
   showDeleteButton = true,
   showMixerButtons = true,
-  response = null,
   showLink = true,
   showDownload = true,
   tooltipPlacement = "top",
-  settingsPlacement = "bottom",
+  settingsPlacement = "bottom-start",
   ...containerProps
 }) => {
   const [deleted, setDeleted] = useState(false);
-  const [localResponse, setLocalResponse] = useState<SingleIdResponse | null>(
-    response,
-  );
-  const [name, setName] = useState<string>("");
-  const { api } = useAuthentication();
+  const [name, setName] = useState<string | null>(null);
+  const [showOverlay, setShowOverlay] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const { sessionToken, api } = useAuthentication();
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const getUri = useCallback(() => {
+    const url = `/audio/media/${audioId}.flac`;
+
+    return api.getUri({
+      url,
+      method: "get",
+      params: {
+        access_token: sessionToken,
+      },
+    });
+  }, [audioId, sessionToken, api]);
+
+  const toggleAudio = () => {
+    if (audioRef.current === null) {
+      audioRef.current = new Audio(getUri());
+
+      const handleAudioEnd = () => {
+        setIsPlaying(false);
+      };
+
+      audioRef.current.addEventListener("ended", handleAudioEnd);
+    }
+    if (audioRef.current !== null) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
+    }
+    setIsPlaying(!isPlaying);
+  };
 
   useEffect(() => {
-    (async () => {
-      try {
-        const response = await api.post<QueryIdsResponse>("/audio/query/ids", {
-          ids: [audioId],
-        });
-        if (response.data.infos.length === 0) {
-          setDeleted(true);
-          return;
-        }
-        setLocalResponse(response.data.infos[0]);
-        const name = response.data.infos[0].name;
-        if (name !== null) {
-          setName(name);
-        }
-      } catch (error) {}
-    })();
-  }, [audioId, api]);
+    if (audioRef.current !== null) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    setIsPlaying(false);
+  }, [audioId]);
 
   return (
     <Container {...containerProps}>
       <ButtonToolbar>
         {deleted ? (
-          <Button variant="danger" disabled>
+          <Button className="mt-2 me-2" variant="danger" disabled>
             Deleted
           </Button>
         ) : (
           <ButtonGroup className="mt-2 me-2">
-            <AudioPlayButton
-              name={name}
-              audioId={audioId}
-              tooltipPlacement={tooltipPlacement}
-            />
-
-            {showMixerButtons && (
-              <AudioMixerButtons
-                audioId={audioId}
-                tooltipPlacement={tooltipPlacement}
-              />
-            )}
-
             <OverlayTrigger
-              trigger="click"
-              rootClose
+              show={showOverlay}
               placement={settingsPlacement}
               overlay={
                 <AudioPopover
                   audioId={audioId}
-                  localResponse={localResponse}
-                  name={name}
+                  response={response}
+                  name={name ?? response?.name ?? ""}
                   setName={setName}
                   showLink={showLink}
                   showDownload={showDownload}
                   showDeleteButton={showDeleteButton}
                   setDeleted={setDeleted}
+                  onMouseOver={() => setShowOverlay(true)}
+                  onMouseLeave={() => setShowOverlay(false)}
                 />
               }
             >
-              <Button>
-                <FontAwesomeIcon icon={faCog} />
+              <Button
+                variant={isPlaying ? "warning" : "primary"}
+                onClick={toggleAudio}
+                onMouseEnter={() => setShowOverlay(true)}
+                onMouseLeave={() => setShowOverlay(false)}
+                disabled={response === null}
+              >
+                <p
+                  style={{
+                    width: 150,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    margin: 0,
+                    padding: 0,
+                    textAlign: "left",
+                  }}
+                >
+                  {isPlaying ? (
+                    <FontAwesomeIcon
+                      icon={faPause}
+                      className="me-2"
+                      style={{ width: 20 }}
+                    />
+                  ) : (
+                    <FontAwesomeIcon
+                      icon={faPlay}
+                      className="me-2"
+                      style={{ width: 20 }}
+                    />
+                  )}
+                  {name ?? response?.name}
+                </p>
               </Button>
             </OverlayTrigger>
+
+            {showMixerButtons && (
+              <AudioMixerButtons
+                audioId={audioId}
+                tooltipPlacement={tooltipPlacement}
+                disabled={response === null}
+              />
+            )}
           </ButtonGroup>
         )}
       </ButtonToolbar>

@@ -1,4 +1,4 @@
-import AudioPlayback from "components/playback/AudioPlayback";
+import SingleAudioPlayback from "components/playback/SingleAudioPlayback";
 import { humanReadableError } from "constants/backend";
 import { useAlertQueue } from "hooks/alerts";
 import { useAuthentication } from "hooks/auth";
@@ -149,7 +149,11 @@ const AudioRecorder = () => {
         </Alert>
       )}
       {lastId !== null && (
-        <AudioPlayback className="mt-3" audioId={lastId} title="Last Upload" />
+        <SingleAudioPlayback
+          className="mt-3"
+          audioId={lastId}
+          title="Last Upload"
+        />
       )}
     </Card.Body>
   );

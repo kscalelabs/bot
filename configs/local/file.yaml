@@ -1,3 +1,0 @@
-file:
-  fs_type: file
-  root_dir: ${oc.env:DATA_DIR}/dpsh-bot/samples

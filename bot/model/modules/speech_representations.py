@@ -18,7 +18,7 @@ from torch import Tensor, nn
 
 from bot.model.modules.hubert_soft import PretrainedHubertSoftSize, pretrained_hubert_soft
 
-SpeechRepresentationType = Literal["hubert", "hubert-quantized", "hubert-soft"]
+SpeechRepresentationType = Literal["test", "hubert", "hubert-quantized", "hubert-soft"]
 
 
 def cast_speech_representation_type(s: str) -> SpeechRepresentationType:
@@ -47,6 +47,21 @@ class BaseSpeechRepresentation(nn.Module, ABC):
         Returns:
             The audio representation, with shape ``(B, T', dimensions)``.
         """
+
+
+class TestSpeechRepresentation(BaseSpeechRepresentation):
+    def __init__(self, tsz: int = 16, dims: int = 16) -> None:
+        super().__init__()
+
+        self.tsz = tsz
+        self.dims = dims
+
+    @property
+    def dimensions(self) -> int:
+        return self.dims
+
+    def forward(self, audio: Tensor, sample_rate: int) -> Tensor:
+        return audio.new_empty(audio.shape[0], self.tsz, self.dims).random_()
 
 
 class HubertSpeechRepresentation(BaseSpeechRepresentation):
@@ -135,6 +150,13 @@ def get_speech_representation(
 
 @overload
 def get_speech_representation(
+    speech_representation_type: Literal["test"],
+) -> TestSpeechRepresentation:
+    ...
+
+
+@overload
+def get_speech_representation(
     speech_representation_type: SpeechRepresentationType,
     *,
     hubert_size: PretrainedHubertSize = "base",
@@ -154,6 +176,8 @@ def get_speech_representation(
     hubert_soft_size: PretrainedHubertSoftSize = "base",
 ) -> BaseSpeechRepresentation:
     match speech_representation_type:
+        case "test":
+            return TestSpeechRepresentation()
         case "hubert":
             return HubertSpeechRepresentation(hubert_size, hubert_output_layer)
         case "hubert-quantized":

@@ -1,4 +1,4 @@
-"""Tests the generation API functions."""
+"""Tests the worker endpoint."""
 
 import os
 
@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 from bot.api.email import OneTimePassPayload
 
 
-async def test_generation_functions(
+async def test_worker_endpoint(
     app_client: TestClient,
     tmpdir_factory: TempdirFactory,
     infer_client: AsyncTestClient,
@@ -48,32 +48,10 @@ async def test_generation_functions(
         data = response.json()
         ids.append(data["id"])
 
-    # Tests running the model on the two uploaded files.
-    gen_ids: list[str] = []
-    for _ in range(3):
-        response = app_client.post("/infer/run", json={"source_id": ids[0], "reference_id": ids[1]})
-        assert response.status_code == 200, response.json()
-        data = response.json()
-        gen_ids.append(data["generation_id"])
-
-    # Makes some generations public.
-    for i in range(2):
-        response = app_client.post("/admin/act/generation", json={"id": gen_ids[i], "public": True})
-        assert response.status_code == 200, response.json()
-
-    # Tests getting some random public generations.
-    response = app_client.post("/generation/public", json={"count": 2})
-    assert response.status_code == 200, response.json()
-    data = response.json()
-    assert len(data["infos"]) == 2
-    assert {d["id"] for d in data["infos"]} == set(gen_ids[:2])
-
-    # Queries the number of generations.
-    response = app_client.get("/generation/info/me")
-    assert response.status_code == 200, response.json()
-    assert response.json()["count"] == 3
-
-    # Queries the generations.
-    response = app_client.get("/generation/query/me", params={"start": 0, "limit": 5})
-    assert response.status_code == 200, response.json()
-    assert len(response.json()["generations"]) == 3
+    # Tests calling the endpoint.
+    endpoint = f"/?source_id={ids[0]}&reference_id={ids[1]}"
+    response = await infer_client.get(endpoint)
+    assert response.status == 200, response.json()
+    data = await response.json()
+    assert isinstance(data["output_id"], int)
+    assert isinstance(data["generation_id"], int)

@@ -1,5 +1,0 @@
-worker:
-  model_key: "hubert-quantized-20231015"
-  queue_type: sqs
-  sqs:
-    queue_name: ${oc.env:SQS_QUEUE}

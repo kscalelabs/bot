@@ -1,3 +1,7 @@
+export interface QueryIdsRequest {
+  ids: number[];
+}
+
 export interface SingleIdResponse {
   id: number;
   name: string;

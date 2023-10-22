@@ -1,8 +1,9 @@
-import AudioPlayback from "components/playback/AudioPlayback";
+import SingleAudioPlayback from "components/playback/SingleAudioPlayback";
 import React, { createContext, useCallback, useContext, useState } from "react";
 import { Toast, ToastContainer } from "react-bootstrap";
 import { useClipboard } from "./clipboard";
 
+const DELAY = 5000;
 const MAX_ERRORS = 10;
 
 type AlertType = "error" | "success" | "primary" | "info";
@@ -116,7 +117,7 @@ export const AlertQueue = (props: AlertQueueProps) => {
               key={alertId}
               bg={alertTypeToBg(kind)}
               autohide
-              delay={5000}
+              delay={DELAY}
               onClose={() => removeAlert(alertId)}
               animation={true}
             >
@@ -140,7 +141,10 @@ export const AlertQueue = (props: AlertQueueProps) => {
             </Toast.Header>
             <Toast.Body className="d-flex justify-content-center">
               <div className="d-flex justify-content-center">
-                <AudioPlayback audioId={sourceId} settingsPlacement="top" />
+                <SingleAudioPlayback
+                  audioId={sourceId}
+                  settingsPlacement="top"
+                />
               </div>
             </Toast.Body>
           </Toast>
@@ -156,7 +160,10 @@ export const AlertQueue = (props: AlertQueueProps) => {
             </Toast.Header>
             <Toast.Body className="d-flex justify-content-center">
               <div className="d-flex justify-content-center">
-                <AudioPlayback audioId={referenceId} settingsPlacement="top" />
+                <SingleAudioPlayback
+                  audioId={referenceId}
+                  settingsPlacement="top"
+                />
               </div>
             </Toast.Body>
           </Toast>

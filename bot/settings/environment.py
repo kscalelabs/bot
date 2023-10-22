@@ -1,12 +1,8 @@
-"""Defines the bot settings."""
+"""Defines the bot environment settings."""
 
-import functools
-import os
 from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Any, cast
 
-from omegaconf import II, MISSING, OmegaConf
+from omegaconf import MISSING
 
 
 @dataclass
@@ -28,7 +24,7 @@ class SQLiteDatabaseSettings:
 
 
 @dataclass
-class PostgreSQLEndpointSettings:
+class PostgreSQLDatabaseSettings:
     host: str = field(default=MISSING)
     port: int = field(default=MISSING)
     username: str = field(default=MISSING)
@@ -37,39 +33,19 @@ class PostgreSQLEndpointSettings:
 
 
 @dataclass
-class PostgreSQLDatabaseSettings:
-    write_endpoint: PostgreSQLEndpointSettings = field(default_factory=PostgreSQLEndpointSettings)
-    read_endpoint: PostgreSQLEndpointSettings = II("database.postgres.write_endpoint")
-
-
-@dataclass
 class DatabaseSettings:
     kind: str = field(default=MISSING)
+    generate_schemas: bool = field(default=MISSING)
     sqlite: SQLiteDatabaseSettings = field(default_factory=SQLiteDatabaseSettings)
     postgres: PostgreSQLDatabaseSettings = field(default_factory=PostgreSQLDatabaseSettings)
 
 
 @dataclass
-class RabbitMessageQueueSettings:
-    host: str = field(default="localhost")
-    port: int = field(default=5672)
-    virtual_host: str = field(default="/")
-    username: str = field(default="guest")
-    password: str = field(default="guest")
-    queue_name: str = field(default="dpsh")
-
-
-@dataclass
-class SqsMessageQueueSettings:
-    queue_name: str = field(default=MISSING)
-
-
-@dataclass
 class WorkerSettings:
     model_key: str = field(default=MISSING)
-    queue_type: str = field(default=MISSING)
-    rabbit: RabbitMessageQueueSettings = field(default_factory=RabbitMessageQueueSettings)
-    sqs: SqsMessageQueueSettings = field(default_factory=SqsMessageQueueSettings)
+    scheme: str = field(default="http")
+    host: str = field(default=MISSING)
+    port: int | None = field(default=MISSING)
     sampling_timesteps: int | None = field(default=None)
     soft_time_limit: int = field(default=30)
     max_retries: int = field(default=3)
@@ -127,9 +103,9 @@ class ModelSettings:
 
 
 @dataclass
-class Settings:
+class EnvironmentSettings:
     app_name: str = field(default="bot")
-    is_prod: bool = field(default=True)
+    environment: str = field(default=MISSING)
     user: UserSettings = field(default_factory=UserSettings)
     site: SiteSettings = field(default_factory=SiteSettings)
     database: DatabaseSettings = field(default_factory=DatabaseSettings)
@@ -138,25 +114,3 @@ class Settings:
     email: EmailSettings = field(default_factory=EmailSettings)
     crypto: CryptoSettings = field(default_factory=CryptoSettings)
     model: ModelSettings = field(default_factory=ModelSettings)
-
-
-def _load_settings(raw_config: Any | None) -> Settings:  # noqa: ANN401
-    config = OmegaConf.structured(Settings)
-    if raw_config is not None:
-        config = OmegaConf.merge(config, raw_config)
-    OmegaConf.resolve(config)
-    return cast(Settings, config)
-
-
-@functools.lru_cache()
-def load_settings() -> Settings:
-    """Loads the bot settings.
-
-    This function first looks for the config at ``$DPSH_CONFIG``, and if not,
-    defaults to using whatever config is at ``~/.config/dpsh.yaml``.
-
-    Returns:
-        The bot settings dataclass.
-    """
-    raw_config_path = Path(os.environ.get("DPSH_CONFIG", "~/.config/dpsh.yaml")).expanduser().resolve()
-    return _load_settings(OmegaConf.load(raw_config_path) if raw_config_path.exists() else None)

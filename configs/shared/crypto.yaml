@@ -1,2 +1,0 @@
-crypto:
-  google_client_id: ${oc.env:GOOGLE_CLIENT_ID}

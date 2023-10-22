@@ -1,0 +1,29 @@
+crypto:
+  jwt_secret: jwt_secret
+  google_client_id: testclientid
+database:
+  kind: sqlite
+  generate_schemas: true
+  sqlite:
+    host: ":memory:"
+email:
+  host: localhost
+  port: 587
+  name: Ben from DPSH
+  email: email
+  password: password
+file:
+  fs_type: file
+  audio:
+    file_ext: flac
+    min_duration: 0.0
+site:
+  homepage: http://localhost
+user:
+  admin_emails:
+    - "ben@dpsh.dev"
+worker:
+  model_key: test
+  host: localhost
+  port: 8080
+  sampling_timesteps: 5

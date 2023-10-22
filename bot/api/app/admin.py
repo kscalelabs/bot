@@ -6,15 +6,14 @@ from pydantic.main import BaseModel
 
 from bot.api.app.users import SessionTokenData, get_session_token
 from bot.api.model import Audio, Generation, User
-from bot.settings import load_settings
+from bot.settings import env_settings as settings
 
 admin_router = APIRouter()
 
 
 async def is_admin(user_obj: User) -> bool:
     email = user_obj.email
-    settings = load_settings().user
-    return email in settings.admin_emails
+    return email in settings.user.admin_emails
 
 
 async def assert_is_admin(token_data: SessionTokenData = Depends(get_session_token)) -> SessionTokenData:

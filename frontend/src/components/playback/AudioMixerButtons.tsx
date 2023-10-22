@@ -4,20 +4,30 @@ import { useAlertQueue } from "hooks/alerts";
 import { useAuthentication } from "hooks/auth";
 import { useClipboard } from "hooks/clipboard";
 import { useState } from "react";
-import { Button, OverlayTrigger, Spinner, Tooltip } from "react-bootstrap";
+import {
+  Button,
+  ButtonProps,
+  OverlayTrigger,
+  Spinner,
+  Tooltip,
+} from "react-bootstrap";
 import { Placement } from "react-bootstrap/esm/types";
+import SingleAudioPlayback from "./SingleAudioPlayback";
 
-interface Props {
+interface ComponentProps {
   audioId: number;
   tooltipPlacement?: Placement;
 }
 
+type Props = ComponentProps & ButtonProps;
+
 interface RunResponse {
-  id: number;
+  output_id: number;
+  generation_id: number;
 }
 
 const SourceButton = (props: Props) => {
-  const { audioId, tooltipPlacement = "top" } = props;
+  const { audioId, tooltipPlacement = "top", ...buttonProps } = props;
   const [isDisabled, setIsDisabled] = useState(false);
 
   const { sourceId, setSourceId, referenceId, setReferenceId } = useClipboard();
@@ -34,11 +44,17 @@ const SourceButton = (props: Props) => {
     }
     setIsDisabled(true);
     try {
-      await api.post<RunResponse>("/infer/run", {
+      const response = await api.post<RunResponse>("/infer/run", {
         source_id: audioId,
         reference_id: referenceId,
       });
-      addAlert("Queued mixer job", "success");
+      addAlert(
+        <SingleAudioPlayback
+          audioId={response.data.output_id}
+          settingsPlacement="top-start"
+        />,
+        "success",
+      );
     } catch (error) {
       addAlert("Failed to add job", "error");
     } finally {
@@ -63,6 +79,7 @@ const SourceButton = (props: Props) => {
             }
           }}
           variant={isSource ? "secondary" : "primary"}
+          {...buttonProps}
         >
           <span>
             <FontAwesomeIcon icon={faS} style={{ width: 15, height: 15 }} />
@@ -82,8 +99,9 @@ const SourceButton = (props: Props) => {
       >
         <Button
           onClick={runInference}
-          disabled={isDisabled}
           variant={isReference ? "primary" : "success"}
+          {...buttonProps}
+          disabled={isDisabled}
         >
           <span>
             {isDisabled ? (
@@ -99,7 +117,7 @@ const SourceButton = (props: Props) => {
 };
 
 const ReferenceButton = (props: Props) => {
-  const { audioId, tooltipPlacement = "top" } = props;
+  const { audioId, tooltipPlacement = "top", ...buttonProps } = props;
   const [isDisabled, setIsDisabled] = useState(false);
 
   const { sourceId, setSourceId, referenceId, setReferenceId } = useClipboard();
@@ -117,11 +135,17 @@ const ReferenceButton = (props: Props) => {
 
     setIsDisabled(true);
     try {
-      await api.post<RunResponse>("/infer/run", {
+      const response = await api.post<RunResponse>("/infer/run", {
         source_id: sourceId,
         reference_id: audioId,
       });
-      addAlert("Queued mixing", "success");
+      addAlert(
+        <SingleAudioPlayback
+          audioId={response.data.output_id}
+          settingsPlacement="top-start"
+        />,
+        "success",
+      );
     } catch (error) {
       addAlert("Failed to start mixing", "error");
     } finally {
@@ -148,6 +172,7 @@ const ReferenceButton = (props: Props) => {
             }
           }}
           variant={isReference ? "secondary" : "primary"}
+          {...buttonProps}
         >
           <span>
             <FontAwesomeIcon icon={faR} style={{ width: 15, height: 15 }} />
@@ -165,8 +190,9 @@ const ReferenceButton = (props: Props) => {
       >
         <Button
           onClick={runInference}
-          disabled={isDisabled}
           variant={isSource ? "primary" : "success"}
+          {...buttonProps}
+          disabled={isDisabled}
         >
           <span>
             {isDisabled ? (

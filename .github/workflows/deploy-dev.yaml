@@ -72,7 +72,6 @@ jobs:
           SMTP_EMAIL: ${{ vars.SMTP_EMAIL }}
           SMTP_HOST: ${{ vars.SMTP_HOST }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-          SQS_QUEUE: ${{ vars.SQS_QUEUE}}
         run: |
           ./scripts/build_api_docker_image.sh
 
@@ -126,7 +125,6 @@ jobs:
           SMTP_EMAIL: ${{ vars.SMTP_EMAIL }}
           SMTP_HOST: ${{ vars.SMTP_HOST }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-          SQS_QUEUE: ${{ vars.SQS_QUEUE}}
         run: |
           ./scripts/build_worker_docker_image.sh
 

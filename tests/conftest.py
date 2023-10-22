@@ -2,17 +2,19 @@
 
 import functools
 import os
-from typing import Generator
+import uuid
+from typing import AsyncGenerator, Callable, Generator
 
 import pytest
 import torch
+import yarl
 from _pytest.legacypath import TempdirFactory
 from _pytest.python import Function, Metafunc
+from aiohttp.test_utils import TestClient as AsyncTestClient
 from fastapi.testclient import TestClient
-from omegaconf import OmegaConf
 from pytest_mock.plugin import MockerFixture, MockType
 
-from bot.settings import Settings
+os.environ["DPSH_ENVIRONMENT"] = "test"
 
 
 @functools.lru_cache()
@@ -40,49 +42,16 @@ def pytest_generate_tests(metafunc: Metafunc) -> None:
 
 @pytest.fixture(scope="function", autouse=True)
 def mock_load_settings(mocker: MockerFixture, tmpdir_factory: TempdirFactory) -> MockType:
-    mock = mocker.patch("bot.settings.load_settings")
-    settings = Settings()
+    mock = mocker.patch("bot.settings._load_environment_settings")
 
-    # Sets the default app settings.
-    settings.is_prod = False
-
-    # Sets the user settings.
-    settings.user.admin_emails = ["ben@dpsh.dev"]
-
-    # Sets the default site settings.
-    settings.site.homepage = "http://localhost"
-
-    # Sets the default database settings.
-    settings.database.kind = "sqlite"
-    settings.database.sqlite.host = ":memory:"
-
-    # Sets the default worker settings.
-    settings.worker.queue_type = "dummy"
+    from bot.settings import env_settings as settings
 
     # Sets the default image settings.
     file_root_dir = tmpdir_factory.mktemp("files")
-    settings.file.fs_type = "file"
-    settings.file.audio.file_ext = "flac"
     settings.file.root_dir = str(file_root_dir)
-    settings.file.audio.min_duration = 0.0
-
-    # Sets the default email settings.
-    settings.email.host = "localhost"
-    settings.email.port = 587
-    settings.email.name = "name"
-    settings.email.email = "email"
-    settings.email.password = "password"
-
-    # Sets the default crypto settings.
-    settings.crypto.jwt_secret = "jwt_secret"
-    settings.crypto.google_client_id = "testclientid"
-
-    # Saves the settings to a temporary file.
-    settings_file = str(tmpdir_factory.mktemp("settings").join("settings.yaml"))
-    OmegaConf.save(settings, settings_file)
-    os.environ["DPSH_CONFIG"] = settings_file
 
     mock.return_value = settings
+
     return mock
 
 
@@ -99,6 +68,54 @@ def app_client() -> Generator[TestClient, None, None]:
 
     with TestClient(app) as app_client:
         yield app_client
+
+
+@pytest.fixture(autouse=True)
+async def mock_call_infer_backend(mocker: MockerFixture) -> MockType:
+    from bot.api.model import Audio, AudioSource, Generation
+
+    mock = mocker.patch("bot.api.app.infer.make_request")
+
+    async def mock_fn(endpoint: str) -> dict[str, int]:
+        url = yarl.URL(endpoint)
+        source_id = int(url.query["source_id"])
+        reference_id = int(url.query["reference_id"])
+
+        source, reference = await Audio.get(id=source_id), await Audio.get(id=reference_id)
+
+        output = await Audio.create(
+            key=uuid.uuid4(),
+            name="test",
+            user_id=source.user_id,
+            source=AudioSource.generated,
+            num_frames=100,
+            num_channels=1,
+            sample_rate=16000,
+            duration=1.0,
+        )
+
+        generation = await Generation.create(
+            user_id=source.user_id,
+            source=source,
+            reference=reference,
+            output=output,
+            model="test",
+            elapsed_time=1.0,
+        )
+
+        return {"output_id": output.id, "generation_id": generation.id}
+
+    mock.side_effect = mock_fn
+
+    return mock
+
+
+@pytest.fixture()
+async def infer_client(mocker: MockerFixture, aiohttp_client: Callable) -> AsyncGenerator[AsyncTestClient, None]:
+    from bot.worker.server import Server
+
+    async with Server() as server:
+        yield await aiohttp_client(server.app)
 
 
 @pytest.fixture()

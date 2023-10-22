@@ -67,6 +67,11 @@ class Audio(Model):
     public = fields.BooleanField(default=False)
 
 
+class AudioDeleteTask(Model):
+    id = fields.IntField(pk=True)
+    key = fields.UUIDField(unique=True, index=True)
+
+
 class Generation(Model):
     id = fields.IntField(pk=True)
     user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
@@ -90,15 +95,38 @@ class Generation(Model):
         index=True,
         null=False,
     )
-    output: fields.ForeignKeyNullableRelation[Audio] = fields.ForeignKeyField(
+    output: fields.ForeignKeyRelation[Audio] = fields.ForeignKeyField(
         "models.Audio",
         related_name="generations_as_output",
         on_delete=fields.CASCADE,
         index=True,
+        null=False,
+    )
+    model = fields.CharField(max_length=255, index=True)
+    elapsed_time = fields.FloatField()
+    task_finished = fields.DatetimeField(auto_now_add=True)
+    public = fields.BooleanField(default=False)
+
+
+class Task(Model):
+    # When a user is deleted, we delete all their tasks as well, to avoid
+    # accidentally associating the task with a different user.
+    user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
+        "models.User",
+        related_name="tasks",
+        on_delete=fields.CASCADE,
+        index=True,
+        null=False,
+    )
+    # When a generation is deleted, we keep the task around for accounting
+    # purposes, but we set the generation to null.
+    generation: fields.ForeignKeyNullableRelation[Generation] = fields.ForeignKeyField(
+        "models.Generation",
+        related_name="tasks",
+        on_delete=fields.SET_NULL,
+        index=True,
         null=True,
     )
-    model = fields.CharField(max_length=255, index=True, null=True)
-    elapsed_time = fields.FloatField(null=True)
-    task_created = fields.DatetimeField(auto_now_add=True)
-    task_finished = fields.DatetimeField(null=True)
-    public = fields.BooleanField(default=False)
+    model = fields.CharField(max_length=255, index=True)
+    elapsed_time = fields.FloatField()
+    task_finished = fields.DatetimeField(auto_now_add=True)

@@ -1,6 +1,6 @@
 import { faClose } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import AudioPlayback from "components/playback/AudioPlayback";
+import SingleAudioPlayback from "components/playback/SingleAudioPlayback";
 import { useClipboard } from "hooks/clipboard";
 import {
   Button,
@@ -34,7 +34,7 @@ const AudioSelection = (props: Props) => {
           <div>Make a selection</div>
         ) : (
           <>
-            <AudioPlayback
+            <SingleAudioPlayback
               audioId={audioId}
               showDeleteButton={false}
               showMixerButtons={false}

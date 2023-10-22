@@ -3,7 +3,6 @@
 # FastAPI dependencies.
 aiosmtplib
 fastapi[all]
-mangum
 pyjwt
 python-multipart
 uvicorn
@@ -16,7 +15,6 @@ aerich
 aioboto3
 
 # Worker dependencies.
-aio-pika
 huggingface_hub
 
 # Processing dependencies.
@@ -30,3 +28,7 @@ ml-pretrained
 ml-starter
 torch
 torchaudio
+
+# Deployment requirements.
+pulumi
+pulumi_aws

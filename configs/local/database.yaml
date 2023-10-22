@@ -1,5 +1,0 @@
-database:
-  kind: sqlite
-  sqlite:
-    # host: ":memory:"
-    host: "${oc.env:DATA_DIR}/dpsh-bot/db.sqlite"

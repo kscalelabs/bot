@@ -1,14 +1,13 @@
-import AudioPlayback from "components/playback/AudioPlayback";
 import { Card, CardProps, Col, Row } from "react-bootstrap";
 import { Link } from "react-router-dom";
+import SingleAudioPlayback from "./SingleAudioPlayback";
 
 interface ComponentProps {
   generationId: number;
   outputId: number | null;
   referenceId: number;
   sourceId: number;
-  taskCreated: Date;
-  taskFinished: Date | null;
+  taskFinished: Date;
   showLink?: boolean;
 }
 
@@ -20,7 +19,6 @@ const SingleGeneration = (props: Props) => {
     outputId,
     referenceId,
     sourceId,
-    taskCreated,
     taskFinished,
     showLink = true,
     ...cardProps
@@ -31,7 +29,7 @@ const SingleGeneration = (props: Props) => {
       <Card.Header>Generation {generationId}</Card.Header>
       <Card.Body>
         <Card.Text>
-          Created {new Date(taskCreated).toLocaleString()}
+          Created {new Date(taskFinished).toLocaleString()}
           <br />
           {taskFinished === null
             ? " Processing..."
@@ -47,14 +45,14 @@ const SingleGeneration = (props: Props) => {
         </Card.Text>
         <Row>
           <Col sm={12} md={12} lg={4} className="mt-2">
-            <AudioPlayback audioId={sourceId} title="Source" />
+            <SingleAudioPlayback audioId={sourceId} title="Source" />
           </Col>
           <Col sm={12} md={12} lg={4} className="mt-2">
-            <AudioPlayback audioId={referenceId} title="Reference" />
+            <SingleAudioPlayback audioId={referenceId} title="Reference" />
           </Col>
           {outputId !== null && (
             <Col sm={12} md={12} lg={4} className="mt-2">
-              <AudioPlayback audioId={outputId} title="Generated" />
+              <SingleAudioPlayback audioId={outputId} title="Generated" />
             </Col>
           )}
         </Row>

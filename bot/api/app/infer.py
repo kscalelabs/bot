@@ -1,59 +1,39 @@
 """Defines the API endpoint for running the ML model."""
 
 import logging
-from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+from typing import Any
 
-from fastapi import APIRouter, Depends
+import aiohttp
+from aiohttp.client import ClientSession
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic.main import BaseModel
+from yarl import URL
 
 from bot.api.app.users import SessionTokenData, get_session_token
-from bot.api.model import Generation
-from bot.worker.message_passing import get_message_queue
+from bot.settings import env_settings
 
 logger = logging.getLogger(__name__)
 
-mq = get_message_queue()
+
+infer_router = APIRouter()
 
 
-@asynccontextmanager
-async def lifespan(router: APIRouter) -> AsyncGenerator[None, None]:
-    await mq.initialize()
-    try:
-        yield
-    finally:
-        await mq.close()
-
-
-infer_router = APIRouter(lifespan=lifespan)
-
-
-async def generate(source_id: int, reference_id: int, user_id: int) -> Generation:
-    """Generates a new audio file from a source and a reference.
-
-    Args:
-        source_id: The ID of the source audio.
-        reference_id: The ID of the reference audio.
-        user_id: The ID of the user who requested the generation.
-
-    Returns:
-        The row in generation table containing the generation ID.
-    """
-    generation = await Generation.create(
-        user_id=user_id,
-        source_id=source_id,
-        reference_id=reference_id,
+def get_client_session() -> ClientSession:
+    worker_settings = env_settings.worker
+    url = URL.build(
+        scheme=worker_settings.scheme,
+        host=worker_settings.host,
+        port=worker_settings.port,
     )
+    return aiohttp.ClientSession(base_url=url)
 
-    # Sends the generation ID to the queue, deleting it if the send fails.
-    try:
-        await mq.send(generation.id)
-    except Exception:
-        logger.exception("Error sending generation to queue")
-        await generation.delete()
-        raise
 
-    return generation
+async def make_request(endpoint: URL) -> Any:  # noqa: ANN401
+    async with get_client_session() as session:
+        async with session.get(endpoint) as response:
+            if response.status != 200:
+                raise HTTPException(status_code=response.status, detail=response.reason)
+            return await response.json()
 
 
 class RunRequest(BaseModel):
@@ -62,10 +42,12 @@ class RunRequest(BaseModel):
 
 
 class RunResponse(BaseModel):
-    id: int
+    output_id: int
+    generation_id: int
 
 
 @infer_router.post("/run", response_model=RunResponse)
 async def run(data: RunRequest, user_data: SessionTokenData = Depends(get_session_token)) -> RunResponse:
-    generation = await generate(data.source_id, data.reference_id, user_data.user_id)
-    return RunResponse(id=generation.id)
+    endpoint = URL.build(query={"source_id": data.source_id, "reference_id": data.reference_id})
+    response_data = await make_request(endpoint)
+    return RunResponse(**response_data)

@@ -3,13 +3,11 @@
 import os
 
 import numpy as np
-import pytest
 import soundfile as sf
 from _pytest.legacypath import TempdirFactory
 from fastapi.testclient import TestClient
 
 
-@pytest.mark.asyncio
 async def test_audio_functions(
     authenticated_user: tuple[TestClient, str, str],
     tmpdir_factory: TempdirFactory,
@@ -39,11 +37,6 @@ async def test_audio_functions(
             assert response.status_code == 200, (response.status_code, response.json())
             data = response.json()
             id_list.append(data["id"])
-
-    # Gets the info for the current user.
-    response = app_client.get("/audio/info/me", params={"q": "test"})
-    assert response.status_code == 200, response.json()
-    assert response.json()["count"] == 10
 
     # Tests querying the audio files for the user.
     for source, id_list in (("uploaded", upload_ids), ("recorded", record_ids)):

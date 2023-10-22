@@ -1,2 +1,0 @@
-crypto:
-  jwt_secret: ${oc.env:JWT_SECRET}

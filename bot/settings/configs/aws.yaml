@@ -1,0 +1,40 @@
+crypto:
+  jwt_secret: ${oc.env:JWT_SECRET}
+  google_client_id: ${oc.env:GOOGLE_CLIENT_ID}
+database:
+  kind: postgres
+  generate_schemas: false
+  postgres:
+    host: ${oc.env:DB_DEV_HOST}
+    port: ${oc.decode:${oc.env:DB_PORT,5432}}
+    username: ${oc.env:DB_USERNAME}
+    password: ${oc.env:DB_PASSWORD}
+email:
+  host: ${oc.env:SMTP_HOST}
+  port: 587
+  name: Ben from DPSH
+  email: ${oc.env:SMTP_EMAIL}
+  password: ${oc.env:SMTP_PASSWORD}
+file:
+  fs_type: s3
+  root_dir: audio_uploads
+  s3:
+    bucket: ${oc.env:S3_BUCKET}
+model:
+  # Where the model weights are cached inside the Docker image.
+  hf_hub_token: ${oc.env:HF_HUB_TOKEN}
+  cache_dir: ~/models
+site:
+  homepage: ${oc.env:SITE_HOMEPAGE}
+user:
+  # Warning: These users can change content visibility!
+  admin_emails:
+    - "ben@bolte.cc"
+    - "ben@dpsh.dev"
+    - "bkbolte18@gmail.com"
+  # For soft rollout, these users will be automatically approved, other users
+  # will be waitlisted until an admin approves them. If this is removed, then
+  # any user can sign up without being waitlisted.
+  authorized_users: []
+worker:
+  model_key: "hubert-quantized-20231015"
