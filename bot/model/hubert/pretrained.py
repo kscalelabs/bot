@@ -11,9 +11,23 @@ from safetensors import safe_open
 from bot.model.hubert.model import HubertModel
 from bot.settings import env_settings as settings
 
-PretrainedHubertModel = Literal["hubert-quantized-20231015"]
+PretrainedHubertModel = Literal["test", "hubert-quantized-20231015"]
 
 REPO_ID = "codekansas/dpshai"
+
+
+def get_test_model() -> HubertModel:
+    model = HubertModel(
+        name="test",
+        num_timesteps=10,
+        num_layers=1,
+        embedding_dims=64,
+        contraction_factor=2,
+        autoencoder_type="test",
+        speech_representation_type="test",
+    )
+    model.requires_grad_(False)
+    return model
 
 
 def cast_pretrained_model(key: str) -> PretrainedHubertModel:
@@ -22,6 +36,8 @@ def cast_pretrained_model(key: str) -> PretrainedHubertModel:
 
 
 def _load_model(key: PretrainedHubertModel, ckpt_path: str | Path | None = None) -> HubertModel:
+    if key == "test":
+        return get_test_model()
     cache_dir_str, token = settings.model.cache_dir, settings.model.hf_hub_token
     cache_dir = None if cache_dir_str is None else Path(cache_dir_str).expanduser().resolve()
     if ckpt_path is None:

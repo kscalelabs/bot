@@ -3,13 +3,11 @@
 import os
 
 import numpy as np
-import pytest
 import soundfile as sf
 from _pytest.legacypath import TempdirFactory
 from fastapi.testclient import TestClient
 
 
-@pytest.mark.asyncio
 async def test_audio_functions(
     authenticated_user: tuple[TestClient, str, str],
     tmpdir_factory: TempdirFactory,

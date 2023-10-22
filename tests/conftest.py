@@ -2,12 +2,15 @@
 
 import functools
 import os
-from typing import Generator
+import uuid
+from typing import Callable, Generator
 
 import pytest
 import torch
+import yarl
 from _pytest.legacypath import TempdirFactory
 from _pytest.python import Function, Metafunc
+from aiohttp.test_utils import TestClient as AsyncTestClient
 from fastapi.testclient import TestClient
 from pytest_mock.plugin import MockerFixture, MockType
 
@@ -65,6 +68,54 @@ def app_client() -> Generator[TestClient, None, None]:
 
     with TestClient(app) as app_client:
         yield app_client
+
+
+@pytest.fixture(autouse=True)
+async def mock_call_infer_backend(mocker: MockerFixture) -> MockType:
+    from bot.api.model import Audio, AudioSource, Generation
+
+    mock = mocker.patch("bot.api.app.infer.make_request")
+
+    async def mock_fn(endpoint: str) -> dict[str, int]:
+        url = yarl.URL(endpoint)
+        source_id = int(url.query["source_id"])
+        reference_id = int(url.query["reference_id"])
+
+        source, reference = await Audio.get(id=source_id), await Audio.get(id=reference_id)
+
+        output = await Audio.create(
+            key=uuid.uuid4(),
+            name="test",
+            user_id=source.user_id,
+            source=AudioSource.generated,
+            num_frames=100,
+            num_channels=1,
+            sample_rate=16000,
+            duration=1.0,
+        )
+
+        generation = await Generation.create(
+            user_id=source.user_id,
+            source=source,
+            reference=reference,
+            output=output,
+            model="test",
+            elapsed_time=1.0,
+        )
+
+        return {"output_id": output.id, "generation_id": generation.id}
+
+    mock.side_effect = mock_fn
+
+    return mock
+
+
+@pytest.fixture()
+async def infer_client(mocker: MockerFixture, aiohttp_client: Callable) -> AsyncTestClient:
+    from bot.worker.server import Server
+
+    async with Server() as server:
+        yield await aiohttp_client(server.app)
 
 
 @pytest.fixture()

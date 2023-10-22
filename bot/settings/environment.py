@@ -43,7 +43,9 @@ class DatabaseSettings:
 @dataclass
 class WorkerSettings:
     model_key: str = field(default=MISSING)
-    worker_url: str = field(default=MISSING)
+    scheme: str = field(default="http")
+    host: str = field(default=MISSING)
+    port: int | None = field(default=MISSING)
     sampling_timesteps: int | None = field(default=None)
     soft_time_limit: int = field(default=30)
     max_retries: int = field(default=3)

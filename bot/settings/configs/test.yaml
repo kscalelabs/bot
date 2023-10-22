@@ -23,5 +23,7 @@ user:
   admin_emails:
     - "ben@dpsh.dev"
 worker:
-  model_key: dummy
-  worker_url: "http://localhost:8080"
+  model_key: test
+  host: localhost
+  port: 8080
+  sampling_timesteps: 5

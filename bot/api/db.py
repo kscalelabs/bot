@@ -93,9 +93,10 @@ def get_config() -> dict:
             raise ValueError(f"Invalid database kind in configuration: {db_kind}")
 
 
-async def init_db() -> None:
+async def init_db(generate_schemas: bool = False) -> None:
     await Tortoise.init(config=get_config())
-    # await Tortoise.generate_schemas()
+    if generate_schemas:
+        await Tortoise.generate_schemas()
 
 
 async def close_db() -> None:

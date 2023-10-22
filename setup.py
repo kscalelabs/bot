@@ -9,9 +9,11 @@ REQUIREMENTS_DEV = [
     "black",
     "darglint",
     "mypy",
+    "pytest-aiohttp",
     "pytest-asyncio",
     "pytest-mock",
     "pytest-timeout",
+    "pytest-trio",
     "pytest",
     "ruff",
 ]

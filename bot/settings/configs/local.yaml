@@ -24,5 +24,6 @@ user:
     - "ben@dpsh.dev"
 worker:
   model_key: "hubert-quantized-20231015"
-  worker_url: "http://localhost:8080"
+  host: localhost
+  port: 8080
   sampling_timesteps: 50

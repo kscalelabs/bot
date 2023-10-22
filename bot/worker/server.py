@@ -1,9 +1,9 @@
 """A simple HTTP server for serving responses from the model."""
 
-import argparse
 import asyncio
 import logging
 from dataclasses import dataclass
+from types import TracebackType
 
 from aiohttp import web
 from aiohttp.web_request import Request
@@ -13,6 +13,7 @@ from torch import Tensor
 
 from bot.api.db import close_db, init_db
 from bot.api.model import Audio
+from bot.settings import env_settings
 from bot.worker.model import ModelRunner
 
 logger = logging.getLogger(__name__)
@@ -51,19 +52,24 @@ class ProcessedRequestData:
 
 
 class Server:
-    def __init__(self, host: str, port: int, max_loaded_requests: int = 2) -> None:
+    def __init__(self, max_loaded_requests: int = 2) -> None:
         super().__init__()
 
-        self.host = host
-        self.port = port
         self.max_loaded_requests = max_loaded_requests
 
         self.request_queue: "asyncio.Queue[RequestData]" = asyncio.Queue()
         self.loaded_request_queue: "asyncio.Queue[LoadedRequestData]" = asyncio.Queue(maxsize=max_loaded_requests)
         self.processed_request_queue: "asyncio.Queue[ProcessedRequestData]" = asyncio.Queue()
-        self.runner_lock: asyncio.Lock = asyncio.Lock()
 
         self.model_runner = ModelRunner()
+
+        self._tasks: list[asyncio.Task] = []
+        self._app: web.Application | None = None
+
+    @property
+    def app(self) -> web.Application:
+        assert self._app is not None, "Server not started"
+        return self._app
 
     async def get_queue_size(self, request: Request) -> Response:
         return web.Response(text=str(self.request_queue.qsize()))
@@ -85,7 +91,10 @@ class Server:
                 return None
 
         while True:
-            data = await self.request_queue.get()
+            try:
+                data = await self.request_queue.get()
+            except asyncio.CancelledError:
+                break
 
             try:
                 if (src_id := get_param(data.request, SOURCE_ID_KEY)) is None:
@@ -122,7 +131,10 @@ class Server:
         logger.info("Starting request processor...")
 
         while True:
-            data = await self.loaded_request_queue.get()
+            try:
+                data = await self.loaded_request_queue.get()
+            except asyncio.CancelledError:
+                break
 
             try:
                 output_array, elapsed_time = await self.model_runner.run_model(
@@ -149,7 +161,10 @@ class Server:
         logger.info("Starting request saver...")
 
         while True:
-            data = await self.processed_request_queue.get()
+            try:
+                data = await self.processed_request_queue.get()
+            except asyncio.CancelledError:
+                break
 
             try:
                 output, generation = await self.model_runner.process_output(
@@ -168,7 +183,7 @@ class Server:
                 logger.exception("Error saving request")
                 data.data.response_future.set_result(web.Response(text="Error saving request", status=500))
 
-    async def start(self) -> None:
+    async def __aenter__(self) -> "Server":
         """Starts the server.
 
         The server will run until the process is killed. It has two endpoints:
@@ -179,56 +194,98 @@ class Server:
             which can be used for load balancing.
         """
 
-        async def get_lock() -> None:
-            if self.runner_lock.locked():
-                raise RuntimeError("Server is already running")
-            await self.runner_lock.acquire()
+        async def start_web_server() -> web.Application:
+            assert self._app is None, "Server already started"
+            self._app = web.Application()
+            self._app.router.add_get("/", self.handle_request)
+            self._app.router.add_get("/queue", self.get_queue_size)
 
-        async def open_db_conn() -> None:
-            logger.info("Opening database connection...")
-            await init_db()
+        async def start_tasks() -> None:
+            assert len(self._tasks) == 0, "Tasks already started"
+            self._tasks.append(asyncio.create_task(self.request_loader()))
+            self._tasks.append(asyncio.create_task(self.request_processor()))
+            self._tasks.append(asyncio.create_task(self.request_saver()))
 
-        async def start_web_server() -> web.AppRunner:
-            app = web.Application()
-            app.router.add_get("/", self.handle_request)
-            app.router.add_get("/queue", self.get_queue_size)
-            runner = web.AppRunner(app)
-            await runner.setup()
-            logger.info("Started app runner")
+        async def start_db() -> None:
+            await init_db(generate_schemas=env_settings.database.generate_schemas)
 
-            site = web.TCPSite(runner, self.host, self.port)
-            await site.start()
-            logger.info("Started TCP site on %s:%s", self.host, self.port)
+        await asyncio.gather(start_web_server(), start_tasks(), start_db())
 
-            return runner
+        return self
 
-        logger.info("Starting server...")
-        _, _, runner = await asyncio.gather(get_lock(), open_db_conn(), start_web_server())
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        async def stop_web_server() -> None:
+            assert self._app is not None, "Server not started"
+            await self._app.shutdown()
+            await self._app.cleanup()
 
-        tasks: list[asyncio.Task] = []
-        tasks.append(asyncio.create_task(self.request_loader()))
-        tasks.append(asyncio.create_task(self.request_processor()))
-        tasks.append(asyncio.create_task(self.request_saver()))
-        await asyncio.gather(*tasks)
+        async def stop_tasks() -> None:
+            assert len(self._tasks) > 0, "Tasks not started"
+            for task in self._tasks:
+                task.cancel()
+            await asyncio.gather(*self._tasks)
 
-        logger.info("Shutting down server...")
-        await asyncio.gather(runner.cleanup(), close_db())
-        self.runner_lock.release()
+        await asyncio.gather(stop_web_server(), stop_tasks(), close_db())
+
+
+class Runner:
+    def __init__(self, server: Server) -> None:
+        super().__init__()
+
+        self.server = server
+
+        self._runner: web.AppRunner | None = None
+        self._site: web.TCPSite | None = None
+
+    async def __aenter__(self) -> "Runner":
+        await self.server.__aenter__()
+
+        self._runner = web.AppRunner(self.server.app)
+        await self._runner.setup()
+        logger.info("Started app runner")
+
+        host = env_settings.worker.host
+        port = env_settings.worker.port
+        self._site = web.TCPSite(self._runner, host, port)
+        await self._site.start()
+        logger.info("Started TCP site on %s:%s", host, port)
+
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        assert self._site is not None, "Site not started"
+        await self._site.stop()
+
+        assert self._runner is not None, "Runner not started"
+        await self._runner.shutdown()
+        await self._runner.cleanup()
+
+        await self.server.__aexit__(exc_type, exc_val, exc_tb)
+
+    async def run_forever(self) -> None:
+        async with self:
+            await asyncio.Event().wait()
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run the HTTP server.")
-    parser.add_argument("-t", "--host", type=str, default="localhost", help="The host to run the server on")
-    parser.add_argument("-p", "--port", type=int, default=8080, help="The port to run the server on")
-    parser.add_argument("-d", "--debug", action="store_true", help="If set, turn on debug mode for asyncio.run")
-    args = parser.parse_args()
-
     configure_logging()
     logging.getLogger("aiohttp").setLevel(logging.WARNING)
 
-    server = Server(args.host, args.port)
-    asyncio.run(server.start())
+    server = Server()
+    runner = Runner(server)
+    asyncio.run(runner.run_forever())
 
 
 if __name__ == "__main__":
+    # python -m bot.worker.server
     main()

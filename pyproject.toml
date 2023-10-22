@@ -9,6 +9,7 @@ include = '\.pyi?$'
 timeout = 60
 addopts = "-rx -rf -x -q"
 testpaths = ["tests"]
+asyncio_mode = "auto"
 
 markers = [
     "slow: Marks test as being slow",

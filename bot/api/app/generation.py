@@ -33,12 +33,11 @@ class SingleGenerationResponse(BaseModel):
     output_id: int | None
     reference_id: int
     source_id: int
-    task_created: datetime.datetime
-    task_finished: datetime.datetime | None
+    task_finished: datetime.datetime
 
     @staticmethod
     def keys() -> tuple[str, ...]:
-        return ("id", "output_id", "reference_id", "source_id", "task_created", "task_finished")
+        return ("id", "output_id", "reference_id", "source_id", "task_finished")
 
 
 class QueryMeResponse(BaseModel):
@@ -56,7 +55,7 @@ async def query_me(
     query = Generation.filter(user_id=user_data.user_id)
     generations = cast(
         list[SingleGenerationResponse],
-        await query.order_by("-task_created").offset(start).limit(limit).values(*SingleGenerationResponse.keys()),
+        await query.order_by("-task_finished").offset(start).limit(limit).values(*SingleGenerationResponse.keys()),
     )
     return QueryMeResponse(generations=generations)
 
@@ -71,7 +70,6 @@ async def query_from_id(id: int, user_data: SessionTokenData = Depends(get_sessi
         output_id=generation.output_id,
         reference_id=generation.reference_id,
         source_id=generation.source_id,
-        task_created=generation.task_created,
         task_finished=generation.task_finished,
     )
 

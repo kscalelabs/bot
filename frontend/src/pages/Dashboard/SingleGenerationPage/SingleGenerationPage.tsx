@@ -11,14 +11,13 @@ interface SingleGenerationResponse {
   output_id: number | null;
   reference_id: number;
   source_id: number;
-  task_created: Date;
-  task_finished: Date | null;
+  task_finished: Date;
 }
 
 const SingleGenerationPage = () => {
   const { id } = useParams();
   const [response, setResponse] = useState<SingleGenerationResponse | null>(
-    null,
+    null
   );
 
   const { api } = useAuthentication();
@@ -34,7 +33,7 @@ const SingleGenerationPage = () => {
               params: {
                 id,
               },
-            },
+            }
           );
           setResponse(apiResponse.data);
         } catch (error) {
@@ -69,7 +68,6 @@ const SingleGenerationPage = () => {
                   outputId={response.output_id}
                   referenceId={response.reference_id}
                   sourceId={response.source_id}
-                  taskCreated={response.task_created}
                   taskFinished={response.task_finished}
                   showLink={false}
                 />
