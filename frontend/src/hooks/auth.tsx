@@ -70,6 +70,7 @@ export const AuthenticationProvider = (props: AuthenticationProviderProps) => {
 
   const api = axios.create({
     baseURL: BACKEND_URL,
+    withCredentials: true,
   });
 
   const baseApi = axios.create({

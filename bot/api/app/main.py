@@ -45,14 +45,6 @@ app = FastAPI(lifespan=lifespan)
 # Just link to the official terms of service.
 app.terms_of_service = "https://dpsh.dev/tos"
 
-# Adds CORS middleware.
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[settings.site.homepage],
-    allow_methods=["GET", "POST", "DELETE"],
-    allow_headers=["*"],
-)
-
 
 @app.get("/")
 async def read_index() -> bool:
@@ -75,3 +67,12 @@ app.include_router(users_router, prefix="/users", tags=["users"])
 
 # Registers the database, generating schemas if not in production.
 register_tortoise(app, config=get_config(), generate_schemas=not settings.database.generate_schemas)
+
+# Adds CORS middleware.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[settings.site.homepage],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+    allow_headers=["*"],
+)
