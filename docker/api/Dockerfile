@@ -1,4 +1,3 @@
-
 # Dockerfile for the FastAPI application.
 
 FROM ubuntu:22.04
