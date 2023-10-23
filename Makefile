@@ -29,8 +29,8 @@ all:
 #      Development         #
 # ------------------------ #
 
-# env_file := .env.local
-env_file := .env.dev
+env_file := .env.local
+# env_file := .env.dev
 # env_file := .env.prod
 
 start-backend:

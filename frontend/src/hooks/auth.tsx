@@ -69,12 +69,10 @@ export const AuthenticationProvider = (props: AuthenticationProviderProps) => {
   const isAuthenticated = refreshToken !== null;
 
   const api = axios.create({
-    withCredentials: true,
     baseURL: BACKEND_URL,
   });
 
   const baseApi = axios.create({
-    withCredentials: true,
     baseURL: BACKEND_URL,
   });
 

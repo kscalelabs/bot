@@ -24,7 +24,7 @@ const EmailAuthComponent = () => {
     e.preventDefault();
 
     setIsDisabled(true);
-    const login_url = window.location.origin;
+    const login_url = window.location.href;
 
     try {
       await api.post<boolean>("/users/login", {
@@ -66,7 +66,11 @@ const EmailAuthComponent = () => {
         />
       </FloatingLabel>
       <ButtonGroup>
-        <Button variant="primary" type="submit" disabled={isDisabled}>
+        <Button
+          variant="primary"
+          type="submit"
+          disabled={isDisabled || email.length === 0}
+        >
           Sign In with Email
           <FontAwesomeIcon icon={faEnvelope} style={{ marginLeft: 15 }} />
         </Button>

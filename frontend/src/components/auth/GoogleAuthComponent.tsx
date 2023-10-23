@@ -51,6 +51,10 @@ const GoogleAuthComponentInner = () => {
       addAlert("Failed to login using Google OAuth.", "error");
       setDisableButton(false);
     },
+    onNonOAuthError: () => {
+      addAlert("Failed to login using Google OAuth.", "error");
+      setDisableButton(false);
+    },
   });
 
   return (
