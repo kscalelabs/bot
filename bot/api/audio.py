@@ -189,35 +189,25 @@ async def get_audio_url(audio_entry: Audio) -> tuple[str, bool]:
         The file path or URL for serving the audio file, along with a boolean
         indicating if it is a URL.
     """
-    cur_time = server_time()
     fs_type = get_fs_type()
 
     try:
         match fs_type:
             case "file":
                 fs_path = _get_file_path(audio_entry.key)
-                updated = audio_entry.url != fs_path
-                audio_entry.url = fs_path
-                if updated:
-                    audio_entry.url_expires = cur_time
-                    await audio_entry.save()
                 return fs_path, False
 
             case "s3":
-                if audio_entry.url is not None and audio_entry.url_expires > cur_time:
-                    return audio_entry.url, True
                 s3_path = _get_s3_path(audio_entry.key)
                 s3_bucket = settings.file.s3.bucket
                 session = aioboto3.Session()
                 async with session.client("s3") as s3:
-                    audio_entry.url = await s3.generate_presigned_url(
+                    url = await s3.generate_presigned_url(
                         ClientMethod="get_object",
                         Params={"Bucket": s3_bucket, "Key": s3_path},
                         ExpiresIn=settings.file.s3.url_expiration,
                     )
-                audio_entry.url_expires = cur_time + timedelta(seconds=settings.file.s3.url_expiration - 1)
-                await audio_entry.save()
-                return audio_entry.url, True
+                return url, True
 
             case _:
                 raise ValueError(f"Invalid file system type: {fs_type}")

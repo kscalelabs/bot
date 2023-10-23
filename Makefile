@@ -47,16 +47,16 @@ start-worker:
 # ------------------------ #
 
 create-db:
-	DPSH_ENVIRONMENT_SECRETS=$(env_file) python -m bot.api.db
+	DPSH_ENVIRONMENT_SECRETS=.env.dev python -m bot.api.db
 
 aerich-init:
-	DPSH_ENVIRONMENT_SECRETS=$(env_file) aerich init --tortoise-orm bot.api.db.CONFIG --location bot/api/migrations/
+	DPSH_ENVIRONMENT_SECRETS=.env.dev aerich init --tortoise-orm bot.api.db.CONFIG --location bot/api/migrations/
 
 aerich-init-db:
-	DPSH_ENVIRONMENT_SECRETS=$(env_file) aerich init-db
+	DPSH_ENVIRONMENT_SECRETS=.env.dev aerich init-db
 
 aerich-migrate:
-	DPSH_ENVIRONMENT_SECRETS=$(env_file) aerich migrate
+	DPSH_ENVIRONMENT_SECRETS=.env.dev aerich migrate
 
 # ------------------------ #
 #          Build           #
