@@ -12,7 +12,7 @@ from tortoise.transactions import in_transaction
 from bot.api.audio import load_audio_array, save_audio_array
 from bot.api.model import Audio, AudioSource, Generation, Task
 from bot.model.hubert.pretrained import cast_pretrained_model, pretrained_hubert
-from bot.settings import env_settings
+from bot.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -21,16 +21,16 @@ class ModelRunner:
     def __init__(self, num_timesteps: int | None = None) -> None:
         super().__init__()
 
-        self.num_timesteps = env_settings.worker.sampling_timesteps if num_timesteps is None else num_timesteps
+        self.num_timesteps = settings.worker.sampling_timesteps if num_timesteps is None else num_timesteps
 
         device = detect_device()
-        model = pretrained_hubert(cast_pretrained_model(env_settings.worker.model_key))
+        model = pretrained_hubert(cast_pretrained_model(settings.worker.model_key))
         model.eval()
         device.module_to(model)
 
         self.device = device
         self.model = model
-        self.model_key = env_settings.worker.model_key
+        self.model_key = settings.worker.model_key
 
     async def load_samples(self, src: Audio, ref: Audio) -> tuple[Tensor, Tensor]:
         src_audio_arr, ref_audio_arr = await asyncio.gather(

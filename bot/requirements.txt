@@ -6,6 +6,7 @@ fastapi[all]
 pyjwt
 python-multipart
 uvicorn
+gunicorn
 
 # Database dependencies.
 tortoise-orm[asyncpg]

@@ -47,6 +47,12 @@ const LogInModal = () => {
           </Col>
         </Row>
       </Modal.Body>
+      <Modal.Footer>
+        <small>
+          <i>Issues logging in? Send an email to </i>
+          <code>ben@dpsh.dev</code>
+        </small>
+      </Modal.Footer>
     </Modal>
   );
 };

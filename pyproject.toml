@@ -1,3 +1,8 @@
+[tool.aerich]
+tortoise_orm = "bot.api.db.CONFIG"
+location = "bot/api/migrations/"
+src_folder = "./."
+
 [tool.black]
 
 line-length = 120
@@ -39,6 +44,8 @@ namespace_packages = false
 # For TorchScript stuff.
 disable_error_code = ["attr-defined"]
 
+exclude = ["build"]
+
 [[tool.mypy.overrides]]
 
 module = [
@@ -73,6 +80,8 @@ ignore = [
 line-length = 120
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 target-version = "py310"
+
+exclude = ["bot/api/migrations/models/*.py"]
 
 [tool.ruff.per-file-ignores]
 

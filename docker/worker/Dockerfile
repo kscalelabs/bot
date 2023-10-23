@@ -24,22 +24,19 @@ RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
     python3.11 get-pip.py && \
     rm get-pip.py
 
+# Copies over and installs requirements file first.
+COPY bot/requirements.txt .
+RUN pip install -r requirements.txt
+
 # Copies over code.
 ADD bot/ bot/
-COPY dist/config.yaml .
+COPY pyproject.toml .
 COPY setup.py .
 COPY setup.cfg .
 COPY README.md .
 
-# Copies the config file and points to it.
-ENV DPSH_CONFIG=./config.yaml
-
 # Installs the package.
-RUN python3.11 -m pip install --upgrade --upgrade-strategy eager --force-reinstall '.[worker]'
-
-# Cleans up.
-RUN apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+RUN pip install '.'
 
 # Downloads the model weights.
 RUN python3.11 -m bot.worker.download

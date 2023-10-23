@@ -5,7 +5,8 @@ database:
   kind: postgres
   generate_schemas: false
   postgres:
-    host: ${oc.env:DB_DEV_HOST}
+    read_host: ${oc.env:DB_READ_HOST}
+    write_host: ${oc.env:DB_WRITE_HOST}
     port: ${oc.decode:${oc.env:DB_PORT,5432}}
     username: ${oc.env:DB_USERNAME}
     password: ${oc.env:DB_PASSWORD}
@@ -17,9 +18,9 @@ email:
   password: ${oc.env:SMTP_PASSWORD}
 file:
   fs_type: s3
-  root_dir: audio_uploads
   s3:
     bucket: ${oc.env:S3_BUCKET}
+    subfolder: audio_uploads
 model:
   # Where the model weights are cached inside the Docker image.
   hf_hub_token: ${oc.env:HF_HUB_TOKEN}

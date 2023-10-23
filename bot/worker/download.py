@@ -5,7 +5,7 @@ import logging
 from ml.utils.logging import configure_logging
 
 from bot.model.hubert.pretrained import cast_pretrained_model, pretrained_hubert
-from bot.settings import env_settings as settings
+from bot.settings import settings
 
 logger = logging.getLogger(__name__)
 

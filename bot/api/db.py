@@ -1,11 +1,14 @@
 """Defines the utility functions for interacting with the database."""
 
+import asyncio
 import logging
+from pathlib import Path
+from typing import Any
 
+from ml.utils.logging import configure_logging
 from tortoise import Model, Tortoise
 
-from bot.settings import env_settings as settings
-from bot.settings.environment import PostgreSQLDatabaseSettings
+from bot.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -27,11 +30,17 @@ def get_sqlite_config() -> dict:
     Returns:
         The configuration dictionary to pass to Tortoise ORM.
     """
+    host = settings.database.sqlite.host
+    if host != ":memory:":
+        host_path = Path(host).expanduser().resolve()
+        host_path.parent.mkdir(parents=True, exist_ok=True)
+        host = host_path.as_posix()
+
     return {
         "connections": {
             "default": {
                 "engine": "tortoise.backends.sqlite",
-                "credentials": {"file_path": settings.database.sqlite.host},
+                "credentials": {"file_path": host},
             },
         },
         "apps": {
@@ -53,26 +62,41 @@ def get_postgres_config() -> dict:
         The configuration dictionary to pass to Tortoise ORM.
     """
 
-    def get_credential(endpoint_settings: "PostgreSQLDatabaseSettings") -> dict:
+    def get_credential(host: str) -> dict:
+        endpoint_settings = settings.database.postgres
+
         return {
-            "host": endpoint_settings.host,
+            "host": host,
             "port": endpoint_settings.port,
             "user": endpoint_settings.username,
             "password": endpoint_settings.password,
             "database": endpoint_settings.database,
         }
 
-    return {
-        "connections": {
+    write_host, read_host = settings.database.postgres.write_host, settings.database.postgres.read_host
+
+    def get_connections() -> dict:
+        if write_host == read_host:
+            return {
+                "default": {
+                    "engine": "tortoise.backends.asyncpg",
+                    "credentials": get_credential(settings.database.postgres.write_host),
+                },
+            }
+
+        return {
             "default": {
                 "engine": "tortoise.backends.asyncpg",
-                "credentials": get_credential(settings.database.postgres),
+                "credentials": get_credential(settings.database.postgres.write_host),
             },
             "read_replica": {
                 "engine": "tortoise.backends.asyncpg",
-                "credentials": get_credential(settings.database.postgres),
+                "credentials": get_credential(settings.database.postgres.read_host),
             },
-        },
+        }
+
+    return {
+        "connections": get_connections(),
         "apps": {
             "models": {
                 "models": ["bot.api.model", "aerich.models"],
@@ -94,6 +118,7 @@ def get_config() -> dict:
 
 
 async def init_db(generate_schemas: bool = False) -> None:
+    logger.info("Initializing database")
     await Tortoise.init(config=get_config())
     if generate_schemas:
         await Tortoise.generate_schemas()
@@ -102,3 +127,37 @@ async def init_db(generate_schemas: bool = False) -> None:
 async def close_db() -> None:
     logger.info("Closing database")
     await Tortoise.close_connections()
+
+
+class _LazyLoadConfig:
+    def __init__(self) -> None:
+        super().__init__()
+
+        self._config: dict | None = None
+
+    def __getattribute__(self, name: str) -> Any:  # noqa: ANN401
+        if name == "_config":
+            config = super().__getattribute__(name)
+            if config is None:
+                config = get_config()
+                super().__setattr__(name, config)
+            return config
+        return self._config.__getattribute__(name)
+
+    def __getitem__(self, key: str) -> Any:  # noqa: ANN401
+        assert (config := self._config) is not None
+        return config.__getitem__(key)
+
+
+CONFIG = _LazyLoadConfig()
+
+
+async def main() -> None:
+    configure_logging()
+    await init_db(generate_schemas=True)
+    await close_db()
+
+
+if __name__ == "__main__":
+    # python -m bot.api.db
+    asyncio.run(main())

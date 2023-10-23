@@ -44,11 +44,11 @@ def pytest_generate_tests(metafunc: Metafunc) -> None:
 def mock_load_settings(mocker: MockerFixture, tmpdir_factory: TempdirFactory) -> MockType:
     mock = mocker.patch("bot.settings._load_environment_settings")
 
-    from bot.settings import env_settings as settings
+    from bot.settings import settings
 
     # Sets the default image settings.
     file_root_dir = tmpdir_factory.mktemp("files")
-    settings.file.root_dir = str(file_root_dir)
+    settings.file.local.root_dir = str(file_root_dir)
 
     mock.return_value = settings
 

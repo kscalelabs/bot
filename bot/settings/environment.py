@@ -25,7 +25,8 @@ class SQLiteDatabaseSettings:
 
 @dataclass
 class PostgreSQLDatabaseSettings:
-    host: str = field(default=MISSING)
+    read_host: str = field(default=MISSING)
+    write_host: str = field(default=MISSING)
     port: int = field(default=MISSING)
     username: str = field(default=MISSING)
     password: str = field(default=MISSING)
@@ -65,16 +66,22 @@ class AudioFileSettings:
 
 
 @dataclass
+class LocalFileSettings:
+    root_dir: str = field(default=MISSING)
+
+
+@dataclass
 class S3FileSettings:
     bucket: str = field(default=MISSING)
+    subfolder: str = field(default=MISSING)
     url_expiration: int = field(default=3600)
 
 
 @dataclass
 class FileSettings:
     fs_type: str = field(default=MISSING)
-    root_dir: str = field(default=MISSING)
     audio: AudioFileSettings = field(default_factory=AudioFileSettings)
+    local: LocalFileSettings = field(default_factory=LocalFileSettings)
     s3: S3FileSettings = field(default_factory=S3FileSettings)
 
 

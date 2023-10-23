@@ -1,4 +1,4 @@
-name: Deploy to Development Environment
+name: Builds the Docker images.
 
 on:
   push:
@@ -17,9 +17,6 @@ concurrency:
 
 jobs:
   build-api:
-    environment:
-      name: dev
-      url: ${{ vars.SITE_BACKEND }}
     runs-on: ubuntu-latest
 
     defaults:
@@ -54,26 +51,10 @@ jobs:
           pip install --no-deps .
 
       - name: Build and publish
-        # The build script requires access to the secrets and vars in the
-        # dev environment, as environment variables.
         env:
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_READ_HOST: ${{ vars.DB_READ_HOST }}
-          DB_USERNAME: ${{ secrets.DB_USERNAME }}
-          DB_WRITE_HOST: ${{ vars.DB_WRITE_HOST }}
           ECR_URI: ${{ secrets.ECR_URI }}
-          ECS_CLUSTER_NAME: ${{ vars.ECS_CLUSTER_NAME }}
-          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-          HF_HUB_TOKEN: ${{ secrets.HF_HUB_TOKEN }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          LAMBDA_FUNCTION_NAME: ${{ vars.LAMBDA_FUNCTION_NAME }}
-          S3_BUCKET: ${{ vars.S3_BUCKET }}
-          SITE_HOMEPAGE: ${{ vars.SITE_HOMEPAGE }}
-          SMTP_EMAIL: ${{ vars.SMTP_EMAIL }}
-          SMTP_HOST: ${{ vars.SMTP_HOST }}
-          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
         run: |
-          ./scripts/build_api_docker_image.sh
+          ./docker/api/build.sh
 
   build-worker:
     environment:
@@ -107,26 +88,10 @@ jobs:
           pip install --no-deps .
 
       - name: Build and publish
-        # The build script requires access to the secrets and vars in the
-        # dev environment, as environment variables.
-        env:
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_READ_HOST: ${{ vars.DB_READ_HOST }}
-          DB_USERNAME: ${{ secrets.DB_USERNAME }}
-          DB_WRITE_HOST: ${{ vars.DB_WRITE_HOST }}
-          ECR_URI: ${{ secrets.ECR_URI }}
-          ECS_CLUSTER_NAME: ${{ vars.ECS_CLUSTER_NAME }}
-          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-          HF_HUB_TOKEN: ${{ secrets.HF_HUB_TOKEN }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          LAMBDA_FUNCTION_NAME: ${{ vars.LAMBDA_FUNCTION_NAME }}
-          S3_BUCKET: ${{ vars.S3_BUCKET }}
-          SITE_HOMEPAGE: ${{ vars.SITE_HOMEPAGE }}
-          SMTP_EMAIL: ${{ vars.SMTP_EMAIL }}
-          SMTP_HOST: ${{ vars.SMTP_HOST }}
-          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+      env:
+        ECR_URI: ${{ secrets.ECR_URI }}
         run: |
-          ./scripts/build_worker_docker_image.sh
+          ./docker/worker/build.sh
 
   build-frontend:
     environment: dev

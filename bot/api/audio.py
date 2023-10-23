@@ -10,6 +10,7 @@ import uuid
 from datetime import timedelta
 from hashlib import sha1
 from io import BytesIO
+from pathlib import Path
 from typing import Literal, cast, get_args
 from uuid import UUID
 
@@ -19,7 +20,7 @@ from fastapi import UploadFile
 from pydub import AudioSegment
 
 from bot.api.model import Audio, AudioSource
-from bot.settings import env_settings as settings
+from bot.settings import settings
 from bot.utils import server_time
 
 DEFAULT_NAME = "Untitled"
@@ -38,8 +39,13 @@ def get_fs_type() -> FSType:
     return cast(FSType, fs_type_str)
 
 
-def _get_path(key: UUID) -> str:
-    return f"{settings.file.root_dir}/{key}.{settings.file.audio.file_ext}"
+def _get_file_path(key: UUID) -> str:
+    (dir_path := Path(settings.file.local.root_dir).expanduser().resolve()).mkdir(parents=True, exist_ok=True)
+    return str(dir_path / f"{key}.{settings.file.audio.file_ext}")
+
+
+def _get_s3_path(key: UUID) -> str:
+    return f"{settings.file.s3.subfolder}/{key}.{settings.file.audio.file_ext}"
 
 
 async def _save_audio(user_id: int, source: AudioSource, name: str | None, audio: AudioSegment) -> Audio:
@@ -69,7 +75,6 @@ async def _save_audio(user_id: int, source: AudioSource, name: str | None, audio
     key_bytes = sha1(uuid.NAMESPACE_OID.bytes + f"user-{user_id}".encode("utf-8") + os.urandom(16))
     key = UUID(bytes=key_bytes.digest()[:16], version=5)
     fs_type = get_fs_type()
-    fs_path = _get_path(key)
     max_bytes = settings.file.audio.max_mb * 1024 * 1024
 
     match fs_type:
@@ -78,7 +83,7 @@ async def _save_audio(user_id: int, source: AudioSource, name: str | None, audio
                 audio.export(temp_file.name, format=settings.file.audio.file_ext)
             if os.path.getsize(temp_file.name) > max_bytes:
                 raise ValueError("Audio file is too large")
-            shutil.move(temp_file.name, fs_path)
+            shutil.move(temp_file.name, _get_file_path(key))
 
         case "s3":
             with tempfile.NamedTemporaryFile(suffix=f".{settings.file.audio.file_ext}") as temp_file:
@@ -89,7 +94,7 @@ async def _save_audio(user_id: int, source: AudioSource, name: str | None, audio
                 session = aioboto3.Session()
                 async with session.resource("s3") as s3:
                     bucket = await s3.Bucket(s3_bucket)
-                    await bucket.upload_file(temp_file.name, fs_path)
+                    await bucket.upload_file(temp_file.name, _get_s3_path(key))
 
         case _:
             raise ValueError(f"Invalid file system type: {fs_type}")
@@ -186,11 +191,11 @@ async def get_audio_url(audio_entry: Audio) -> tuple[str, bool]:
     """
     cur_time = server_time()
     fs_type = get_fs_type()
-    fs_path = _get_path(audio_entry.key)
 
     try:
         match fs_type:
             case "file":
+                fs_path = _get_file_path(audio_entry.key)
                 updated = audio_entry.url != fs_path
                 audio_entry.url = fs_path
                 if updated:
@@ -201,12 +206,13 @@ async def get_audio_url(audio_entry: Audio) -> tuple[str, bool]:
             case "s3":
                 if audio_entry.url is not None and audio_entry.url_expires > cur_time:
                     return audio_entry.url, True
+                s3_path = _get_s3_path(audio_entry.key)
                 s3_bucket = settings.file.s3.bucket
                 session = aioboto3.Session()
                 async with session.client("s3") as s3:
                     audio_entry.url = await s3.generate_presigned_url(
                         ClientMethod="get_object",
-                        Params={"Bucket": s3_bucket, "Key": fs_path},
+                        Params={"Bucket": s3_bucket, "Key": s3_path},
                         ExpiresIn=settings.file.s3.url_expiration,
                     )
                 audio_entry.url_expires = cur_time + timedelta(seconds=settings.file.s3.url_expiration - 1)
@@ -231,20 +237,21 @@ async def load_audio_array(audio_uuid: UUID) -> np.ndarray:
         The audio as a Numpy array.
     """
     fs_type = get_fs_type()
-    fs_path = _get_path(audio_uuid)
 
     try:
         audio: AudioSegment
 
         match fs_type:
             case "file":
+                fs_path = _get_file_path(audio_uuid)
                 audio = AudioSegment.from_file(fs_path, settings.file.audio.file_ext)
 
             case "s3":
                 s3_bucket = settings.file.s3.bucket
+                s3_path = _get_s3_path(audio_uuid)
                 session = aioboto3.Session()
                 async with session.client("s3") as s3:
-                    obj = await s3.get_object(Bucket=s3_bucket, Key=fs_path)
+                    obj = await s3.get_object(Bucket=s3_bucket, Key=s3_path)
                     data = await obj["Body"].read()
                     audio_file_io = BytesIO(data)
                     audio = AudioSegment.from_file(audio_file_io, settings.file.audio.file_ext)
@@ -292,18 +299,19 @@ async def delete_audio(key: UUID) -> None:
         key: The UUID of the audio file to delete
     """
     fs_type = get_fs_type()
-    fs_path = _get_path(key)
 
     try:
         match fs_type:
             case "file":
+                fs_path = _get_file_path(key)
                 os.remove(fs_path)
 
             case "s3":
                 s3_bucket = settings.file.s3.bucket
+                s3_path = _get_s3_path(key)
                 session = aioboto3.Session()
                 async with session.client("s3") as s3:
-                    await s3.delete_object(Bucket=s3_bucket, Key=fs_path)
+                    await s3.delete_object(Bucket=s3_bucket, Key=s3_path)
 
             case _:
                 raise ValueError(f"Invalid file system type: {fs_type}")
