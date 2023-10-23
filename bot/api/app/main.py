@@ -48,8 +48,7 @@ app.terms_of_service = "https://dpsh.dev/tos"
 # Adds CORS middleware.
 app.add_middleware(
     CORSMiddleware,
-    # allow_origins=[settings.site.homepage],
-    allow_origins=["*"],
+    allow_origins=[settings.site.homepage],
     allow_methods=["GET", "POST", "DELETE"],
     allow_headers=["*"],
 )
