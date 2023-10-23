@@ -38,9 +38,6 @@ COPY docker/api/startup.sh ./startup.sh
 # Installs the package.
 RUN pip install '.'
 
-# Runs unit tests.
-# RUN python3.11 -m pytest
-
 # Exposes the port for FastAPI.
 EXPOSE 8000
 

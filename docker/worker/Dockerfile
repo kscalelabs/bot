@@ -1,5 +1,4 @@
-# Use the latest CUDA image as base. This was taken from here:
-# https://github.com/aws-samples/amazon-scalable-discord-diffusion
+# Use the latest CUDA image as base.
 
 FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04
 
@@ -24,9 +23,6 @@ RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
     python3.11 get-pip.py && \
     rm get-pip.py
 
-# Sets environment variables.
-ENV DPSH_ENVIRONMENT=aws
-
 # Copies over and installs requirements file first.
 COPY bot/requirements.txt .
 RUN pip install -r requirements.txt
@@ -37,11 +33,13 @@ COPY pyproject.toml .
 COPY setup.py .
 COPY setup.cfg .
 COPY README.md .
+COPY docker/api/startup.sh ./startup.sh
 
 # Installs the package.
 RUN pip install '.'
 
-# Downloads the model weights.
-RUN python3.11 -m bot.worker.download
+# Exposes the port for FastAPI.
+EXPOSE 8000
 
-CMD ["python3", "-m", "bot.worker"]
+# Command to run database migrations.
+ENTRYPOINT ["./startup.sh"]
