@@ -29,15 +29,34 @@ all:
 #      Development         #
 # ------------------------ #
 
+# env_file := .env.local
+env_file := .env.dev
+# env_file := .env.prod
+
 start-backend:
-	# uvicorn bot.api.app.main:app --reload --port 8000 --host localhost --env-file docker/.env.local
-	uvicorn bot.api.app.main:app --reload --port 8000 --host localhost --env-file docker/.env.dev
+	DPSH_ENVIRONMENT_SECRETS=$(env_file) uvicorn bot.api.app.main:app --reload --port 8000 --host localhost --env-file $(env_file)
 
 start-frontend:
 	cd frontend && npm start
 
 start-worker:
-	PYTORCH_ENABLE_MPS_FALLBACK=1 python -m bot.worker.server --debug --env-file docker/.env.local
+	DPSH_ENVIRONMENT_SECRETS=$(env_file) PYTORCH_ENABLE_MPS_FALLBACK=1 python -m bot.worker.server --debug
+
+# ------------------------ #
+#          DB              #
+# ------------------------ #
+
+create-db:
+	DPSH_ENVIRONMENT_SECRETS=$(env_file) python -m bot.api.db
+
+aerich-init:
+	DPSH_ENVIRONMENT_SECRETS=$(env_file) aerich init --tortoise-orm bot.api.db.CONFIG --location bot/api/migrations/
+
+aerich-init-db:
+	DPSH_ENVIRONMENT_SECRETS=$(env_file) aerich init-db
+
+aerich-migrate:
+	DPSH_ENVIRONMENT_SECRETS=$(env_file) aerich migrate
 
 # ------------------------ #
 #          Build           #

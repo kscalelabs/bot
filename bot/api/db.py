@@ -3,7 +3,9 @@
 import asyncio
 import logging
 from pathlib import Path
+from typing import Any
 
+from ml.utils.logging import configure_logging
 from tortoise import Model, Tortoise
 
 from bot.settings import settings
@@ -71,8 +73,18 @@ def get_postgres_config() -> dict:
             "database": endpoint_settings.database,
         }
 
-    return {
-        "connections": {
+    write_host, read_host = settings.database.postgres.write_host, settings.database.postgres.read_host
+
+    def get_connections() -> dict:
+        if write_host == read_host:
+            return {
+                "default": {
+                    "engine": "tortoise.backends.asyncpg",
+                    "credentials": get_credential(settings.database.postgres.write_host),
+                },
+            }
+
+        return {
             "default": {
                 "engine": "tortoise.backends.asyncpg",
                 "credentials": get_credential(settings.database.postgres.write_host),
@@ -81,7 +93,10 @@ def get_postgres_config() -> dict:
                 "engine": "tortoise.backends.asyncpg",
                 "credentials": get_credential(settings.database.postgres.read_host),
             },
-        },
+        }
+
+    return {
+        "connections": get_connections(),
         "apps": {
             "models": {
                 "models": ["bot.api.model", "aerich.models"],
@@ -103,6 +118,7 @@ def get_config() -> dict:
 
 
 async def init_db(generate_schemas: bool = False) -> None:
+    logger.info("Initializing database")
     await Tortoise.init(config=get_config())
     if generate_schemas:
         await Tortoise.generate_schemas()
@@ -111,3 +127,36 @@ async def init_db(generate_schemas: bool = False) -> None:
 async def close_db() -> None:
     logger.info("Closing database")
     await Tortoise.close_connections()
+
+
+class _LazyLoadConfig:
+    def __init__(self) -> None:
+        super().__init__()
+
+        self._config: dict | None = None
+
+    def __getattribute__(self, name: str) -> Any:  # noqa: ANN401
+        if name == "_config":
+            config = super().__getattribute__(name)
+            if config is None:
+                config = get_config()
+                super().__setattr__(name, config)
+            return config
+        return self._config.__getattribute__(name)
+
+    def __getitem__(self, key: str) -> Any:  # noqa: ANN401
+        return self._config.__getitem__(key)
+
+
+CONFIG = _LazyLoadConfig()
+
+
+async def main() -> None:
+    configure_logging()
+    await init_db(generate_schemas=True)
+    await close_db()
+
+
+if __name__ == "__main__":
+    # python -m bot.api.db
+    asyncio.run(main())

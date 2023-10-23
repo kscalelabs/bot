@@ -15,4 +15,4 @@ fi
 docker build -t dpsh-worker -f docker/worker/Dockerfile .
 
 # Runs the worker Docker image.
-docker run -p 8000:8000 --env-file docker/.env.local dpsh-worker:latest
+docker run -p 8000:8000 --env-file .env.local dpsh-worker:latest

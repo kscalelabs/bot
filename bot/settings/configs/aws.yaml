@@ -18,9 +18,9 @@ email:
   password: ${oc.env:SMTP_PASSWORD}
 file:
   fs_type: s3
-  root_dir: audio_uploads
   s3:
     bucket: ${oc.env:S3_BUCKET}
+    subfolder: audio_uploads
 model:
   # Where the model weights are cached inside the Docker image.
   hf_hub_token: ${oc.env:HF_HUB_TOKEN}

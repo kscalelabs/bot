@@ -1,6 +1,7 @@
 [tool.aerich]
-
-tortoise_orm = "conftest"
+tortoise_orm = "bot.api.db.CONFIG"
+location = "bot/api/migrations/"
+src_folder = "./."
 
 [tool.black]
 

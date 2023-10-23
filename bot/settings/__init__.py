@@ -4,7 +4,8 @@ import os
 from pathlib import Path
 from typing import Any, Callable, Generic, TypeVar, cast
 
-from omegaconf import DictConfig, OmegaConf
+from dotenv import load_dotenv
+from omegaconf import OmegaConf
 
 from bot.settings.environment import EnvironmentSettings
 
@@ -18,6 +19,8 @@ def _check_exists(path: Path) -> Path:
 
 
 def _load_environment_settings() -> EnvironmentSettings:
+    if "DPSH_ENVIRONMENT_SECRETS" in os.environ:
+        load_dotenv(os.environ["DPSH_ENVIRONMENT_SECRETS"])
     environment = os.environ["DPSH_ENVIRONMENT"]
     base_dir = (Path(__file__).parent / "configs").resolve()
     config_path = _check_exists(base_dir / f"{environment}.yaml")

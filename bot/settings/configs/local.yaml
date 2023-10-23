@@ -15,7 +15,8 @@ email:
   password: ${oc.env:SMTP_PASSWORD}
 file:
   fs_type: file
-  root_dir: ${oc.env:DATA_DIR}/dpsh-bot/samples
+  audio:
+    root_dir: ${oc.env:DATA_DIR}/dpsh-bot/samples
 site:
   homepage: http://localhost:3000
 user:

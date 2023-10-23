@@ -48,7 +48,7 @@ def mock_load_settings(mocker: MockerFixture, tmpdir_factory: TempdirFactory) ->
 
     # Sets the default image settings.
     file_root_dir = tmpdir_factory.mktemp("files")
-    settings.file.root_dir = str(file_root_dir)
+    settings.file.local.root_dir = str(file_root_dir)
 
     mock.return_value = settings
 
