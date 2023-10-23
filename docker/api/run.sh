@@ -15,5 +15,5 @@ fi
 docker build -t dpsh-api -f docker/api/Dockerfile .
 
 # Runs the API Docker image.
-docker run -p 8000:8000 --env-file .env.local dpsh-api:latest
-# docker run -p 8000:8000 --env-file .env.dev dpsh-api:latest
+# docker run -p 8000:8000 --env-file .env.local dpsh-api:latest
+docker run -p 8000:8000 --env-file .env.dev dpsh-api:latest

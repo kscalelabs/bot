@@ -4,11 +4,19 @@ import { humanReadableError } from "constants/backend";
 import { useAlertQueue } from "hooks/alerts";
 import { useAuthentication } from "hooks/auth";
 import { useState } from "react";
-import { Button, ButtonGroup, FloatingLabel, Form } from "react-bootstrap";
+import {
+  Button,
+  ButtonGroup,
+  Col,
+  FloatingLabel,
+  Form,
+  Row,
+} from "react-bootstrap";
 
 const EmailAuthComponent = () => {
   const [email, setEmail] = useState("");
   const [isDisabled, setIsDisabled] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const { api } = useAuthentication();
   const { addAlert } = useAlertQueue();
 
@@ -23,7 +31,7 @@ const EmailAuthComponent = () => {
         email,
         login_url,
       });
-      addAlert("Check your email for a login link.", "success");
+      setIsSuccess(true);
     } catch (error) {
       addAlert(humanReadableError(error), "error");
     } finally {
@@ -31,7 +39,20 @@ const EmailAuthComponent = () => {
     }
   };
 
-  return (
+  return isSuccess ? (
+    <Row>
+      <Col>
+        <Row>
+          <Col>
+            <h3>Success!</h3>
+          </Col>
+        </Row>
+        <Row>
+          <Col>Check your email for a login link.</Col>
+        </Row>
+      </Col>
+    </Row>
+  ) : (
     <Form onSubmit={handleSubmit} className="mb-3">
       <FloatingLabel controlId="floatingInput" label="Email" className="mb-3">
         <Form.Control

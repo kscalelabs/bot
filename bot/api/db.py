@@ -145,7 +145,8 @@ class _LazyLoadConfig:
         return self._config.__getattribute__(name)
 
     def __getitem__(self, key: str) -> Any:  # noqa: ANN401
-        return self._config.__getitem__(key)
+        assert (config := self._config) is not None
+        return config.__getitem__(key)
 
 
 CONFIG = _LazyLoadConfig()

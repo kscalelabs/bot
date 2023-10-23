@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Create the database, if it doesn't exist.
-python -m bot.api.db
+python3.11 -m bot.api.db
 
 # Run Aerich migrations.
 aerich upgrade

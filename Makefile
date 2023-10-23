@@ -82,23 +82,19 @@ clean:
 #       Static Checks      #
 # ------------------------ #
 
-py-files := $(shell git ls-files '*.py')
+# py-files := $(shell git ls-files '*.py')
 
 format:
-	@black $(py-files)
-	@ruff --fix $(py-files)
+	@black .
+	@ruff --fix .
 	@cd frontend && npm run format
 .PHONY: format
 
 static-checks:
-	@black --diff --check $(py-files)
-	@ruff $(py-files)
-	@mypy --install-types --non-interactive $(py-files)
+	@black --diff --check .
+	@ruff .
+	@mypy --install-types --non-interactive .
 .PHONY: lint
-
-mypy-daemon:
-	@dmypy run -- $(py-files)
-.PHONY: mypy-daemon
 
 # ------------------------ #
 #        Unit tests        #
