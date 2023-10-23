@@ -20,5 +20,5 @@ dist/
 *.so
 out*/
 
-# Put environment configurations here, but don't commit them to git.
+# Environments
 .env.*

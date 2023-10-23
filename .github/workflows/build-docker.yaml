@@ -57,9 +57,6 @@ jobs:
           ./docker/api/build.sh
 
   build-worker:
-    environment:
-      name: dev
-      url: ${{ vars.SITE_BACKEND }}
     runs-on: ubuntu-latest
 
     defaults:
@@ -88,13 +85,12 @@ jobs:
           pip install --no-deps .
 
       - name: Build and publish
-      env:
-        ECR_URI: ${{ secrets.ECR_URI }}
+        env:
+          ECR_URI: ${{ secrets.ECR_URI }}
         run: |
           ./docker/worker/build.sh
 
   build-frontend:
-    environment: dev
     runs-on: ubuntu-latest
 
     defaults:
