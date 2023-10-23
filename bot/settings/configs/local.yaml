@@ -24,7 +24,6 @@ user:
     - "ben@bolte.cc"
     - "ben@dpsh.dev"
 worker:
-  model_key: "hubert-quantized-20231015"
   host: localhost
   port: 8080
   sampling_timesteps: 50

@@ -37,5 +37,3 @@ user:
   # will be waitlisted until an admin approves them. If this is removed, then
   # any user can sign up without being waitlisted.
   authorized_users: []
-worker:
-  model_key: "hubert-quantized-20231015"

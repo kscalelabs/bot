@@ -15,6 +15,7 @@ from fastapi.testclient import TestClient
 from pytest_mock.plugin import MockerFixture, MockType
 
 os.environ["DPSH_ENVIRONMENT"] = "test"
+os.environ["DPSH_MODEL"] = "test"
 
 
 @functools.lru_cache()

@@ -22,7 +22,6 @@ user:
   admin_emails:
     - "ben@dpsh.dev"
 worker:
-  model_key: test
   host: localhost
   port: 8080
   sampling_timesteps: 5

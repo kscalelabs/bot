@@ -43,7 +43,6 @@ class DatabaseSettings:
 
 @dataclass
 class WorkerSettings:
-    model_key: str = field(default=MISSING)
     scheme: str = field(default="http")
     host: str = field(default=MISSING)
     port: int | None = field(default=MISSING)
