@@ -20,3 +20,9 @@ aws ecr get-login-password | docker login --username AWS --password-stdin ${ECR_
 # Pushes the Docker image to ECR.
 docker tag dpsh-api:latest ${ECR_URI}:latest-api
 docker push ${ECR_URI}:latest-api
+
+# Triggers the AWS ECS deployment.
+aws ecs update-service \
+  --cluster dpsh-dev-cluster \
+  --service dpsh-dev-api \
+  --force-new-deployment

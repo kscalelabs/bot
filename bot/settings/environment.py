@@ -106,6 +106,7 @@ class CryptoSettings:
 class ModelSettings:
     hf_hub_token: str | None = field(default=None)
     cache_dir: str | None = field(default=None)
+    key: str = field(default=MISSING)
 
 
 @dataclass

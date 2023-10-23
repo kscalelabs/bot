@@ -27,3 +27,5 @@ worker:
   host: localhost
   port: 8080
   sampling_timesteps: 50
+model:
+  key: hubert-quantized-20231015

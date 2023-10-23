@@ -102,6 +102,7 @@ export const AuthenticationProvider = (props: AuthenticationProviderProps) => {
     (config) => {
       if (sessionToken !== null) {
         config.headers.Authorization = `Bearer ${sessionToken}`;
+        config.headers["Access-Control-Allow-Origin"] = "*";
       }
       return config;
     },
@@ -129,6 +130,7 @@ export const AuthenticationProvider = (props: AuthenticationProviderProps) => {
             {
               headers: {
                 Authorization: `Bearer ${refreshToken}`,
+                "Access-Control-Allow-Origin": "*",
               },
             },
           );

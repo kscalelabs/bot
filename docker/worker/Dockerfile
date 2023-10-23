@@ -24,6 +24,9 @@ RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
     python3.11 get-pip.py && \
     rm get-pip.py
 
+# Sets environment variables.
+ENV DPSH_ENVIRONMENT=aws
+
 # Copies over and installs requirements file first.
 COPY bot/requirements.txt .
 RUN pip install -r requirements.txt

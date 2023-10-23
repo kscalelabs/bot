@@ -2,9 +2,7 @@
 
 import asyncio
 import logging
-import os
 import time
-from typing import cast, get_args
 
 import torch
 from ml.utils.device.auto import detect_device
@@ -13,20 +11,10 @@ from tortoise.transactions import in_transaction
 
 from bot.api.audio import load_audio_array, save_audio_array
 from bot.api.model import Audio, AudioSource, Generation, Task
-from bot.model.hubert.pretrained import PretrainedHubertModel, pretrained_hubert
+from bot.model.hubert.pretrained import cast_pretrained_model, pretrained_hubert
 from bot.settings import settings
 
 logger = logging.getLogger(__name__)
-
-
-def get_model() -> PretrainedHubertModel:
-    key = os.environ.get("DPSH_MODEL", "hubert-quantized-20231015")
-    if key not in get_args(PretrainedHubertModel):
-        raise ValueError(f"Invalid pretrained HuBERT model: {key}")
-    return cast(PretrainedHubertModel, key)
-
-
-MODEL: PretrainedHubertModel = get_model()
 
 
 class ModelRunner:
@@ -34,15 +22,15 @@ class ModelRunner:
         super().__init__()
 
         self.num_timesteps = settings.worker.sampling_timesteps if num_timesteps is None else num_timesteps
+        self.model_key = cast_pretrained_model(settings.model.key)
 
         device = detect_device()
-        model = pretrained_hubert(MODEL)
+        model = pretrained_hubert(self.model_key)
         model.eval()
         device.module_to(model)
 
         self.device = device
         self.model = model
-        self.model_key = MODEL
 
     async def load_samples(self, src: Audio, ref: Audio) -> tuple[Tensor, Tensor]:
         src_audio_arr, ref_audio_arr = await asyncio.gather(

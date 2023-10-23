@@ -25,3 +25,5 @@ worker:
   host: localhost
   port: 8080
   sampling_timesteps: 5
+model:
+  key: test
