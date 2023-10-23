@@ -1,11 +1,12 @@
 """Defines the utility functions for interacting with the database."""
 
+import asyncio
 import logging
+from pathlib import Path
 
 from tortoise import Model, Tortoise
 
-from bot.settings import env_settings as settings
-from bot.settings.environment import PostgreSQLDatabaseSettings
+from bot.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -27,11 +28,17 @@ def get_sqlite_config() -> dict:
     Returns:
         The configuration dictionary to pass to Tortoise ORM.
     """
+    host = settings.database.sqlite.host
+    if host != ":memory:":
+        host_path = Path(host).expanduser().resolve()
+        host_path.parent.mkdir(parents=True, exist_ok=True)
+        host = host_path.as_posix()
+
     return {
         "connections": {
             "default": {
                 "engine": "tortoise.backends.sqlite",
-                "credentials": {"file_path": settings.database.sqlite.host},
+                "credentials": {"file_path": host},
             },
         },
         "apps": {
@@ -53,9 +60,11 @@ def get_postgres_config() -> dict:
         The configuration dictionary to pass to Tortoise ORM.
     """
 
-    def get_credential(endpoint_settings: "PostgreSQLDatabaseSettings") -> dict:
+    def get_credential(host: str) -> dict:
+        endpoint_settings = settings.database.postgres
+
         return {
-            "host": endpoint_settings.host,
+            "host": host,
             "port": endpoint_settings.port,
             "user": endpoint_settings.username,
             "password": endpoint_settings.password,
@@ -66,11 +75,11 @@ def get_postgres_config() -> dict:
         "connections": {
             "default": {
                 "engine": "tortoise.backends.asyncpg",
-                "credentials": get_credential(settings.database.postgres),
+                "credentials": get_credential(settings.database.postgres.write_host),
             },
             "read_replica": {
                 "engine": "tortoise.backends.asyncpg",
-                "credentials": get_credential(settings.database.postgres),
+                "credentials": get_credential(settings.database.postgres.read_host),
             },
         },
         "apps": {

@@ -25,7 +25,8 @@ class SQLiteDatabaseSettings:
 
 @dataclass
 class PostgreSQLDatabaseSettings:
-    host: str = field(default=MISSING)
+    read_host: str = field(default=MISSING)
+    write_host: str = field(default=MISSING)
     port: int = field(default=MISSING)
     username: str = field(default=MISSING)
     password: str = field(default=MISSING)

@@ -10,6 +10,7 @@ import uuid
 from datetime import timedelta
 from hashlib import sha1
 from io import BytesIO
+from pathlib import Path
 from typing import Literal, cast, get_args
 from uuid import UUID
 
@@ -19,7 +20,7 @@ from fastapi import UploadFile
 from pydub import AudioSegment
 
 from bot.api.model import Audio, AudioSource
-from bot.settings import env_settings as settings
+from bot.settings import settings
 from bot.utils import server_time
 
 DEFAULT_NAME = "Untitled"
@@ -39,7 +40,8 @@ def get_fs_type() -> FSType:
 
 
 def _get_path(key: UUID) -> str:
-    return f"{settings.file.root_dir}/{key}.{settings.file.audio.file_ext}"
+    (dir_path := Path(settings.file.root_dir).expanduser().resolve()).mkdir(parents=True, exist_ok=True)
+    return str(dir_path / f"{key}.{settings.file.audio.file_ext}")
 
 
 async def _save_audio(user_id: int, source: AudioSource, name: str | None, audio: AudioSegment) -> Audio:

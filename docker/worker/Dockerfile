@@ -1,0 +1,51 @@
+# Use the latest CUDA image as base. This was taken from here:
+# https://github.com/aws-samples/amazon-scalable-discord-diffusion
+
+FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04
+
+WORKDIR /app
+
+# Installs system packages.
+RUN apt-get update -y && \
+    apt-get install -y \
+        ffmpeg \
+        curl \
+        gcc \
+        make \
+        python3.11 \
+        python3.11-dev \
+        python3.11-distutils \
+        python3.11-venv && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Installs Pip for Python 3.11.
+RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
+    python3.11 get-pip.py && \
+    rm get-pip.py
+
+# Copies over code.
+ADD bot/ bot/
+ADD tests/ tests/
+COPY pyproject.toml .
+COPY setup.py .
+COPY setup.cfg .
+COPY README.md .
+
+# Copies the config file and points to it.
+ENV DPSH_CONFIG=./config.yaml
+
+# Installs the package.
+RUN python3.11 -m pip install --upgrade --upgrade-strategy eager --force-reinstall '.[dev]'
+
+# Cleans up.
+RUN apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Downloads the model weights.
+RUN python3.11 -m bot.worker.download
+
+# Runs unit tests.
+RUN python -m pytest
+
+CMD ["python3", "-m", "bot.worker"]

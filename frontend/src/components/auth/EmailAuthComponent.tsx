@@ -16,7 +16,7 @@ const EmailAuthComponent = () => {
     e.preventDefault();
 
     setIsDisabled(true);
-    const login_url = window.location.origin + "#/login";
+    const login_url = window.location.origin;
 
     try {
       await api.post<boolean>("/users/login", {

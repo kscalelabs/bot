@@ -23,7 +23,7 @@ from bot.api.app.generation import generation_router
 from bot.api.app.infer import infer_router
 from bot.api.app.users import users_router
 from bot.api.db import get_config
-from bot.settings import env_settings as settings
+from bot.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +48,8 @@ app.terms_of_service = "https://dpsh.dev/tos"
 # Adds CORS middleware.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.site.homepage],
+    # allow_origins=[settings.site.homepage],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["GET", "POST", "DELETE"],
     allow_headers=["*"],

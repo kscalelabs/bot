@@ -1,7 +1,7 @@
-# Use the latest CUDA image as base. This was taken from here:
-# https://github.com/aws-samples/amazon-scalable-discord-diffusion
 
-FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04
+# Dockerfile for the FastAPI application.
+
+FROM ubuntu:22.04
 
 WORKDIR /app
 
@@ -26,22 +26,23 @@ RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
 
 # Copies over code.
 ADD bot/ bot/
-COPY dist/config.yaml .
+ADD tests/ tests/
+COPY pyproject.toml .
 COPY setup.py .
 COPY setup.cfg .
 COPY README.md .
 
-# Copies the config file and points to it.
-ENV DPSH_CONFIG=./config.yaml
+# Removes any existing Pip packages.
+RUN rm -rf ~/.cache/pip
 
 # Installs the package.
-RUN python3.11 -m pip install --upgrade --upgrade-strategy eager --force-reinstall '.[worker]'
+RUN pip install --no-cache-dir '.[dev]'
 
-# Cleans up.
-RUN apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# Runs unit tests.
+RUN python3.11 -m pytest
 
-# Downloads the model weights.
-RUN python3.11 -m bot.worker.download
+# Exposes the port for FastAPI.
+EXPOSE 8000
 
-CMD ["python3", "-m", "bot.worker"]
+# Command to run Gunicorn.
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "bot.api.app.main:app", "--worker-class", "uvicorn.workers.UvicornWorker"]

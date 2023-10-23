@@ -1,3 +1,7 @@
+[tool.aerich]
+
+tortoise_orm = "conftest"
+
 [tool.black]
 
 line-length = 120

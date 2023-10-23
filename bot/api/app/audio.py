@@ -24,7 +24,7 @@ from tortoise.transactions import in_transaction
 from bot.api.app.users import SessionTokenData, get_session_token
 from bot.api.audio import delete_audio as delete_audio_impl, get_audio_url, save_audio_file
 from bot.api.model import Audio, AudioDeleteTask, AudioSource, cast_audio_source
-from bot.settings import env_settings as settings
+from bot.settings import settings
 
 MAX_UUIDS_PER_QUERY = 100
 

@@ -30,13 +30,14 @@ all:
 # ------------------------ #
 
 start-backend:
-	uvicorn bot.api.app.main:app --reload --port 8000 --host localhost
+	# uvicorn bot.api.app.main:app --reload --port 8000 --host localhost --env-file docker/.env.local
+	uvicorn bot.api.app.main:app --reload --port 8000 --host localhost --env-file docker/.env.dev
 
 start-frontend:
 	cd frontend && npm start
 
 start-worker:
-	PYTORCH_ENABLE_MPS_FALLBACK=1 python -m bot.worker.server --debug
+	PYTORCH_ENABLE_MPS_FALLBACK=1 python -m bot.worker.server --debug --env-file docker/.env.local
 
 # ------------------------ #
 #          Build           #

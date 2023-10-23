@@ -5,7 +5,8 @@ database:
   kind: postgres
   generate_schemas: false
   postgres:
-    host: ${oc.env:DB_DEV_HOST}
+    read_host: ${oc.env:DB_READ_HOST}
+    write_host: ${oc.env:DB_WRITE_HOST}
     port: ${oc.decode:${oc.env:DB_PORT,5432}}
     username: ${oc.env:DB_USERNAME}
     password: ${oc.env:DB_PASSWORD}

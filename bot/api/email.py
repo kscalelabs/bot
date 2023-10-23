@@ -12,7 +12,7 @@ from email.mime.text import MIMEText
 import aiosmtplib
 
 from bot.api.token import create_token, load_token
-from bot.settings import env_settings as settings
+from bot.settings import settings
 
 logger = logging.getLogger(__name__)
 

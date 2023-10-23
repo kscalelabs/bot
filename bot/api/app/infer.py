@@ -10,7 +10,7 @@ from pydantic.main import BaseModel
 from yarl import URL
 
 from bot.api.app.users import SessionTokenData, get_session_token
-from bot.settings import env_settings
+from bot.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ infer_router = APIRouter()
 
 
 def get_client_session() -> ClientSession:
-    worker_settings = env_settings.worker
+    worker_settings = settings.worker
     url = URL.build(
         scheme=worker_settings.scheme,
         host=worker_settings.host,

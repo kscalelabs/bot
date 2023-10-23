@@ -13,7 +13,7 @@ from torch import Tensor
 
 from bot.api.db import close_db, init_db
 from bot.api.model import Audio
-from bot.settings import env_settings
+from bot.settings import settings
 from bot.worker.model import ModelRunner
 
 logger = logging.getLogger(__name__)
@@ -207,7 +207,7 @@ class Server:
             self._tasks.append(asyncio.create_task(self.request_saver()))
 
         async def start_db() -> None:
-            await init_db(generate_schemas=env_settings.database.generate_schemas)
+            await init_db(generate_schemas=settings.database.generate_schemas)
 
         await asyncio.gather(start_web_server(), start_tasks(), start_db())
 
@@ -249,8 +249,8 @@ class Runner:
         await self._runner.setup()
         logger.info("Started app runner")
 
-        host = env_settings.worker.host
-        port = env_settings.worker.port
+        host = settings.worker.host
+        port = settings.worker.port
         self._site = web.TCPSite(self._runner, host, port)
         await self._site.start()
         logger.info("Started TCP site on %s:%s", host, port)
