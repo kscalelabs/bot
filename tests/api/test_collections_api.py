@@ -54,6 +54,14 @@ async def test_audio_functions(
     assert response.status_code == 200, (response.status_code, response.json())
     assert response.json() == {"names": ["recorded"]}
 
+    # Tests checking if some audio IDs are in a given collection.
+    response = app_client.post("/collections/query/ids", json={"name": "recorded", "audio_ids": record_ids})
+    assert response.status_code == 200, (response.status_code, response.json())
+    audio_ids = response.json()
+    for row in audio_ids["ids"]:
+        audio_id, in_collection = row["audio_id"], row["in_collection"]
+        assert in_collection is (audio_id in record_ids[:3])
+
     # Tests removing an audio file from the collection.
     response = app_client.delete("/collections/remove", params={"name": "recorded", "audio_id": record_ids[0]})
     assert response.status_code == 200, (response.status_code, response.json())

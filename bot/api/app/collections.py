@@ -68,3 +68,36 @@ async def remove_from_collection(
 ) -> bool:
     await Collection.filter(name=name, audio_id=audio_id, user_id=user_data.user_id).delete()
     return True
+
+
+class QueryIdsRequest(BaseModel):
+    name: str
+    audio_ids: list[int]
+
+
+class QueryIdsSingleResponse(BaseModel):
+    audio_id: int
+    in_collection: bool
+
+
+class QueryIdsResponse(BaseModel):
+    ids: list[QueryIdsSingleResponse]
+
+
+@collections_router.post("/query/ids", response_model=QueryIdsResponse)
+async def query_ids(
+    data: QueryIdsRequest,
+    user_data: SessionTokenData = Depends(get_session_token),
+) -> QueryIdsResponse:
+    audio_ids = await Collection.filter(
+        name=data.name,
+        user_id=user_data.user_id,
+        audio_id__in=data.audio_ids,
+    ).values_list("audio_id", flat=True)
+    audio_id_set = set(audio_ids)
+    return QueryIdsResponse(
+        ids=[
+            QueryIdsSingleResponse(audio_id=audio_id, in_collection=audio_id in audio_id_set)
+            for audio_id in data.audio_ids
+        ]
+    )

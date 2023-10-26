@@ -38,3 +38,7 @@ user:
   # will be waitlisted until an admin approves them. If this is removed, then
   # any user can sign up without being waitlisted.
   authorized_users: []
+worker:
+  host: "172.31.85.223"
+  port: 8000
+  sampling_timesteps: 50
