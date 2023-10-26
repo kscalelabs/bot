@@ -48,6 +48,6 @@ class RunResponse(BaseModel):
 
 @infer_router.post("/run", response_model=RunResponse)
 async def run(data: RunRequest, user_data: SessionTokenData = Depends(get_session_token)) -> RunResponse:
-    endpoint = URL.build(query={"source_id": data.source_id, "reference_id": data.reference_id})
+    endpoint = URL.build(path="/", query={"source_id": data.source_id, "reference_id": data.reference_id})
     response_data = await make_request(endpoint)
     return RunResponse(**response_data)
