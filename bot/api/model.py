@@ -128,3 +128,22 @@ class Task(Model):
     model = fields.CharField(max_length=255, index=True)
     elapsed_time = fields.FloatField()
     task_finished = fields.DatetimeField(auto_now_add=True)
+
+
+class Collection(Model):
+    id = fields.IntField(pk=True)
+    name = fields.CharField(max_length=255, index=True)
+    user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
+        "models.User",
+        related_name="collections",
+        on_delete=fields.CASCADE,
+        index=True,
+        null=False,
+    )
+    audio: fields.ForeignKeyRelation[Audio] = fields.ForeignKeyField(
+        "models.Audio",
+        related_name="collections",
+        on_delete=fields.CASCADE,
+        index=True,
+        null=False,
+    )

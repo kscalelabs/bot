@@ -121,3 +121,4 @@ class EnvironmentSettings:
     email: EmailSettings = field(default_factory=EmailSettings)
     crypto: CryptoSettings = field(default_factory=CryptoSettings)
     model: ModelSettings = field(default_factory=ModelSettings)
+    debug: bool = field(default=False)

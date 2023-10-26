@@ -23,9 +23,13 @@ user:
   admin_emails:
     - "ben@bolte.cc"
     - "ben@dpsh.dev"
+  authorized_users: ${user.admin_emails}
 worker:
   host: localhost
   port: 8080
   sampling_timesteps: 50
 model:
   key: hubert-quantized-20231015
+# Setting this flag to make some debugging things easier, but it is a good
+# idea to avoid using it too often.
+debug: true
