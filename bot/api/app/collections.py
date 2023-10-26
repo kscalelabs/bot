@@ -1,6 +1,8 @@
 """Defines the API for managing collections."""
 
 
+from typing import cast
+
 from fastapi import APIRouter, Depends
 from pydantic.main import BaseModel
 
@@ -19,7 +21,10 @@ async def query_collection(
     name: str,
     user_data: SessionTokenData = Depends(get_session_token),
 ) -> SingleCollectionResponse:
-    audio_ids = await Collection.filter(name=name, user_id=user_data.user_id).values_list("audio_id", flat=True)
+    audio_ids = cast(
+        list[int],
+        await Collection.filter(name=name, user_id=user_data.user_id).values_list("audio_id", flat=True),
+    )
     return SingleCollectionResponse(audio_ids=audio_ids)
 
 
@@ -29,8 +34,9 @@ class MyCollectionsResponse(BaseModel):
 
 @collections_router.get("/query/me")
 async def query_my_collections(user_data: SessionTokenData = Depends(get_session_token)) -> MyCollectionsResponse:
-    names = (
-        await Collection.filter(user_id=user_data.user_id).distinct().order_by("name").values_list("name", flat=True)
+    names = cast(
+        list[str],
+        await Collection.filter(user_id=user_data.user_id).distinct().order_by("name").values_list("name", flat=True),
     )
     return MyCollectionsResponse(names=names)
 
