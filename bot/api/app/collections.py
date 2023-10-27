@@ -89,11 +89,14 @@ async def query_ids(
     data: QueryIdsRequest,
     user_data: SessionTokenData = Depends(get_session_token),
 ) -> QueryIdsResponse:
-    audio_ids = await Collection.filter(
-        name=data.name,
-        user_id=user_data.user_id,
-        audio_id__in=data.audio_ids,
-    ).values_list("audio_id", flat=True)
+    audio_ids = cast(
+        list[int],
+        await Collection.filter(
+            name=data.name,
+            user_id=user_data.user_id,
+            audio_id__in=data.audio_ids,
+        ).values_list("audio_id", flat=True),
+    )
     audio_id_set = set(audio_ids)
     return QueryIdsResponse(
         ids=[
