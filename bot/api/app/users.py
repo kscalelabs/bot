@@ -2,6 +2,7 @@
 
 import asyncio
 import datetime
+import logging
 from email.utils import parseaddr as parse_email_address
 
 import aiohttp
@@ -13,6 +14,8 @@ from bot.api.email import OneTimePassPayload, send_delete_email, send_otp_email,
 from bot.api.model import Token, User
 from bot.api.token import create_refresh_token, create_token, load_refresh_token, load_token
 from bot.settings import settings
+
+logger = logging.getLogger(__name__)
 
 users_router = APIRouter()
 
@@ -78,7 +81,16 @@ def validate_email(email: str) -> str:
 async def login_user(data: UserSignup) -> bool:
     email = validate_email(data.email)
     payload = OneTimePassPayload(email)
-    await send_otp_email(payload, data.login_url)
+
+    if (
+        settings.debug
+        and (authorized_emails := settings.user.authorized_users) is not None
+        and email in authorized_emails
+    ):
+        logger.warning("Login URL: %s?otp=%s", data.login_url, payload.encode())
+    else:
+        await send_otp_email(payload, data.login_url)
+
     return True
 
 
@@ -105,8 +117,7 @@ async def create_or_get(email: str) -> User:
         # For initial rollout, set a few authorized emails through the config,
         # other users will be added to the database but will be banned (meaning,
         # they are waitlisted).
-        authorized_emails = settings.user.authorized_users
-        if authorized_emails is not None:
+        if (authorized_emails := settings.user.authorized_users) is not None:
             if email not in authorized_emails and email not in settings.user.admin_emails:
                 await add_to_waitlist(email)
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You're on the waitlist!")

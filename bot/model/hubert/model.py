@@ -178,7 +178,7 @@ class HubertModel(nn.Module):
         self.diff = GaussianDiffusion(
             betas=get_diffusion_beta_schedule("cosine", num_timesteps),
             pred_mode="pred_x_0",
-            loss_type="mse",
+            loss="mse",
             sigma_type="upper_bound",
         )
 
@@ -260,7 +260,7 @@ class HubertModel(nn.Module):
     def forward(self, audio: Tensor, ref_audio: Tensor) -> Tensor:
         latents, ref_latents, hubert_embeddings = self.get_inputs(audio, ref_audio)
         cond_emb = self.speaker_emb(ref_latents)
-        loss = self.diff.loss(latents, lambda x, times: self.model(x, hubert_embeddings, times, cond_emb))
+        loss = self.diff.loss(lambda x, times: self.model(x, hubert_embeddings, times, cond_emb), latents)
         return loss
 
     def infer(self, audio: Tensor, ref_audio: Tensor, sampling_timesteps: int | None = None) -> tuple[Tensor, Tensor]:

@@ -19,6 +19,7 @@ from tortoise.contrib.fastapi import register_tortoise
 
 from bot.api.app.admin import admin_router
 from bot.api.app.audio import audio_router
+from bot.api.app.collections import collections_router
 from bot.api.app.generation import generation_router
 from bot.api.app.infer import infer_router
 from bot.api.app.users import users_router
@@ -64,6 +65,7 @@ app.include_router(audio_router, prefix="/audio", tags=["audio"])
 app.include_router(generation_router, prefix="/generation", tags=["generation"])
 app.include_router(infer_router, prefix="/infer", tags=["infer"])
 app.include_router(users_router, prefix="/users", tags=["users"])
+app.include_router(collections_router, prefix="/collections", tags=["collections"])
 
 # Registers the database, generating schemas if not in production.
 register_tortoise(app, config=get_config(), generate_schemas=not settings.database.generate_schemas)

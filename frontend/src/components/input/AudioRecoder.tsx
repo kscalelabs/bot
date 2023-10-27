@@ -27,6 +27,7 @@ const AudioRecorder = () => {
   const { addAlert } = useAlertQueue();
 
   const { startRecording, stopRecording } = useReactMediaRecorder({
+    video: false,
     audio: true,
     onStop: (blobUrl, blob) => {
       setAudioBlob([blobUrl, blob]);
@@ -34,10 +35,9 @@ const AudioRecorder = () => {
     blobPropertyBag: {
       type: "audio/webm",
     },
-    mediaRecorderOptions: {
-      audioBitsPerSecond: 16000,
-      mimeType: "audio/webm",
-    },
+    // mediaRecorderOptions: {
+    //   mimeType: "audio/webm",
+    // },
   });
 
   useEffect(() => {
@@ -69,6 +69,7 @@ const AudioRecorder = () => {
         addAlert(humanReadableError(error), "error");
       } finally {
         setShowSpinner(false);
+        setAudioBlob(null);
       }
     })();
   }, [audioBlob, api, addAlert]);

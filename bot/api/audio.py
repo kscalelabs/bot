@@ -7,7 +7,6 @@ import os
 import shutil
 import tempfile
 import uuid
-from datetime import timedelta
 from hashlib import sha1
 from io import BytesIO
 from pathlib import Path
@@ -21,7 +20,6 @@ from pydub import AudioSegment
 
 from bot.api.model import Audio, AudioSource
 from bot.settings import settings
-from bot.utils import server_time
 
 DEFAULT_NAME = "Untitled"
 
