@@ -33,7 +33,7 @@ COPY pyproject.toml .
 COPY setup.py .
 COPY setup.cfg .
 COPY README.md .
-COPY docker/api/startup.sh ./startup.sh
+COPY docker/worker/startup.sh ./startup.sh
 
 # Installs the package.
 RUN pip install '.'
