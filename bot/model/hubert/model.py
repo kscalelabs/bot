@@ -176,7 +176,8 @@ class HubertModel(nn.Module):
 
         # Diffusion model.
         self.diff = GaussianDiffusion(
-            betas=get_diffusion_beta_schedule("cosine", num_timesteps),
+            beta_schedule="cosine",
+            num_beta_steps=num_timesteps,
             pred_mode="pred_x_0",
             loss="mse",
             sigma_type="upper_bound",
