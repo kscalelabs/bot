@@ -11,7 +11,7 @@ from safetensors import safe_open
 from bot.model.hubert.model import HubertModel
 from bot.settings import settings
 
-PretrainedHubertModel = Literal["test", "hubert-quantized-20231015"]
+PretrainedHubertModel = Literal["test", "hubert-quantized-20231015", "hubert-quantized-20231016"]
 
 REPO_ID = "codekansas/dpshai"
 

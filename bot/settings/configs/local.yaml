@@ -29,7 +29,7 @@ worker:
   port: 8080
   sampling_timesteps: 50
 model:
-  key: hubert-quantized-20231015
+  key: hubert-quantized-20231016
 # Setting this flag to make some debugging things easier, but it is a good
 # idea to avoid using it too often.
 debug: true

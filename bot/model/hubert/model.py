@@ -5,7 +5,7 @@ import logging
 import torch
 import torch.nn.functional as F
 from ml.models.architectures.attention import TransformerEncoder, TransformerEncoderLayer
-from ml.tasks.diffusion import GaussianDiffusion, get_diffusion_beta_schedule
+from ml.tasks.diffusion import GaussianDiffusion
 from pretrained.hubert import PretrainedHubertKmeansSize, PretrainedHubertSize
 from torch import Tensor, nn
 

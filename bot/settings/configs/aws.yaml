@@ -25,7 +25,7 @@ model:
   # Where the model weights are cached inside the Docker image.
   hf_hub_token: ${oc.env:HF_HUB_TOKEN}
   cache_dir: ~/models
-  key: hubert-quantized-20231015
+  key: hubert-quantized-20231016
 site:
   homepage: ${oc.env:SITE_HOMEPAGE}
 user:
